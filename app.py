@@ -15,8 +15,8 @@ uploaded_file = st.sidebar.file_uploader(
 
 if uploaded_file is not None:
   try:
-    # Membaca sheet utama sesuai nama lembar kerja Anda
-    df_raw = pd.read_excel(uploaded_file, sheet_name="HARIAN BARU (2)")
+    # Membaca sheet pertama secara otomatis tanpa terikat nama khusus
+    df_raw = pd.read_excel(uploaded_file, sheet_name=0)
     periode_teks = (
         df_raw.iloc[2, 1] if pd.notna(df_raw.iloc[2, 1]) else "Periode Aktif"
     )
@@ -63,7 +63,7 @@ if uploaded_file is not None:
     with col2:
       st.metric(label="SWDKLLJ", value=f"Rp {val_sw:,.0f}".replace(",", "."))
     with col3:
-      st.metric(label="Denda", value=f"Rp {val_denda:,.0f}".replace(",", "."))
+      st.metric(label="Denda", value=f"Rp {val_denda:,.0f}".replace(".", "."))
     with col4:
       st.metric(
           label="Overall Penerimaan (Total)",
@@ -83,8 +83,8 @@ if uploaded_file is not None:
 
   except Exception as e:
     st.error(
-        f"Terjadi kesalahan saat membaca file Excel: {e}. Pastikan nama sheet"
-        " Excel Anda adalah 'HARIAN BARU (2)'."
+        f"Terjadi kesalahan saat membaca struktur file Excel: {e}. Pastikan posisi"
+        " tabel berada di baris ke-8."
     )
 else:
   st.info(
