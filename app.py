@@ -32,12 +32,10 @@ def load_multi_loket_archives(folder):
     nama_file = os.path.basename(file_path)
     try:
       df_raw = pd.read_excel(file_path, sheet_name=0)
-      # Periode berada di baris indeks 1
       periode = (
           df_raw.iloc[1, 1] if pd.notna(df_raw.iloc[1, 1]) else "Tidak Diketahui"
       )
 
-      # Mapping indeks baris data yang tepat di pandas (0-based index)
       mapping_loket = [
           ("Kota", 5, 8),
           ("Sleman", 10, 13),
@@ -201,15 +199,19 @@ if not df_gabungan.empty:
   st.markdown("---")
 
   st.markdown("### 📋 Detail Sektor Pendanaan pada Tanggal Tersebut")
-  st.dataframe(
-      df_aktif[[
-          "Jenis Dana",
-          "Realisasi s.d. Hari Ini",
-          "Prosentase Siklikal (%)",
-          "Siklikal YTY (%)",
-      ]],
-      use_container_width=True,
-  )
+
+  # Format kolom Realisasi menjadi format mata uang Rupiah
+  df_tampilan = df_aktif[[
+      "Jenis Dana",
+      "Realisasi s.d. Hari Ini",
+      "Prosentase Siklikal (%)",
+      "Siklikal YTY (%)",
+  ]].copy()
+  df_tampilan["Realisasi s.d. Hari Ini"] = df_tampilan[
+      "Realisasi s.d. Hari Ini"
+  ].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+
+  st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
   if not df_tren.empty and len(df_tren) > 1:
     st.markdown("---")
