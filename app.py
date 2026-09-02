@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import streamlit as st
 
@@ -9,19 +10,31 @@ st.set_page_config(
 st.title("📊 Dashboard Monitoring Penerimaan Sektor UU 34 Tahun 1964")
 st.subheader("Kanwil DIY - Jasa Raharja")
 
+# Widget upload di sidebar
 uploaded_file = st.sidebar.file_uploader(
-    "Unggah File Laporan Excel", type=["xlsx", "xls"]
+    "Unggah File Laporan Excel (Opsional)", type=["xlsx", "xls"]
 )
 
+# Menentukan sumber file (prioritas file upload, jika kosong gunakan file default di GitHub)
+default_filename = "Penerimaan Sektor UU 34 Tahun 1964.xlsx"
+source_to_read = None
+
 if uploaded_file is not None:
+  source_to_read = uploaded_file
+  st.sidebar.success("✅ Menggunakan file dari hasil unggahan.")
+elif os.path.exists(default_filename):
+  source_to_read = default_filename
+  st.sidebar.info(
+      "📌 Menggunakan file default dari GitHub (aman dari reset/restart)."
+  )
+
+if source_to_read is not None:
   try:
-    # Membaca sheet pertama secara otomatis
-    df_raw = pd.read_excel(uploaded_file, sheet_name=0)
+    df_raw = pd.read_excel(source_to_read, sheet_name=0)
     periode_teks = (
         df_raw.iloc[2, 1] if pd.notna(df_raw.iloc[2, 1]) else "Periode Aktif"
     )
 
-    # Menyesuaikan rentang baris agar mencakup Kartu Dana (Indeks 6 sampai 9)
     tabel_sektor = df_raw.iloc[6:10, [1, 2, 3, 4]].copy()
     tabel_sektor.columns = [
         "Jenis Dana",
@@ -30,7 +43,6 @@ if uploaded_file is not None:
         "Siklikal YTY (%)",
     ]
 
-    st.success("✅ Berhasil memuat dan memproses data dari file Excel!")
     st.info(f"📌 Informasi Periode Laporan: **{periode_teks}**")
 
     pilihan_loket = st.sidebar.selectbox(
@@ -58,16 +70,20 @@ if uploaded_file is not None:
 
     with col1:
       st.metric(
-          label="Kartu Dana", value=f"Rp {val_kartu:,.0f}".replace(",", ".")
+          label="Kartu Dana", value=f"Rp {val_kartu/1e6:,.2f} Juta".replace(".", ",")
       )
     with col2:
-      st.metric(label="SWDKLLJ", value=f"Rp {val_sw:,.0f}".replace(",", "."))
+      st.metric(
+          label="SWDKLLJ", value=f"Rp {val_sw/1e6:,.2f} Juta".replace(".", ",")
+      )
     with col3:
-      st.metric(label="Denda", value=f"Rp {val_denda:,.0f}".replace(".", "."))
+      st.metric(
+          label="Denda", value=f"Rp {val_denda/1e6:,.2f} Juta".replace(".", ",")
+      )
     with col4:
       st.metric(
-          label="Overall Penerimaan (Total)",
-          value=f"Rp {val_total:,.0f}".replace(",", "."),
+          label="Total Penerimaan",
+          value=f"Rp {val_total/1e6:,.2f} Juta".replace(".", ","),
       )
 
     st.markdown("---")
@@ -82,12 +98,11 @@ if uploaded_file is not None:
     st.table(tabel_siklikal)
 
   except Exception as e:
-    st.error(
-        f"Terjadi kesalahan saat membaca struktur file Excel: {e}. Pastikan posisi"
-        " tabel utama dimulai dari baris ke-7 Excel."
-    )
+    st.error(f"Terjadi kesalahan saat membaca struktur file Excel: {e}")
 else:
-  st.info(
-      "📂 **Silakan unggah file Excel laporan Anda** menggunakan panel di"
-      " sebelah kiri untuk menampilkan dasbor secara instan."
+  st.warning(
+      "⚠️ Belum ada file Excel yang diunggah dan file default belum tersedia di"
+      " GitHub. Unggah file Excel melalui panel kiri atau masukkan file"
+      " bernama 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' langsung ke dalam"
+      " repository GitHub Anda."
   )
