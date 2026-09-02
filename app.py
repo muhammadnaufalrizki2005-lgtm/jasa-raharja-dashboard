@@ -9,14 +9,13 @@ st.set_page_config(
 )
 
 st.title("📊 Dashboard Monitoring Penerimaan Sektor UU 34 Tahun 1964")
-st.subheader("Kanwil DIY - Jasa Raharja (Arsip Harian GitHub)")
+st.subheader("Kanwil DIY - Jasa Raharja (Akumulasi Kumulatif Harian)")
 
-# Folder penyimpanan arsip di GitHub
 folder_arsip = "data_harian"
 
 
 @st.cache_data(ttl=10)
-def load_all_daily_files(folder):
+def load_cumulative_archives(folder):
   if not os.path.exists(folder):
     os.makedirs(folder)
     return pd.DataFrame()
@@ -25,17 +24,21 @@ def load_all_daily_files(folder):
   if not daftar_file:
     return pd.DataFrame()
 
-  list_data = []
-  daftar_file.sort()  # Mengurutkan file secara kronologis
+  # Urutkan file agar kronologis (berdasarkan nama file)
+  daftar_file.sort()
+
+  list_ringkasan = []
+  list_detail = []
 
   for file_path in daftar_file:
+    nama_file = os.path.basename(file_path)
     try:
       df_raw = pd.read_excel(file_path, sheet_name=0)
       periode = (
           df_raw.iloc[2, 1] if pd.notna(df_raw.iloc[2, 1]) else "Tidak Diketahui"
       )
 
-      # Ekstraksi tabel sektor (Baris 6 sampai 9, Kolom B, C, D, E -> Indeks 1, 2, 3, 4)
+      # Ekstraksi tabel sektor (Baris 6 s.d. 9, Kolom B, C, D, E)
       tabel_sektor = df_raw.iloc[6:10, [1, 2, 3, 4]].copy()
       tabel_sektor.columns = [
           "Jenis Dana",
@@ -43,25 +46,39 @@ def load_all_daily_files(folder):
           "Prosentase Siklikal (%)",
           "Siklikal YTY (%)",
       ]
-      tabel_sektor["Sumber File"] = os.path.basename(file_path)
+      tabel_sektor["Sumber File"] = nama_file
       tabel_sektor["Periode Laporan"] = periode
+      list_detail.append(tabel_sektor)
 
-      list_data.append(tabel_sektor)
+      # Ambil nilai Total Penerimaan untuk grafik tren historis
+      row_total = tabel_sektor[
+          tabel_sektor["Jenis Dana"].str.contains("Total", case=False, na=False)
+      ]
+      if not row_total.empty:
+        total_val = float(row_total["Realisasi s.d. Hari Ini"].values[0])
+        list_ringkasan.append(
+            {"File": nama_file, "Periode": periode, "Total Penerimaan": total_val}
+        )
+
     except Exception as e:
-      st.warning(f"Gagal membaca file {os.path.basename(file_path)}: {e}")
+      st.warning(f"Gagal membaca file {nama_file}: {e}")
 
-  if list_data:
-    return pd.concat(list_data, ignore_index=True)
-  return pd.DataFrame()
+  df_detail_gabungan = (
+      pd.concat(list_detail, ignore_index=True) if list_detail else pd.DataFrame()
+  )
+  df_tren = (
+      pd.DataFrame(list_ringkasan) if list_ringkasan else pd.DataFrame()
+  )
+
+  return df_detail_gabungan, df_tren
 
 
-# Memuat data gabungan
-df_gabungan = load_all_daily_files(folder_arsip)
+df_detail, df_tren = load_cumulative_archives(folder_arsip)
 
-if not df_gabungan.empty:
-  st.success("✅ Berhasil memuat seluruh arsip laporan dari folder GitHub.")
+if not df_detail.empty:
+  st.success("✅ Berhasil memuat arsip laporan kumulatif dari GitHub.")
 
-  # Panel Samping Pilihan Loket & Arsip File
+  # Panel Samping
   pilihan_loket = st.sidebar.selectbox(
       "Pilih Loket SAMSAT",
       [
@@ -74,22 +91,22 @@ if not df_gabungan.empty:
       ],
   )
 
-  daftar_file_tersedia = df_gabungan["Sumber File"].unique()
+  daftar_file_tersedia = df_detail["Sumber File"].unique()
   file_pilihan = st.sidebar.selectbox(
-      "Pilih Berkas Laporan Harian",
+      "Pilih Tanggal Laporan yang Ingin Dilihat",
       daftar_file_tersedia,
       index=len(daftar_file_tersedia) - 1,
   )
 
-  # Filter data berdasarkan file yang dipilih di sidebar
-  df_terpilih = df_gabungan[df_gabungan["Sumber File"] == file_pilihan]
+  # Filter data sesuai file/tanggal yang dipilih di sidebar
+  df_terpilih = df_detail[df_detail["Sumber File"] == file_pilihan]
   periode_aktif = (
       df_terpilih["Periode Laporan"].iloc[0] if not df_terpilih.empty else "-"
   )
 
   st.info(
-      f"📌 Menampilkan Laporan dari Berkas: **{file_pilihan}** | Periode:"
-      f" **{periode_aktif}**"
+      f"📌 Menampilkan Posisi Laporan Per Tanggal Berkas: **{file_pilihan}** |"
+      f" {periode_aktif}"
   )
 
   st.markdown("### 📈 Ringkasan Penerimaan Keseluruhan")
@@ -122,7 +139,7 @@ if not df_gabungan.empty:
   except:
     val_kartu, val_sw, val_denda, val_total = 0, 0, 0, 0
 
-  # Tata letak metrik 2 kolom agar tidak terpotong
+  # Tata letak metrik 2x2 agar tidak terpotong
   row1_col1, row1_col2 = st.columns(2)
   with row1_col1:
     st.metric(
@@ -141,13 +158,13 @@ if not df_gabungan.empty:
     )
   with row2_col2:
     st.metric(
-        label="Total Penerimaan",
+        label="Total Penerimaan Kumulatif",
         value=f"Rp {val_total/1e6:,.2f} Juta".replace(".", ","),
     )
 
   st.markdown("---")
 
-  st.markdown("### 📋 Detail Tabel Sektor Pendanaan")
+  st.markdown("### 📋 Detail Sektor Pendanaan pada Tanggal Tersebut")
   st.dataframe(
       df_terpilih[[
           "Jenis Dana",
@@ -158,12 +175,15 @@ if not df_gabungan.empty:
       use_container_width=True,
   )
 
-  with st.expander("📁 Lihat Seluruh Riwayat Gabungan Semua File Harian"):
-    st.dataframe(df_gabungan, use_container_width=True)
+  # Grafik Perbandingan Tren Pertumbuhan Antar Tanggal Laporan
+  if not df_tren.empty and len(df_tren) > 1:
+    st.markdown("---")
+    st.markdown("### 📉 Grafik Tren Pertumbuhan Total Penerimaan (Historis)")
+    st.line_chart(df_tren.set_index("File")["Total Penerimaan"])
 
 else:
   st.warning(
-      "⚠️ Belum ada file Excel di dalam folder `data_harian/` di GitHub. "
-      "Silakan unggah file laporan harian Anda (misal:"
-      " `laporan_harian_20260902.xlsx`) ke dalam folder tersebut."
+      "⚠️ Belum ada file Excel di dalam folder `data_harian/` di GitHub."
+      " Silakan unggah file data awal (misal: laporan s.d. 31 Agustus) dan file"
+      " harian berikutnya ke dalam folder tersebut."
   )
