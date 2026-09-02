@@ -9,38 +9,30 @@ st.set_page_config(
 st.title("📊 Dashboard Monitoring Penerimaan Sektor UU 34 Tahun 1964")
 st.subheader("Kanwil DIY - Jasa Raharja")
 
-# Widget untuk mengunggah file Excel langsung dari halaman web
 uploaded_file = st.sidebar.file_uploader(
     "Unggah File Laporan Excel", type=["xlsx", "xls"]
 )
 
 if uploaded_file is not None:
   try:
-    # Membaca file Excel yang diunggah pengguna
+    # Membaca sheet utama sesuai nama lembar kerja Anda
     df_raw = pd.read_excel(uploaded_file, sheet_name="HARIAN BARU (2)")
     periode_teks = (
         df_raw.iloc[2, 1] if pd.notna(df_raw.iloc[2, 1]) else "Periode Aktif"
     )
 
-    # Ekstraksi Tabel Utama Sektor (Baris 7-10)
-    tabel_sektor = df_raw.iloc[7:11, [1, 5, 6, 9]].copy()
+    # Ekstraksi Tabel Utama Sektor (Menyesuaikan kolom B, C, D, E di baris 8-11)
+    tabel_sektor = df_raw.iloc[7:11, [1, 2, 3, 4]].copy()
     tabel_sektor.columns = [
         "Jenis Dana",
         "Realisasi s.d. Hari Ini",
         "Prosentase Siklikal (%)",
         "Siklikal YTY (%)",
     ]
-    tabel_sektor["Jenis Dana"] = [
-        "Kartu Dana / Sertifikat",
-        "SWDKLLJ",
-        "Denda",
-        "Total Penerimaan",
-    ]
 
     st.success("✅ Berhasil memuat dan memproses data dari file Excel!")
     st.info(f"📌 Informasi Periode Laporan: **{periode_teks}**")
 
-    # Panel Samping Filter Loket
     pilihan_loket = st.sidebar.selectbox(
         "Pilih Loket SAMSAT",
         [
@@ -53,7 +45,6 @@ if uploaded_file is not None:
         ],
     )
 
-    # Menampilkan Metrik Utama di Bagian Atas Web
     st.markdown("### 📈 Ringkasan Penerimaan Keseluruhan")
     col1, col2, col3, col4 = st.columns(4)
 
@@ -72,7 +63,7 @@ if uploaded_file is not None:
     with col2:
       st.metric(label="SWDKLLJ", value=f"Rp {val_sw:,.0f}".replace(",", "."))
     with col3:
-      st.metric(label="Denda", value=f"Rp {val_denda:,.0f}".replace(".", "."))
+      st.metric(label="Denda", value=f"Rp {val_denda:,.0f}".replace(",", "."))
     with col4:
       st.metric(
           label="Overall Penerimaan (Total)",
@@ -81,11 +72,9 @@ if uploaded_file is not None:
 
     st.markdown("---")
 
-    # Menampilkan Tabel Rinci di Web
     st.markdown("### 📋 Detail Rekapitulasi Per Sektor Pendanaan")
     st.dataframe(tabel_sektor, use_container_width=True)
 
-    # Bagian Target Persentase Siklikal dari Pusat
     st.markdown("### 🎯 Evaluasi Target Siklikal Kantor Pusat")
     tabel_siklikal = tabel_sektor[
         ["Jenis Dana", "Prosentase Siklikal (%)", "Siklikal YTY (%)"]
@@ -94,8 +83,8 @@ if uploaded_file is not None:
 
   except Exception as e:
     st.error(
-        f"Terjadi kesalahan saat membaca file Excel: {e}. Pastikan file memiliki"
-        " sheet bernama 'HARIAN BARU (2)' dengan struktur yang sesuai."
+        f"Terjadi kesalahan saat membaca file Excel: {e}. Pastikan nama sheet"
+        " Excel Anda adalah 'HARIAN BARU (2)'."
     )
 else:
   st.info(
