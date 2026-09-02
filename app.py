@@ -93,18 +93,18 @@ elif role == "Pimpinan":
     df = pd.DataFrame()
 
   if not df.empty:
-    df["tanggal"] = pd.to_datetime(df["tanggal"])
-    df["Bulan"] = df["tanggal"].dt.to_period("M").astype(str)
-    df["Tahun"] = df["tanggal"].dt.year.astype(str)
+    df["dt_tanggal"] = pd.to_datetime(df["tanggal"])
+    df["Bulan"] = df["dt_tanggal"].dt.to_period("M").astype(str)
+    df["Tahun"] = df["dt_tanggal"].dt.year.astype(str)
 
     mode_waktu = st.sidebar.radio(
         "Filter Periode", ["Harian", "Bulanan", "Tahunan"]
     )
 
     if mode_waktu == "Harian":
-      list_tanggal = sorted(df["tanggal"].dt.date.unique(), reverse=True)
+      list_tanggal = sorted(df["dt_tanggal"].dt.date.unique(), reverse=True)
       pilih_tgl = st.sidebar.selectbox("Pilih Tanggal", list_tanggal)
-      df_filtered = df[df["tanggal"].dt.date == pilih_tgl]
+      df_filtered = df[df["dt_tanggal"].dt.date == pilih_tgl]
       st.info(f"Menampilkan Laporan Tanggal: **{pilih_tgl}**")
 
     elif mode_waktu == "Bulanan":
@@ -133,11 +133,17 @@ elif role == "Pimpinan":
       )
       st.info(f"Menampilkan Rekap Tahun: **{pilih_thn}**")
 
-    if not df_filtered.empty and "realisasi" in df_filtered.columns:
+    # Format tampilan tabel agar bersih tanpa 00:00:00 dan format Rupiah
+    if not df_filtered.empty:
       df_tampilan = df_filtered.copy()
-      df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
-          lambda x: f"Rp {x:,.0f}".replace(",", ".")
-      )
+      if "tanggal" in df_tampilan.columns:
+        df_tampilan["tanggal"] = pd.to_datetime(
+            df_tampilan["tanggal"]
+        ).dt.strftime("%Y-%m-%d")
+      if "realisasi" in df_tampilan.columns:
+        df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
+            lambda x: f"Rp {x:,.0f}".replace(",", ".")
+        )
     else:
       df_tampilan = df_filtered
 
@@ -147,7 +153,10 @@ elif role == "Pimpinan":
     st.markdown("---")
     st.markdown("### 📉 Grafik Tren Penerimaan")
     df_chart = (
-        df.groupby("tanggal")["realisasi"].sum().reset_index().set_index("tanggal")
+        df.groupby("dt_tanggal")["realisasi"]
+        .sum()
+        .reset_index()
+        .set_index("dt_tanggal")
     )
     st.line_chart(df_chart)
 
