@@ -1,10 +1,8 @@
 from datetime import date
 import pandas as pd
-import streamlit as str_lit
 import streamlit as st
 from supabase import create_client
 
-# Kredensial Supabase Anda yang sesungguhnya
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
@@ -20,21 +18,19 @@ st.set_page_config(
     page_title="Sistem Monitoring Penerimaan Jasa Raharja DIY", layout="wide"
 )
 
-# **Sistem Login & Hak Akses**
-st.sidebar.title("🔐 Autentikasi Sistem")
+st.sidebar.title("🔐 Menu Utama")
 role = st.sidebar.selectbox(
-    "Pilih Peran Pengguna", ["Pilih Peran...", "Petugas (Input)", "Pimpinan (Stakeholder)"]
+    "Pilih Akses Menu", ["Pilih Peran...", "Petugas SAMSAT", "Pimpinan"]
 )
 
 if role == "Pilih Peran...":
   st.info(
-      "👋 Selamat datang! Silakan pilih peran Anda di panel sebelah kiri untuk"
-      " masuk ke sistem."
+      "Silakan pilih menu akses di panel sebelah kiri untuk masuk ke sistem."
   )
 
-elif role == "Petugas (Input)":
-  st.title("📝 Form Raw Data Entry (Backend Petugas)")
-  st.subheader("SAMSAT Wilayah DIY - Input Data Harian")
+elif role == "Petugas SAMSAT":
+  st.title("📝 Form Input Data Harian")
+  st.subheader("Kanwil DIY - Jasa Raharja")
 
   with st.form("form_penerimaan"):
     col1, col2 = st.columns(2)
@@ -61,9 +57,7 @@ elif role == "Petugas (Input)":
     with col4:
       f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
 
-    submit_button = st.form_submit_button(
-        "💾 Simpan Data ke Database Supabase"
-    )
+    submit_button = st.form_submit_button("💾 Simpan Data")
 
     if submit_button:
       data_insert = {
@@ -78,15 +72,14 @@ elif role == "Petugas (Input)":
         response = (
             supabase.table("penerimaan_harian").insert(data_insert).execute()
         )
-        st.success("✅ Data berhasil disimpan secara real-time ke database!")
+        st.success("Data berhasil disimpan.")
       except Exception as e:
-        st.error(f"❌ Gagal menyimpan data: {e}")
+        st.error(f"Gagal menyimpan data: {e}")
 
-elif role == "Pimpinan (Stakeholder)":
-  st.title("📊 Dashboard Eksekutif Analisis Penerimaan")
+elif role == "Pimpinan":
+  st.title("📊 Dashboard Laporan Penerimaan")
   st.subheader("Monitoring Harian, Bulanan, dan Tahunan Kanwil DIY")
 
-  # Ambil data dari Supabase
   try:
     response = supabase.table("penerimaan_harian").select("*").execute()
     data = response.data
@@ -100,20 +93,19 @@ elif role == "Pimpinan (Stakeholder)":
     df["Bulan"] = df["tanggal"].dt.to_period("M").astype(str)
     df["Tahun"] = df["tanggal"].dt.year.astype(str)
 
-    # **Filter Tampilan Waktu (Harian, Bulanan, Tahunan)**
     mode_waktu = st.sidebar.radio(
-        "Filter Periode Analisis", ["Harian", "Bulanan", "Tahunan"]
+        "Filter Periode", ["Harian", "Bulanan", "Tahunan"]
     )
 
     if mode_waktu == "Harian":
       list_tanggal = sorted(df["tanggal"].dt.date.unique(), reverse=True)
-      pilih_tgl = st.sidebar.selectbox("Pilih Tanggal Laporan", list_tanggal)
+      pilih_tgl = st.sidebar.selectbox("Pilih Tanggal", list_tanggal)
       df_filtered = df[df["tanggal"].dt.date == pilih_tgl]
-      st.info(f"📌 Menampilkan Laporan Posisi Tanggal: **{pilih_tgl}**")
+      st.info(f"Menampilkan Laporan Tanggal: **{pilih_tgl}**")
 
     elif mode_waktu == "Bulanan":
       list_bulan = sorted(df["Bulan"].unique(), reverse=True)
-      pilih_bln = st.sidebar.selectbox("Pilih Bulan Laporan", list_bulan)
+      pilih_bln = st.sidebar.selectbox("Pilih Bulan", list_bulan)
       df_filtered = (
           df[df["Bulan"] == pilih_bln]
           .groupby(["loket", "jenis_dana"])[
@@ -122,11 +114,11 @@ elif role == "Pimpinan (Stakeholder)":
           .mean()
           .reset_index()
       )
-      st.info(f"📌 Menampilkan Agregat Rata-rata Bulan: **{pilih_bln}**")
+      st.info(f"Menampilkan Rata-rata Bulan: **{pilih_bln}**")
 
-    else:  # Tahunan
+    else:
       list_tahun = sorted(df["Tahun"].unique(), reverse=True)
-      pilih_thn = st.sidebar.selectbox("Pilih Tahun Laporan", list_tahun)
+      pilih_thn = st.sidebar.selectbox("Pilih Tahun", list_tahun)
       df_filtered = (
           df[df["Tahun"] == pilih_thn]
           .groupby(["loket", "jenis_dana"])[
@@ -135,9 +127,8 @@ elif role == "Pimpinan (Stakeholder)":
           .mean()
           .reset_index()
       )
-      st.info(f"📌 Menampilkan Agregat Tahunan: **{pilih_thn}**")
+      st.info(f"Menampilkan Rekap Tahun: **{pilih_thn}**")
 
-    # Format Tampilan Tabel Rupiah
     if not df_filtered.empty and "realisasi" in df_filtered.columns:
       df_tampilan = df_filtered.copy()
       df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
@@ -146,19 +137,15 @@ elif role == "Pimpinan (Stakeholder)":
     else:
       df_tampilan = df_filtered
 
-    st.markdown("### 📋 Tabel Rekapitulasi Penerimaan")
+    st.markdown("### 📋 Rekapitulasi Data")
     st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
-    # Grafik Tren
     st.markdown("---")
-    st.markdown("### 📉 Grafik Tren Realisasi Penerimaan")
+    st.markdown("### 📉 Grafik Tren Penerimaan")
     df_chart = (
         df.groupby("tanggal")["realisasi"].sum().reset_index().set_index("tanggal")
     )
     st.line_chart(df_chart)
 
   else:
-    st.warning(
-        "⚠️ Belum ada data di dalam database Supabase. Silakan login sebagai"
-        " Petugas terlebih dahulu untuk menginput data melalui Form."
-    )
+    st.warning("Belum ada data di dalam database.")
