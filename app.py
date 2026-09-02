@@ -18,7 +18,6 @@ st.set_page_config(
     page_title="Sistem Monitoring Penerimaan Jasa Raharja DIY", layout="wide"
 )
 
-# Menampilkan Logo Resmi di Sidebar
 st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
 st.sidebar.markdown("---")
 
@@ -133,12 +132,12 @@ elif role == "Pimpinan":
       )
       st.info(f"Menampilkan Rekap Tahun: **{pilih_thn}**")
 
-    # Format tampilan tabel agar bersih tanpa 00:00:00 dan format Rupiah
+    # Format tampilan tabel agar dt_tanggal bersih tanpa 00:00:00 dan format Rupiah
     if not df_filtered.empty:
       df_tampilan = df_filtered.copy()
-      if "tanggal" in df_tampilan.columns:
-        df_tampilan["tanggal"] = pd.to_datetime(
-            df_tampilan["tanggal"]
+      if "dt_tanggal" in df_tampilan.columns:
+        df_tampilan["dt_tanggal"] = pd.to_datetime(
+            df_tampilan["dt_tanggal"]
         ).dt.strftime("%Y-%m-%d")
       if "realisasi" in df_tampilan.columns:
         df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
