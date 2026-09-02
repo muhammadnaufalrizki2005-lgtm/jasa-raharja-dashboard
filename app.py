@@ -15,14 +15,14 @@ uploaded_file = st.sidebar.file_uploader(
 
 if uploaded_file is not None:
   try:
-    # Membaca sheet pertama secara otomatis tanpa terikat nama khusus
+    # Membaca sheet pertama secara otomatis
     df_raw = pd.read_excel(uploaded_file, sheet_name=0)
     periode_teks = (
         df_raw.iloc[2, 1] if pd.notna(df_raw.iloc[2, 1]) else "Periode Aktif"
     )
 
-    # Ekstraksi Tabel Utama Sektor (Menyesuaikan kolom B, C, D, E di baris 8-11)
-    tabel_sektor = df_raw.iloc[7:11, [1, 2, 3, 4]].copy()
+    # Menyesuaikan rentang baris agar mencakup Kartu Dana (Indeks 6 sampai 9)
+    tabel_sektor = df_raw.iloc[6:10, [1, 2, 3, 4]].copy()
     tabel_sektor.columns = [
         "Jenis Dana",
         "Realisasi s.d. Hari Ini",
@@ -84,7 +84,7 @@ if uploaded_file is not None:
   except Exception as e:
     st.error(
         f"Terjadi kesalahan saat membaca struktur file Excel: {e}. Pastikan posisi"
-        " tabel berada di baris ke-8."
+        " tabel utama dimulai dari baris ke-7 Excel."
     )
 else:
   st.info(
