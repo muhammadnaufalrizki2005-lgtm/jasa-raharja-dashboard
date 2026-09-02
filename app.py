@@ -1,225 +1,164 @@
-import glob
-import os
+from datetime import date
 import pandas as pd
+import streamlit as str_lit
 import streamlit as st
+from supabase import create_client
+
+# Kredensial Supabase Anda yang sesungguhnya
+SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
+SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
+
+
+@st.cache_resource
+def init_connection():
+  return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+supabase = init_connection()
 
 st.set_page_config(
-    page_title="Dashboard Monitoring Penerimaan Jasa Raharja DIY",
-    layout="wide",
+    page_title="Sistem Monitoring Penerimaan Jasa Raharja DIY", layout="wide"
 )
 
-st.title("📊 Dashboard Monitoring Penerimaan Sektor UU 34 Tahun 1964")
-st.subheader("Kanwil DIY - Jasa Raharja (Multi-Loket SAMSAT)")
+# **Sistem Login & Hak Akses**
+st.sidebar.title("🔐 Autentikasi Sistem")
+role = st.sidebar.selectbox(
+    "Pilih Peran Pengguna", ["Pilih Peran...", "Petugas (Input)", "Pimpinan (Stakeholder)"]
+)
 
-folder_arsip = "data_harian"
+if role == "Pilih Peran...":
+  st.info(
+      "👋 Selamat datang! Silakan pilih peran Anda di panel sebelah kiri untuk"
+      " masuk ke sistem."
+  )
 
+elif role == "Petugas (Input)":
+  st.title("📝 Form Raw Data Entry (Backend Petugas)")
+  st.subheader("SAMSAT Wilayah DIY - Input Data Harian")
 
-@st.cache_data(ttl=10)
-def load_multi_loket_archives(folder):
-  if not os.path.exists(folder):
-    os.makedirs(folder)
-    return pd.DataFrame(), pd.DataFrame()
-
-  daftar_file = glob.glob(os.path.join(folder, "*.xlsx"))
-  if not daftar_file:
-    return pd.DataFrame(), pd.DataFrame()
-
-  daftar_file.sort()
-  list_semua_data = []
-  list_tren = []
-
-  for file_path in daftar_file:
-    nama_file = os.path.basename(file_path)
-    try:
-      df_raw = pd.read_excel(file_path, sheet_name=0)
-      periode = (
-          df_raw.iloc[1, 1] if pd.notna(df_raw.iloc[1, 1]) else "Tidak Diketahui"
+  with st.form("form_penerimaan"):
+    col1, col2 = st.columns(2)
+    with col1:
+      f_tanggal = st.date_input("Tanggal Laporan", value=date.today())
+      f_loket = st.selectbox(
+          "Loket SAMSAT",
+          ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
+      )
+    with col2:
+      f_jenis = st.selectbox(
+          "Jenis Dana",
+          ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda", "Total Penerimaan"],
+      )
+      f_realisasi = st.number_input(
+          "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
       )
 
-      mapping_loket = [
-          ("Kota", 5, 8),
-          ("Sleman", 10, 13),
-          ("Bantul", 15, 18),
-          ("Kulon Progo", 20, 23),
-          ("Gunung Kidul", 25, 28),
-      ]
+    col3, col4 = st.columns(2)
+    with col3:
+      f_siklikal = st.number_input(
+          "Prosentase Siklikal (%)", min_value=0.0, step=0.01
+      )
+    with col4:
+      f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
 
-      for loket, start_r, end_r in mapping_loket:
-        try:
-          sub_df = df_raw.iloc[start_r : end_r + 1, [1, 2, 3, 4]].copy()
-          sub_df.columns = [
-              "Jenis Dana",
-              "Realisasi s.d. Hari Ini",
-              "Prosentase Siklikal (%)",
-              "Siklikal YTY (%)",
-          ]
-          sub_df["Loket SAMSAT"] = loket
-          sub_df["Sumber File"] = nama_file
-          sub_df["Periode Laporan"] = periode
-          list_semua_data.append(sub_df)
-        except Exception:
-          continue
-
-    except Exception as e:
-      st.warning(f"Gagal membaca file {nama_file}: {e}")
-
-  df_gabungan = (
-      pd.concat(list_semua_data, ignore_index=True)
-      if list_semua_data
-      else pd.DataFrame()
-  )
-
-  if not df_gabungan.empty:
-    df_diy = (
-        df_gabungan[
-            df_gabungan["Jenis Dana"].str.contains("Total", case=False, na=False)
-        ]
-        .groupby(["Sumber File", "Periode Laporan"])["Realisasi s.d. Hari Ini"]
-        .sum()
-        .reset_index()
+    submit_button = st.form_submit_button(
+        "💾 Simpan Data ke Database Supabase"
     )
-    df_tren = df_diy.rename(
-        columns={"Realisasi s.d. Hari Ini": "Total DIY"}
-    )
-  else:
-    df_tren = pd.DataFrame()
 
-  return df_gabungan, df_tren
+    if submit_button:
+      data_insert = {
+          "tanggal": str(f_tanggal),
+          "loket": f_loket,
+          "jenis_dana": f_jenis,
+          "realisasi": f_realisasi,
+          "prosentase_siklikal": f_siklikal,
+          "siklikal_yty": f_yty,
+      }
+      try:
+        response = (
+            supabase.table("penerimaan_harian").insert(data_insert).execute()
+        )
+        st.success("✅ Data berhasil disimpan secara real-time ke database!")
+      except Exception as e:
+        st.error(f"❌ Gagal menyimpan data: {e}")
 
+elif role == "Pimpinan (Stakeholder)":
+  st.title("📊 Dashboard Eksekutif Analisis Penerimaan")
+  st.subheader("Monitoring Harian, Bulanan, dan Tahunan Kanwil DIY")
 
-df_gabungan, df_tren = load_multi_loket_archives(folder_arsip)
-
-if not df_gabungan.empty:
-  st.success("✅ Berhasil memuat arsip multi-loket dari GitHub.")
-
-  pilihan_loket = st.sidebar.selectbox(
-      "Pilih Loket SAMSAT",
-      [
-          "Semua Loket (DIY)",
-          "Kota",
-          "Sleman",
-          "Bantul",
-          "Kulon Progo",
-          "Gunung Kidul",
-      ],
-  )
-
-  daftar_file_tersedia = df_gabungan["Sumber File"].unique()
-  file_pilihan = st.sidebar.selectbox(
-      "Pilih Tanggal Laporan yang Ingin Dilihat",
-      daftar_file_tersedia,
-      index=len(daftar_file_tersedia) - 1,
-  )
-
-  df_filtered_file = df_gabungan[df_gabungan["Sumber File"] == file_pilihan]
-
-  if pilihan_loket == "Semua Loket (DIY)":
-    df_aktif = (
-        df_filtered_file.groupby(
-            ["Jenis Dana", "Periode Laporan", "Sumber File"]
-        )[["Realisasi s.d. Hari Ini"]]
-        .sum()
-        .reset_index()
-    )
-    df_pct = (
-        df_filtered_file.groupby("Jenis Dana")[[
-            "Prosentase Siklikal (%)",
-            "Siklikal YTY (%)",
-        ]]
-        .mean()
-        .reset_index()
-    )
-    df_aktif = pd.merge(df_aktif, df_pct, on="Jenis Dana")
-  else:
-    df_aktif = df_filtered_file[
-        df_filtered_file["Loket SAMSAT"] == pilihan_loket
-    ]
-
-  periode_aktif = (
-      df_aktif["Periode Laporan"].iloc[0] if not df_aktif.empty else "-"
-  )
-
-  st.info(
-      f"📌 Menampilkan Posisi Laporan Per Tanggal Berkas: **{file_pilihan}** |"
-      f" {periode_aktif}"
-  )
-
-  st.markdown("### 📈 Ringkasan Penerimaan Keseluruhan")
-
+  # Ambil data dari Supabase
   try:
-    val_kartu = float(
-        df_aktif[
-            df_aktif["Jenis Dana"].str.contains(
-                "Kartu", case=False, na=False
-            )
-        ]["Realisasi s.d. Hari Ini"].values[0]
-    )
-    val_sw = float(
-        df_aktif[
-            df_aktif["Jenis Dana"].str.contains(
-                "SWDKLLJ", case=False, na=False
-            )
-        ]["Realisasi s.d. Hari Ini"].values[0]
-    )
-    val_denda = float(
-        df_aktif[
-            df_aktif["Jenis Dana"].str.contains("Denda", case=False, na=False)
-        ]["Realisasi s.d. Hari Ini"].values[0]
-    )
-    val_total = float(
-        df_aktif[
-            df_aktif["Jenis Dana"].str.contains("Total", case=False, na=False)
-        ]["Realisasi s.d. Hari Ini"].values[0]
-    )
-  except:
-    val_kartu, val_sw, val_denda, val_total = 0, 0, 0, 0
+    response = supabase.table("penerimaan_harian").select("*").execute()
+    data = response.data
+    df = pd.DataFrame(data)
+  except Exception as e:
+    st.error(f"Gagal memuat data dari database: {e}")
+    df = pd.DataFrame()
 
-  r1c1, r1c2 = st.columns(2)
-  with r1c1:
-    st.metric(
-        label="Kartu Dana",
-        value=f"Rp {val_kartu/1e6:,.2f} Juta".replace(".", ","),
-    )
-  with r1c2:
-    st.metric(
-        label="SWDKLLJ", value=f"Rp {val_sw/1e6:,.2f} Juta".replace(".", ",")
+  if not df.empty:
+    df["tanggal"] = pd.to_datetime(df["tanggal"])
+    df["Bulan"] = df["tanggal"].dt.to_period("M").astype(str)
+    df["Tahun"] = df["tanggal"].dt.year.astype(str)
+
+    # **Filter Tampilan Waktu (Harian, Bulanan, Tahunan)**
+    mode_waktu = st.sidebar.radio(
+        "Filter Periode Analisis", ["Harian", "Bulanan", "Tahunan"]
     )
 
-  r2c1, r2c2 = st.columns(2)
-  with r2c1:
-    st.metric(
-        label="Denda", value=f"Rp {val_denda/1e6:,.2f} Juta".replace(".", ",")
-    )
-  with r2c2:
-    st.metric(
-        label="Total Penerimaan Kumulatif",
-        value=f"Rp {val_total/1e6:,.2f} Juta".replace(".", ","),
-    )
+    if mode_waktu == "Harian":
+      list_tanggal = sorted(df["tanggal"].dt.date.unique(), reverse=True)
+      pilih_tgl = st.sidebar.selectbox("Pilih Tanggal Laporan", list_tanggal)
+      df_filtered = df[df["tanggal"].dt.date == pilih_tgl]
+      st.info(f"📌 Menampilkan Laporan Posisi Tanggal: **{pilih_tgl}**")
 
-  st.markdown("---")
+    elif mode_waktu == "Bulanan":
+      list_bulan = sorted(df["Bulan"].unique(), reverse=True)
+      pilih_bln = st.sidebar.selectbox("Pilih Bulan Laporan", list_bulan)
+      df_filtered = (
+          df[df["Bulan"] == pilih_bln]
+          .groupby(["loket", "jenis_dana"])[
+              ["realisasi", "prosentase_siklikal", "siklikal_yty"]
+          ]
+          .mean()
+          .reset_index()
+      )
+      st.info(f"📌 Menampilkan Agregat Rata-rata Bulan: **{pilih_bln}**")
 
-  st.markdown("### 📋 Detail Sektor Pendanaan pada Tanggal Tersebut")
+    else:  # Tahunan
+      list_tahun = sorted(df["Tahun"].unique(), reverse=True)
+      pilih_thn = st.sidebar.selectbox("Pilih Tahun Laporan", list_tahun)
+      df_filtered = (
+          df[df["Tahun"] == pilih_thn]
+          .groupby(["loket", "jenis_dana"])[
+              ["realisasi", "prosentase_siklikal", "siklikal_yty"]
+          ]
+          .mean()
+          .reset_index()
+      )
+      st.info(f"📌 Menampilkan Agregat Tahunan: **{pilih_thn}**")
 
-  # Format kolom Realisasi menjadi format mata uang Rupiah
-  df_tampilan = df_aktif[[
-      "Jenis Dana",
-      "Realisasi s.d. Hari Ini",
-      "Prosentase Siklikal (%)",
-      "Siklikal YTY (%)",
-  ]].copy()
-  df_tampilan["Realisasi s.d. Hari Ini"] = df_tampilan[
-      "Realisasi s.d. Hari Ini"
-  ].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+    # Format Tampilan Tabel Rupiah
+    if not df_filtered.empty and "realisasi" in df_filtered.columns:
+      df_tampilan = df_filtered.copy()
+      df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
+          lambda x: f"Rp {x:,.0f}".replace(",", ".")
+      )
+    else:
+      df_tampilan = df_filtered
 
-  st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
+    st.markdown("### 📋 Tabel Rekapitulasi Penerimaan")
+    st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
-  if not df_tren.empty and len(df_tren) > 1:
+    # Grafik Tren
     st.markdown("---")
-    st.markdown("### 📉 Grafik Tren Historis Total Penerimaan DIY")
-    st.line_chart(df_tren.set_index("Sumber File")["Total DIY"])
+    st.markdown("### 📉 Grafik Tren Realisasi Penerimaan")
+    df_chart = (
+        df.groupby("tanggal")["realisasi"].sum().reset_index().set_index("tanggal")
+    )
+    st.line_chart(df_chart)
 
-else:
-  st.warning(
-      "⚠️ Belum ada file Excel multi-loket di dalam folder `data_harian/` di"
-      " GitHub."
-  )
+  else:
+    st.warning(
+        "⚠️ Belum ada data di dalam database Supabase. Silakan login sebagai"
+        " Petugas terlebih dahulu untuk menginput data melalui Form."
+    )
