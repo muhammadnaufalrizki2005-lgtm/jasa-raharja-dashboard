@@ -18,6 +18,10 @@ st.set_page_config(
     page_title="Sistem Monitoring Penerimaan Jasa Raharja DIY", layout="wide"
 )
 
+# Menampilkan Logo Resmi di Sidebar
+st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
+st.sidebar.markdown("---")
+
 st.sidebar.title("🔐 Menu Utama")
 role = st.sidebar.selectbox(
     "Pilih Akses Menu", ["Pilih Peran...", "Petugas SAMSAT", "Pimpinan"]
