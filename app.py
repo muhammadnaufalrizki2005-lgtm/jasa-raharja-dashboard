@@ -365,47 +365,37 @@ else:
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
       st.markdown("---")
-      st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Wilayah")
+      st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
 
-      # Kontrol Filter Interaktif Khusus Grafik
-      cc1, cc2, cc3 = st.columns(3)
-      with cc1:
-        c_jenis = st.selectbox(
-            "Filter Jenis Dana (Grafik)",
-            [
-                "Semua Jenis Dana",
-                "Total Penerimaan",
-                "SWDKLLJ",
-                "Denda",
-                "Kartu Dana / Sertifikat",
-            ],
+      # Filter Multi-Select untuk Wilayah dan Jenis Dana pada Grafik
+      all_lokets = sorted(df["loket"].unique())
+      all_jenis = sorted(df["jenis_dana"].unique())
+
+      gc1, gc2 = st.columns(2)
+      with gc1:
+        selected_lokets = st.multiselect(
+            "Pilih Wilayah (Loket)",
+            options=all_lokets,
+            default=all_lokets,
+            key="multi_loket",
         )
-      with cc2:
-        c_loket = st.selectbox(
-            "Filter Wilayah / Loket (Grafik)",
-            [
-                "Semua Loket",
-                "Kota",
-                "Sleman",
-                "Bantul",
-                "Kulon Progo",
-                "Gunung Kidul",
-            ],
-        )
-      with cc3:
-        c_group = st.selectbox(
-            "Kelompok Warna Grafik", ["Berdasarkan Wilayah", "Berdasarkan Jenis Dana"]
+      with gc2:
+        selected_jenis = st.multiselect(
+            "Pilih Jenis Dana",
+            options=all_jenis,
+            default=all_jenis,
+            key="multi_jenis",
         )
 
-      # Pengolahan data untuk grafik berdasarkan pilihan pimpinan
+      # Pengolahan data grafik berdasarkan rentang waktu dan pilihan multi-select
       df_c = df.copy()
       if mode_waktu == "Harian":
         df_c = df_c[
             (df_c["dt_tanggal"].dt.date >= start_tgl)
             & (df_c["dt_tanggal"].dt.date <= end_tgl)
         ]
-        x_axis_val = "dt_tanggal_str"
-        df_c["dt_tanggal_str"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
+        x_axis_val = "Periode"
+        df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
       elif mode_waktu == "Bulanan":
         df_c = df_c[(df_c["Bulan"] >= start_bln) & (df_c["Bulan"] <= end_bln)]
         x_axis_val = "Bulan"
@@ -413,34 +403,33 @@ else:
         df_c = df_c[(df_c["Tahun"] >= start_thn) & (df_c["Tahun"] <= end_thn)]
         x_axis_val = "Tahun"
 
-      if c_jenis != "Semua Jenis Dana":
-        df_c = df_c[df_c["jenis_dana"] == c_jenis]
-      if c_loket != "Semua Loket":
-        df_c = df_c[df_c["loket"] == c_loket]
-
-      color_dim = "loket" if c_group == "Berdasarkan Wilayah" else "jenis_dana"
+      # Terapkan filter multi-select wilayah dan jenis dana
+      if selected_lokets:
+        df_c = df_c[df_c["loket"].isin(selected_lokets)]
+      if selected_jenis:
+        df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
       if not df_c.empty:
+        # Agregasi data dengan menggabungkan Wilayah dan Jenis Dana sebagai kategori visual
         df_chart_agg = (
-            df_c.groupby([x_axis_val, color_dim])["realisasi"]
+            df_c.groupby([x_axis_val, "loket", "jenis_dana"])["realisasi"]
             .sum()
             .reset_index()
+        )
+        df_chart_agg["Kategori"] = (
+            df_chart_agg["loket"] + " - " + df_chart_agg["jenis_dana"]
         )
 
         fig = px.bar(
             df_chart_agg,
             x=x_axis_val,
             y="realisasi",
-            color=color_dim,
+            color="Kategori",
             barmode="group",
             labels={
                 "realisasi": "Total Realisasi (Rp)",
                 x_axis_val: "Periode",
-                color_dim: (
-                    "Wilayah (Loket)"
-                    if color_dim == "loket"
-                    else "Jenis Dana"
-                ),
+                "Kategori": "Wilayah & Jenis Dana",
             },
             color_discrete_sequence=px.colors.qualitative.Bold,
         )
@@ -456,7 +445,7 @@ else:
         )
         st.plotly_chart(fig, use_container_width=True)
       else:
-        st.warning("Tidak ada data untuk kombinasi filter grafik yang dipilih.")
+        st.warning("Tidak ada data untuk kombinasi filter yang dipilih.")
 
     else:
       st.warning("Belum ada data di dalam database.")
