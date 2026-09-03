@@ -4,3 +4,5 @@ openpyxl
 supabase
 Pillow
 plotly
+gspread
+google-auth
