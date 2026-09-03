@@ -80,9 +80,6 @@ if not st.session_state.logged_in:
           "Password", type="password", placeholder="Masukkan Password"
       )
 
-     
-      )
-
       st.write("")
       login_button = st.button("Login")
 
