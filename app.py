@@ -365,43 +365,84 @@ else:
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
       st.markdown("---")
-      st.markdown("### 📈 Grafik Tren Penerimaan")
+      st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Wilayah")
 
-      # Menggunakan Plotly Bar Chart yang bersih, modern, dan mudah dibaca
+      # Kontrol Filter Interaktif Khusus Grafik
+      cc1, cc2, cc3 = st.columns(3)
+      with cc1:
+        c_jenis = st.selectbox(
+            "Filter Jenis Dana (Grafik)",
+            [
+                "Semua Jenis Dana",
+                "Total Penerimaan",
+                "SWDKLLJ",
+                "Denda",
+                "Kartu Dana / Sertifikat",
+            ],
+        )
+      with cc2:
+        c_loket = st.selectbox(
+            "Filter Wilayah / Loket (Grafik)",
+            [
+                "Semua Loket",
+                "Kota",
+                "Sleman",
+                "Bantul",
+                "Kulon Progo",
+                "Gunung Kidul",
+            ],
+        )
+      with cc3:
+        c_group = st.selectbox(
+            "Kelompok Warna Grafik", ["Berdasarkan Wilayah", "Berdasarkan Jenis Dana"]
+        )
+
+      # Pengolahan data untuk grafik berdasarkan pilihan pimpinan
+      df_c = df.copy()
       if mode_waktu == "Harian":
-        df_chart = (
-            df_filtered.groupby("dt_tanggal")["realisasi"]
-            .sum()
-            .reset_index()
-        )
-        df_chart["Periode"] = pd.to_datetime(
-            df_chart["dt_tanggal"]
-        ).dt.strftime("%Y-%m-%d")
-        x_axis = "Periode"
+        df_c = df_c[
+            (df_c["dt_tanggal"].dt.date >= start_tgl)
+            & (df_c["dt_tanggal"].dt.date <= end_tgl)
+        ]
+        x_axis_val = "dt_tanggal_str"
+        df_c["dt_tanggal_str"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
       elif mode_waktu == "Bulanan":
-        df_chart = (
-            df[(df["Bulan"] >= start_bln) & (df["Bulan"] <= end_bln)]
-            .groupby("Bulan")["realisasi"]
-            .sum()
-            .reset_index()
-        )
-        x_axis = "Bulan"
+        df_c = df_c[(df_c["Bulan"] >= start_bln) & (df_c["Bulan"] <= end_bln)]
+        x_axis_val = "Bulan"
       else:
-        df_chart = (
-            df[(df["Tahun"] >= start_thn) & (df["Tahun"] <= end_thn)]
-            .groupby("Tahun")["realisasi"]
+        df_c = df_c[(df_c["Tahun"] >= start_thn) & (df_c["Tahun"] <= end_thn)]
+        x_axis_val = "Tahun"
+
+      if c_jenis != "Semua Jenis Dana":
+        df_c = df_c[df_c["jenis_dana"] == c_jenis]
+      if c_loket != "Semua Loket":
+        df_c = df_c[df_c["loket"] == c_loket]
+
+      color_dim = "loket" if c_group == "Berdasarkan Wilayah" else "jenis_dana"
+
+      if not df_c.empty:
+        df_chart_agg = (
+            df_c.groupby([x_axis_val, color_dim])["realisasi"]
             .sum()
             .reset_index()
         )
-        x_axis = "Tahun"
 
-      if not df_chart.empty:
         fig = px.bar(
-            df_chart,
-            x=x_axis,
+            df_chart_agg,
+            x=x_axis_val,
             y="realisasi",
-            color_discrete_sequence=["#005ba8"],
-            labels={"realisasi": "Total Realisasi (Rp)", x_axis: mode_waktu},
+            color=color_dim,
+            barmode="group",
+            labels={
+                "realisasi": "Total Realisasi (Rp)",
+                x_axis_val: "Periode",
+                color_dim: (
+                    "Wilayah (Loket)"
+                    if color_dim == "loket"
+                    else "Jenis Dana"
+                ),
+            },
+            color_discrete_sequence=px.colors.qualitative.Bold,
         )
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
@@ -409,8 +450,13 @@ else:
             margin=dict(l=20, r=20, t=10, b=20),
             xaxis=dict(showgrid=False, type="category"),
             yaxis=dict(showgrid=True, gridcolor="#e5e5e5"),
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+            ),
         )
         st.plotly_chart(fig, use_container_width=True)
+      else:
+        st.warning("Tidak ada data untuk kombinasi filter grafik yang dipilih.")
 
     else:
       st.warning("Belum ada data di dalam database.")
