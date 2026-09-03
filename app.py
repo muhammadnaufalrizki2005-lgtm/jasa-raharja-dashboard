@@ -40,6 +40,9 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
     div.stButton > button:first-child {
         background-color: #005ba8;
         color: white;
