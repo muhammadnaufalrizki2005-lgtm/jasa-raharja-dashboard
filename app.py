@@ -54,7 +54,6 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
 
-# CSS Umum
 css_base = """
     <style>
     .stApp {
@@ -83,7 +82,6 @@ css_base = """
 """
 
 if not st.session_state.logged_in:
-  # Kunci scroll khusus halaman login
   st.markdown(
       css_base
       + """
@@ -163,7 +161,6 @@ if not st.session_state.logged_in:
 
 else:
   if st.session_state.role == "Pimpinan":
-    # Izinkan scroll normal untuk Pimpinan agar grafik dan tabel bawah terlihat leluasa
     st.markdown(
         css_base
         + """
@@ -176,7 +173,6 @@ else:
         unsafe_allow_html=True,
     )
   else:
-    # Petugas tetap dikunci agar pas satu layar
     st.markdown(
         css_base
         + """
@@ -369,12 +365,35 @@ else:
 
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan")
-      df_chart = (
-          df.groupby("dt_tanggal")["realisasi"]
-          .sum()
-          .reset_index()
-          .set_index("dt_tanggal")
-      )
+
+      # Grafik disesuaikan dengan mode waktu agar sumbu-X nya bersih sesuai tanggal/bulan/tahun
+      if mode_waktu == "Harian":
+        df_chart = (
+            df_filtered.groupby("dt_tanggal")["realisasi"]
+            .sum()
+            .reset_index()
+        )
+        df_chart["Periode"] = pd.to_datetime(
+            df_chart["dt_tanggal"]
+        ).dt.strftime("%Y-%m-%d")
+        df_chart = df_chart.set_index("Periode")[["realisasi"]]
+      elif mode_waktu == "Bulanan":
+        df_chart = (
+            df[(df["Bulan"] >= start_bln) & (df["Bulan"] <= end_bln)]
+            .groupby("Bulan")["realisasi"]
+            .sum()
+            .reset_index()
+            .set_index("Bulan")[["realisasi"]]
+        )
+      else:
+        df_chart = (
+            df[(df["Tahun"] >= start_thn) & (df["Tahun"] <= end_thn)]
+            .groupby("Tahun")["realisasi"]
+            .sum()
+            .reset_index()
+            .set_index("Tahun")[["realisasi"]]
+        )
+
       st.line_chart(df_chart)
 
     else:
