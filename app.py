@@ -53,12 +53,7 @@ def init_connection():
   return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# Pengamanan koneksi agar tidak menyebabkan crash total
-try:
-  supabase = init_connection()
-except Exception as e:
-  st.error(f"⚠️ Gagal menginisialisasi koneksi Supabase: {e}")
-  supabase = None
+supabase = init_connection()
 
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
@@ -72,14 +67,7 @@ if not st.session_state.logged_in:
     st.write("")
     st.write("")
     with st.container():
-      try:
-        st.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
-      except Exception:
-        st.warning(
-            "⚠️ File logo 'LOGO_JASA_RAHARJA_2024.png' belum terdeteksi di"
-            " repositori."
-        )
-
+      st.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
           " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
@@ -121,11 +109,7 @@ if not st.session_state.logged_in:
       )
 
 else:
-  try:
-    st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
-  except Exception:
-    pass
-
+  st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
   st.sidebar.markdown("---")
   st.sidebar.markdown(f"**Status:** Login sebagai {st.session_state.role}")
   if st.sidebar.button("🚪 Keluar (Logout)"):
@@ -165,35 +149,30 @@ else:
       submit_button = st.form_submit_button("💾 Simpan Data")
 
       if submit_button:
-        if supabase is None:
-          st.error("❌ Koneksi database belum siap.")
-        else:
-          data_insert = {
-              "tanggal": str(f_tanggal),
-              "loket": f_loket,
-              "jenis_dana": f_jenis,
-              "realisasi": f_realisasi,
-              "prosentase_siklikal": f_siklikal,
-              "siklikal_yty": f_yty,
-          }
-          try:
-            supabase.table("penerimaan_harian").insert(data_insert).execute()
-            st.success("✅ Data berhasil disimpan ke database!")
-          except Exception as e:
-            st.error(f"❌ Gagal menyimpan data: {e}")
+        data_insert = {
+            "tanggal": str(f_tanggal),
+            "loket": f_loket,
+            "jenis_dana": f_jenis,
+            "realisasi": f_realisasi,
+            "prosentase_siklikal": f_siklikal,
+            "siklikal_yty": f_yty,
+        }
+        try:
+          supabase.table("penerimaan_harian").insert(data_insert).execute()
+          st.success("✅ Data berhasil disimpan ke database!")
+        except Exception as e:
+          st.error(f"❌ Gagal menyimpan data: {e}")
 
   elif st.session_state.role == "Pimpinan":
     st.title("📊 Dashboard Laporan Penerimaan")
     st.subheader("Monitoring Harian, Bulanan, dan Tahunan Kanwil DIY")
 
-    df = pd.DataFrame()
-    if supabase is not None:
-      try:
-        response = supabase.table("penerimaan_harian").select("*").execute()
-        if response.data:
-          df = pd.DataFrame(response.data)
-      except Exception as e:
-        st.error(f"Gagal memuat data dari database: {e}")
+    try:
+      response = supabase.table("penerimaan_harian").select("*").execute()
+      df = pd.DataFrame(response.data)
+    except Exception as e:
+      st.error(f"Gagal memuat data dari database: {e}")
+      df = pd.DataFrame()
 
     if not df.empty:
       df["dt_tanggal"] = pd.to_datetime(df["tanggal"])
@@ -261,6 +240,4 @@ else:
       st.line_chart(df_chart)
 
     else:
-      st.warning(
-          "Belum ada data di dalam database atau tabel belum terhubung."
-      )
+      st.warning("Belum ada data di dalam database.")
