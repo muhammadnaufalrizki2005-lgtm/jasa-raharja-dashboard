@@ -14,6 +14,7 @@ st.markdown(
     <style>
     .stApp {
         background-color: #f8f9fa;
+        padding-top: 15px;
     }
     [data-testid="stHeader"] {
         display: none !important;
@@ -22,6 +23,12 @@ st.markdown(
         display: none !important;
     }
     [data-testid="stDecoration"] {
+        display: none !important;
+    }
+    [data-testid="stImageToolbar"] {
+        display: none !important;
+    }
+    [data-testid="StyledFullScreenButton"] {
         display: none !important;
     }
     div.stButton > button:first-child {
@@ -67,7 +74,7 @@ if not st.session_state.logged_in:
     st.write("")
     st.write("")
     with st.container():
-      st.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
+      st.image("LOGO_JASA_RAHARJA_2024.png", width=240)
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
           " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
@@ -103,7 +110,7 @@ if not st.session_state.logged_in:
       )
 
 else:
-  st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
+  st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", width=200)
   st.sidebar.markdown("---")
   st.sidebar.markdown(f"**Status:** Login sebagai {st.session_state.role}")
   if st.sidebar.button("🚪 Keluar (Logout)"):
@@ -163,7 +170,7 @@ else:
 
     try:
       response = supabase.table("penerimaan_harian").select("*").execute()
-      df = pd.DataFrame(response.data)
+      df = pd.DataFrame(response.data) if response.data else pd.DataFrame()
     except Exception as e:
       st.error(f"Gagal memuat data dari database: {e}")
       df = pd.DataFrame()
@@ -221,7 +228,7 @@ else:
         df_tampilan = df_filtered
 
       st.markdown("### 📋 Rekapitulasi Data")
-      st.dataframe(df_tampilan, width="stretch", hide_index=True)
+      st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan")
