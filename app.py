@@ -1,12 +1,22 @@
 import base64
 from datetime import date
+from PIL import Image
 import pandas as pd
 import streamlit as st
 from supabase import create_client
 
+# Otomatis potong padding transparan logo agar ukurannya besar di tab browser
+try:
+  favicon_img = Image.open("jasa raharja logo.png")
+  bbox = favicon_img.getbbox()
+  if bbox:
+    favicon_img = favicon_img.crop(bbox)
+except Exception:
+  favicon_img = "jasa raharja logo.png"
+
 st.set_page_config(
     page_title="Dashboard Jasa Raharja DIY",
-    page_icon="jasa raharja logo.png",
+    page_icon=favicon_img,
     layout="wide",
     initial_sidebar_state="collapsed",
 )
