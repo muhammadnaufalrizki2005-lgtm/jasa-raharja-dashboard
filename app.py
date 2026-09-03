@@ -85,13 +85,14 @@ if "role" not in st.session_state:
   st.session_state.role = None
 
 if not st.session_state.logged_in:
-  # CSS khusus untuk mengunci scrollbar di halaman login
+  # CSS agresif untuk mengunci total scrollbar khusus halaman login
   st.markdown(
       """
         <style>
-        html, body, [data-testid="stAppViewContainer"] {
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
             overflow: hidden !important;
             height: 100vh !important;
+            max-height: 100vh !important;
         }
         </style>
     """,
@@ -101,7 +102,7 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.2, 1])
 
   with col2:
-    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
