@@ -5,7 +5,6 @@ import pandas as pd
 import streamlit as st
 from supabase import create_client
 
-# Otomatis potong padding transparan logo agar ukurannya besar di tab browser
 try:
   favicon_img = Image.open("jasa raharja logo.png")
   bbox = favicon_img.getbbox()
@@ -117,10 +116,7 @@ if not st.session_state.logged_in:
       )
       st.markdown("---")
 
-      # Diubah menjadi ID Pengguna
-      username = st.text_input(
-          "ID Pengguna", placeholder="Masukkan ID (contoh: petugas / pimpinan)"
-      )
+      username = st.text_input("ID Pengguna", placeholder="Masukkan ID Pengguna")
       password = st.text_input(
           "Password", type="password", placeholder="Masukkan Password"
       )
