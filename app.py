@@ -80,10 +80,7 @@ if not st.session_state.logged_in:
           "Password", type="password", placeholder="Masukkan Password"
       )
 
-      st.markdown(
-          "<p style='text-align: right; font-size: 14px; color: #666666;'>"
-          "Lupa Password?</p>",
-          unsafe_allow_html=True,
+     
       )
 
       st.write("")
