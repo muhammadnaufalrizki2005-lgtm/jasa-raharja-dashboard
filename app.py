@@ -20,6 +20,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+
+@st.cache_data
+def get_img_base64(file_path):
+  try:
+    with open(file_path, "rb") as f:
+      data = f.read()
+    return base64.b64encode(data).decode()
+  except Exception:
+    return ""
+
+
+img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
+
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
@@ -49,11 +62,9 @@ st.markdown(
     [data-testid="stSidebar"] {
         display: none !important;
     }
-    /* Sembunyikan ikon tautan (anchor link) pada judul/header */
     .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] {
         display: none !important;
     }
-    /* Hilangkan scrollbar dan kunci halaman agar tidak bisa di-drag naik-turun */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
         overflow: hidden !important;
         height: 100vh !important;
@@ -84,25 +95,38 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Sinkronisasi status login dengan query_params agar tidak tereset saat refresh
 if "logged_in" not in st.session_state:
-  st.session_state.logged_in = False
-if "role" not in st.session_state:
-  st.session_state.role = None
+  qp_logged = st.query_params.get("logged_in")
+  qp_role = st.query_params.get("role")
+  if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
+    st.session_state.logged_in = True
+    st.session_state.role = qp_role
+  else:
+    st.session_state.logged_in = False
+    st.session_state.role = None
 
 if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
-    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 3vh;'></div>", unsafe_allow_html=True)
     with st.container():
-      st.markdown(
-          """
-            <div style="text-align: center; margin-bottom: 5px;">
-                <h2 style='color: #005ba8; margin-bottom: 0;'>PT JASA RAHARJA</h2>
-            </div>
-            """,
-          unsafe_allow_html=True,
-      )
+      if img_base64:
+        st.markdown(
+            f"""
+                <div style="text-align: center; margin-bottom: 5px;">
+                    <img src="data:image/png;base64,{img_base64}" width="250" style="display: block; margin: 0 auto; height: auto;">
+                </div>
+                """,
+            unsafe_allow_html=True,
+        )
+      else:
+        st.markdown(
+            "<h2 style='text-align: center; color: #005ba8; margin-bottom:"
+            " 0;'>PT JASA RAHARJA</h2>",
+            unsafe_allow_html=True,
+        )
 
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
@@ -127,10 +151,14 @@ if not st.session_state.logged_in:
           if username.lower() == "petugas" and password == "123456":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
+            st.query_params["logged_in"] = "true"
+            st.query_params["role"] = "Petugas SAMSAT"
             st.rerun()
           elif username.lower() == "pimpinan" and password == "123456":
             st.session_state.logged_in = True
             st.session_state.role = "Pimpinan"
+            st.query_params["logged_in"] = "true"
+            st.query_params["role"] = "Pimpinan"
             st.rerun()
           else:
             st.error("❌ ID Pengguna atau Password salah!")
@@ -156,6 +184,7 @@ else:
     if st.button("🚪 Keluar"):
       st.session_state.logged_in = False
       st.session_state.role = None
+      st.query_params.clear()
       st.rerun()
 
   st.markdown("---")
