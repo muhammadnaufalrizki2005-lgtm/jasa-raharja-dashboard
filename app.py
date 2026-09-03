@@ -48,7 +48,8 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    div.stButton > button:first-child {
+    /* Styling tombol login (biasa maupun form submit) */
+    div.stButton > button:first-child, div.stFormSubmitButton > button:first-child {
         background-color: #005ba8;
         color: white;
         width: 100%;
@@ -57,7 +58,7 @@ st.markdown(
         font-weight: bold;
         border: none;
     }
-    div.stButton > button:first-child:hover {
+    div.stButton > button:first-child:hover, div.stFormSubmitButton > button:first-child:hover {
         background-color: #004580;
         color: white;
     }
@@ -85,7 +86,6 @@ if "role" not in st.session_state:
   st.session_state.role = None
 
 if not st.session_state.logged_in:
-  # CSS untuk mengunci scroll dan memposisikan login di tengah layar secara vertikal
   st.markdown(
       """
         <style>
@@ -94,7 +94,6 @@ if not st.session_state.logged_in:
             height: 100vh !important;
             max-height: 100vh !important;
         }
-        /* Mengatur agar area login berada pas di tengah */
         .block-container {
             padding-top: 5vh !important;
         }
@@ -132,25 +131,29 @@ if not st.session_state.logged_in:
       )
       st.markdown("---")
 
-      username = st.text_input("ID Pengguna", placeholder="Masukkan ID Pengguna")
-      password = st.text_input(
-          "Password", type="password", placeholder="Masukkan Password"
-      )
+      # Menggunakan st.form agar bisa ditekan Enter / Tab dengan mulus
+      with st.form("form_login_portal"):
+        username = st.text_input(
+            "ID Pengguna", placeholder="Masukkan ID Pengguna"
+        )
+        password = st.text_input(
+            "Password", type="password", placeholder="Masukkan Password"
+        )
 
-      st.write("")
-      login_button = st.button("Login")
+        st.write("")
+        login_button = st.form_submit_button("Login")
 
-      if login_button:
-        if username.lower() == "petugas" and password == "123456":
-          st.session_state.logged_in = True
-          st.session_state.role = "Petugas SAMSAT"
-          st.rerun()
-        elif username.lower() == "pimpinan" and password == "123456":
-          st.session_state.logged_in = True
-          st.session_state.role = "Pimpinan"
-          st.rerun()
-        else:
-          st.error("❌ ID Pengguna atau Password salah!")
+        if login_button:
+          if username.lower() == "petugas" and password == "123456":
+            st.session_state.logged_in = True
+            st.session_state.role = "Petugas SAMSAT"
+            st.rerun()
+          elif username.lower() == "pimpinan" and password == "123456":
+            st.session_state.logged_in = True
+            st.session_state.role = "Pimpinan"
+            st.rerun()
+          else:
+            st.error("❌ ID Pengguna atau Password salah!")
 
       st.markdown(
           "<p style='text-align: center; font-size: 13px; margin-top:"
