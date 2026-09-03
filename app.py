@@ -8,7 +8,34 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #f8f9fa;
+    }
+    /* Menyembunyikan header bawaan Streamlit termasuk tombol Fork */
+    header {visibility: hidden;}
+    
+    div.stButton > button:first-child {
+        background-color: #005ba8;
+        color: white;
+        width: 100%;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: bold;
+        border: none;
+    }
+    div.stButton > button:first-child:hover {
+        background-color: #004580;
+        color: white;
+    }
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+""",
+    unsafe_allow_html=True,
+)
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
