@@ -20,18 +20,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-
-@st.cache_data
-def get_img_base64(file_path):
-  try:
-    with open(file_path, "rb") as f:
-      data = f.read()
-    return base64.b64encode(data).decode()
-  except Exception:
-    return ""
+SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
+SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
 
-img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
+@st.cache_resource
+def init_connection():
+  return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+supabase = init_connection()
 
 st.markdown(
     """
@@ -48,7 +46,10 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    /* Styling tombol login (biasa maupun form submit) */
+    /* Sembunyikan sidebar sepenuhnya */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
     div.stButton > button:first-child, div.stFormSubmitButton > button:first-child {
         background-color: #005ba8;
         color: white;
@@ -69,17 +70,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
-SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
-
-
-@st.cache_resource
-def init_connection():
-  return create_client(SUPABASE_URL, SUPABASE_KEY)
-
-
-supabase = init_connection()
-
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
 if "role" not in st.session_state:
@@ -95,7 +85,7 @@ if not st.session_state.logged_in:
             max-height: 100vh !important;
         }
         .block-container {
-            padding-top: 5vh !important;
+            padding-top: 4vh !important;
         }
         </style>
     """,
@@ -105,33 +95,24 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
-    st.markdown("<div style='height: 2vh;'></div>", unsafe_allow_html=True)
     with st.container():
-      if img_base64:
-        st.markdown(
-            f"""
-                <div style="text-align: center; margin-bottom: 8px;">
-                    <img src="data:image/png;base64,{img_base64}" width="270" style="display: block; margin: 0 auto; height: auto;">
-                </div>
-                """,
-            unsafe_allow_html=True,
-        )
-      else:
-        st.markdown(
-            "<h2 style='text-align: center; color: #005ba8;'>PT JASA"
-            " RAHARJA</h2>",
-            unsafe_allow_html=True,
-        )
+      st.markdown(
+          """
+            <div style="text-align: center; margin-bottom: 5px;">
+                <h2 style='color: #005ba8; margin-bottom: 0;'>PT JASA RAHARJA</h2>
+            </div>
+            """,
+          unsafe_allow_html=True,
+      )
 
       st.markdown(
-          "<div style='text-align: center; color: #333333; font-size: 1.3rem;"
-          " font-weight: 600; margin-top: 8px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
+          " font-weight: 600; margin-bottom: 5px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown("---")
 
-      # Menggunakan st.form agar bisa ditekan Enter / Tab dengan mulus
       with st.form("form_login_portal"):
         username = st.text_input(
             "ID Pengguna", placeholder="Masukkan ID Pengguna"
@@ -156,33 +137,32 @@ if not st.session_state.logged_in:
             st.error("❌ ID Pengguna atau Password salah!")
 
       st.markdown(
-          "<p style='text-align: center; font-size: 13px; margin-top:"
-          " 18px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
+          "<p style='text-align: center; font-size: 12px; margin-top:"
+          " 10px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
           " Administrator Kanwil.</p>",
           unsafe_allow_html=True,
       )
 
 else:
-  if img_base64:
-    st.sidebar.markdown(
-        f"""
-            <div style="text-align: center; margin-bottom: 10px;">
-                <img src="data:image/png;base64,{img_base64}" width="180" style="display: block; margin: 0 auto; height: auto;">
-            </div>
-            """,
-        unsafe_allow_html=True,
-    )
-  st.sidebar.markdown("---")
-  st.sidebar.markdown(f"**Status:** Login sebagai {st.session_state.role}")
-  if st.sidebar.button("🚪 Keluar (Logout)"):
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.rerun()
+  # Header atas dengan tombol Logout di pojok kanan
+  header_col1, header_col2 = st.columns([4, 1])
+  with header_col1:
+    if st.session_state.role == "Petugas SAMSAT":
+      st.title("📝 Form Input Data Harian")
+      st.subheader("Kanwil DIY - Jasa Raharja")
+    else:
+      st.title("📊 Dashboard Laporan Penerimaan")
+      st.subheader("Monitoring Harian, Bulanan, dan Tahunan Kanwil DIY")
+  with header_col2:
+    st.write("")
+    if st.button("🚪 Keluar"):
+      st.session_state.logged_in = False
+      st.session_state.role = None
+      st.rerun()
+
+  st.markdown("---")
 
   if st.session_state.role == "Petugas SAMSAT":
-    st.title("📝 Form Input Data Harian")
-    st.subheader("Kanwil DIY - Jasa Raharja")
-
     with st.form("form_penerimaan"):
       col1, col2 = st.columns(2)
       with col1:
@@ -226,9 +206,6 @@ else:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
   elif st.session_state.role == "Pimpinan":
-    st.title("📊 Dashboard Laporan Penerimaan")
-    st.subheader("Monitoring Harian, Bulanan, dan Tahunan Kanwil DIY")
-
     try:
       response = supabase.table("penerimaan_harian").select("*").execute()
       df = pd.DataFrame(response.data) if response.data else pd.DataFrame()
@@ -241,18 +218,19 @@ else:
       df["Bulan"] = df["dt_tanggal"].dt.to_period("M").astype(str)
       df["Tahun"] = df["dt_tanggal"].dt.year.astype(str)
 
-      mode_waktu = st.sidebar.radio(
-          "Filter Periode", ["Harian", "Bulanan", "Tahunan"]
+      # Filter menggunakan horizontal radio agar tidak butuh sidebar
+      mode_waktu = st.radio(
+          "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
       )
 
       if mode_waktu == "Harian":
         list_tanggal = sorted(df["dt_tanggal"].dt.date.unique(), reverse=True)
-        pilih_tgl = st.sidebar.selectbox("Pilih Tanggal", list_tanggal)
+        pilih_tgl = st.selectbox("Pilih Tanggal", list_tanggal)
         df_filtered = df[df["dt_tanggal"].dt.date == pilih_tgl]
         st.info(f"Menampilkan Laporan Tanggal: **{pilih_tgl}**")
       elif mode_waktu == "Bulanan":
         list_bulan = sorted(df["Bulan"].unique(), reverse=True)
-        pilih_bln = st.sidebar.selectbox("Pilih Bulan", list_bulan)
+        pilih_bln = st.selectbox("Pilih Bulan", list_bulan)
         df_filtered = (
             df[df["Bulan"] == pilih_bln]
             .groupby(["loket", "jenis_dana"])[
@@ -264,7 +242,7 @@ else:
         st.info(f"Menampilkan Rata-rata Bulan: **{pilih_bln}**")
       else:
         list_tahun = sorted(df["Tahun"].unique(), reverse=True)
-        pilih_thn = st.sidebar.selectbox("Pilih Tahun", list_tahun)
+        pilih_thn = st.selectbox("Pilih Tahun", list_tahun)
         df_filtered = (
             df[df["Tahun"] == pilih_thn]
             .groupby(["loket", "jenis_dana"])[
