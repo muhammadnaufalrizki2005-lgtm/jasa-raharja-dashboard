@@ -9,14 +9,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Kustomisasi CSS Bersih & Menyembunyikan Header/Tombol Fork
+# Kustomisasi CSS untuk menyembunyikan header dan tombol fork secara mutlak
 st.markdown(
     """
     <style>
     .stApp {
         background-color: #f8f9fa;
     }
-    header {visibility: hidden;}
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
     div.stButton > button:first-child {
         background-color: #005ba8;
         color: white;
