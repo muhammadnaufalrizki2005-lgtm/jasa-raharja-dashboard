@@ -46,9 +46,23 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    /* Sembunyikan sidebar sepenuhnya */
     [data-testid="stSidebar"] {
         display: none !important;
+    }
+    /* Sembunyikan ikon tautan (anchor link) pada judul/header */
+    .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] {
+        display: none !important;
+    }
+    /* Hilangkan scrollbar dan kunci halaman agar tidak bisa di-drag naik-turun */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+        overflow: hidden !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+    }
+    ::-webkit-scrollbar {
+        display: none !important;
+        width: 0px !important;
+        background: transparent !important;
     }
     div.stButton > button:first-child, div.stFormSubmitButton > button:first-child {
         background-color: #005ba8;
@@ -76,25 +90,10 @@ if "role" not in st.session_state:
   st.session_state.role = None
 
 if not st.session_state.logged_in:
-  st.markdown(
-      """
-        <style>
-        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-            overflow: hidden !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
-        }
-        .block-container {
-            padding-top: 4vh !important;
-        }
-        </style>
-    """,
-      unsafe_allow_html=True,
-  )
-
   col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
+    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
     with st.container():
       st.markdown(
           """
@@ -144,7 +143,6 @@ if not st.session_state.logged_in:
       )
 
 else:
-  # Header atas dengan tombol Logout di pojok kanan
   header_col1, header_col2 = st.columns([4, 1])
   with header_col1:
     if st.session_state.role == "Petugas SAMSAT":
@@ -218,7 +216,6 @@ else:
       df["Bulan"] = df["dt_tanggal"].dt.to_period("M").astype(str)
       df["Tahun"] = df["dt_tanggal"].dt.year.astype(str)
 
-      # Filter menggunakan horizontal radio agar tidak butuh sidebar
       mode_waktu = st.radio(
           "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
       )
