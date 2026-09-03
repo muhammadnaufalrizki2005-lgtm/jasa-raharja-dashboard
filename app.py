@@ -20,9 +20,13 @@ def init_connection():
 
 supabase = init_connection()
 
+# Kustomisasi CSS Bersih & Profesional (Warna khas Jasa Raharja)
 st.markdown(
     """
     <style>
+    .stApp {
+        background-color: #f8f9fa;
+    }
     div.stButton > button:first-child {
         background-color: #005ba8;
         color: white;
@@ -56,9 +60,10 @@ if not st.session_state.logged_in:
     st.write("")
     with st.container():
       st.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
+      # Menggunakan div biasa agar logo tautan (🔗) tidak muncul
       st.markdown(
-          "<h4 style='text-align: center; color: #4A4A4A;'>Login Member Jasa"
-          " Raharja</h4>",
+          "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
+          " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
           unsafe_allow_html=True,
       )
       st.markdown("---")
@@ -69,7 +74,7 @@ if not st.session_state.logged_in:
       )
 
       st.markdown(
-          "<p style='text-align: right; font-size: 14px; color: #4A4A4A;'>"
+          "<p style='text-align: right; font-size: 14px; color: #666666;'>"
           "Lupa Password?</p>",
           unsafe_allow_html=True,
       )
@@ -91,8 +96,8 @@ if not st.session_state.logged_in:
 
       st.markdown(
           "<p style='text-align: center; font-size: 14px; margin-top:"
-          " 15px;'>Belum Memiliki Akun? <b style='color: #005ba8;'>Registrasi"
-          " Disini</b></p>",
+          " 15px; color: #333333;'>Belum Memiliki Akun? <b style='color:"
+          " #005ba8;'>Registrasi Disini</b></p>",
           unsafe_allow_html=True,
       )
 
