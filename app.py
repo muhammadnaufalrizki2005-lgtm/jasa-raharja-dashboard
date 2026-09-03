@@ -38,7 +38,6 @@ st.markdown(
     <style>
     .stApp {
         background-color: #f8f9fa;
-        padding-top: 15px;
     }
     [data-testid="stHeader"] {
         display: none !important;
@@ -86,17 +85,29 @@ if "role" not in st.session_state:
   st.session_state.role = None
 
 if not st.session_state.logged_in:
+  # CSS khusus untuk mengunci scrollbar di halaman login
+  st.markdown(
+      """
+        <style>
+        html, body, [data-testid="stAppViewContainer"] {
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+        </style>
+    """,
+      unsafe_allow_html=True,
+  )
+
   col1, col2, col3 = st.columns([1, 1.2, 1])
 
   with col2:
-    st.write("")
-    st.write("")
+    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
             f"""
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <img src="data:image/png;base64,{img_base64}" width="240" style="display: block; margin: 0 auto; height: auto;">
+                <div style="text-align: center; margin-bottom: 5px;">
+                    <img src="data:image/png;base64,{img_base64}" width="220" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -109,8 +120,8 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
-          " font-weight: 600; margin-top: 10px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
+          " font-weight: 600; margin-top: 5px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
@@ -137,8 +148,8 @@ if not st.session_state.logged_in:
           st.error("❌ ID Pengguna atau Password salah!")
 
       st.markdown(
-          "<p style='text-align: center; font-size: 13px; margin-top:"
-          " 20px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
+          "<p style='text-align: center; font-size: 12px; margin-top:"
+          " 15px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
           " Administrator Kanwil.</p>",
           unsafe_allow_html=True,
       )
