@@ -1,3 +1,4 @@
+import base64
 from datetime import date
 import pandas as pd
 import streamlit as st
@@ -8,6 +9,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+
+@st.cache_data
+def get_img_base64(file_path):
+  try:
+    with open(file_path, "rb") as f:
+      data = f.read()
+    return base64.b64encode(data).decode()
+  except Exception:
+    return ""
+
+
+img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
 st.markdown(
     """
@@ -24,15 +38,6 @@ st.markdown(
     }
     [data-testid="stDecoration"] {
         display: none !important;
-    }
-    div[data-testid="stImage"] > div {
-        pointer-events: none;
-    }
-    div[data-testid="stImage"] button,
-    [data-testid="stImageToolbar"],
-    [data-testid="StyledFullScreenButton"] {
-        display: none !important;
-        visibility: hidden !important;
     }
     div.stButton > button:first-child {
         background-color: #005ba8;
@@ -77,7 +82,22 @@ if not st.session_state.logged_in:
     st.write("")
     st.write("")
     with st.container():
-      st.image("LOGO_JASA_RAHARJA_2024.png", width=240)
+      if img_base64:
+        st.markdown(
+            f"""
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <img src="data:image/png;base64,{img_base64}" width="240" style="display: block; margin: 0 auto; height: auto;">
+                </div>
+                """,
+            unsafe_allow_html=True,
+        )
+      else:
+        st.markdown(
+            "<h2 style='text-align: center; color: #005ba8;'>PT JASA"
+            " RAHARJA</h2>",
+            unsafe_allow_html=True,
+        )
+
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
           " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
@@ -113,7 +133,15 @@ if not st.session_state.logged_in:
       )
 
 else:
-  st.sidebar.image("LOGO_JASA_RAHARJA_2024.png", width=200)
+  if img_base64:
+    st.sidebar.markdown(
+        f"""
+            <div style="text-align: center; margin-bottom: 10px;">
+                <img src="data:image/png;base64,{img_base64}" width="180" style="display: block; margin: 0 auto; height: auto;">
+            </div>
+            """,
+        unsafe_allow_html=True,
+    )
   st.sidebar.markdown("---")
   st.sidebar.markdown(f"**Status:** Login sebagai {st.session_state.role}")
   if st.sidebar.button("🚪 Keluar (Logout)"):
