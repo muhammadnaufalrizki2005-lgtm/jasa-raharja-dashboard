@@ -269,17 +269,15 @@ else:
       if mode_waktu == "Harian":
         min_tgl = df["dt_tanggal"].dt.date.min()
         max_tgl = df["dt_tanggal"].dt.date.max()
-        date_range = st.date_input(
-            "Pilih Rentang Tanggal", value=(min_tgl, max_tgl)
-        )
 
-        if isinstance(date_range, tuple):
-          if len(date_range) == 2:
-            start_tgl, end_tgl = date_range
-          else:
-            start_tgl = end_tgl = date_range[0]
-        else:
-          start_tgl = end_tgl = date_range
+        dc1, dc2 = st.columns(2)
+        with dc1:
+          start_tgl = st.date_input("Dari Tanggal", value=min_tgl)
+        with dc2:
+          end_tgl = st.date_input("Sampai Tanggal", value=max_tgl)
+
+        if start_tgl > end_tgl:
+          start_tgl, end_tgl = end_tgl, start_tgl
 
         df_filtered = df[
             (df["dt_tanggal"].dt.date >= start_tgl)
@@ -367,7 +365,6 @@ else:
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
 
-      # Opsi Pilih Semua dengan Checkbox agar praktis 1-klik
       all_lokets = sorted(df["loket"].unique())
       all_jenis = sorted(df["jenis_dana"].unique())
 
