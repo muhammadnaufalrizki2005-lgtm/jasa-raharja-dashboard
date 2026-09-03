@@ -5,7 +5,7 @@ import streamlit as st
 from supabase import create_client
 
 st.set_page_config(
-    page_title="Sistem Monitoring Jasa Raharja",
+    page_title="Dashboard Jasa Raharja DIY",
     page_icon="LOGO_JASA_RAHARJA_2024.png",
     layout="wide",
     initial_sidebar_state="collapsed",
