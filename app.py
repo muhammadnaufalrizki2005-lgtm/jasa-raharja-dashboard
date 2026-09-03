@@ -109,15 +109,18 @@ if not st.session_state.logged_in:
             unsafe_allow_html=True,
         )
 
-      # PERUBAHAN TEKS LOGIN DI SINI
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
-          " font-weight: 600; margin-top: 10px;'>Portal Monitoring Kanwil DIY</div>",
+          " font-weight: 600; margin-top: 10px;'>Portal Monitoring Kanwil"
+          " DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown("---")
 
-      email = st.text_input("Email", placeholder="Masukkan Email Terdaftar")
+      # Diubah menjadi ID Pengguna
+      username = st.text_input(
+          "ID Pengguna", placeholder="Masukkan ID (contoh: petugas / pimpinan)"
+      )
       password = st.text_input(
           "Password", type="password", placeholder="Masukkan Password"
       )
@@ -126,16 +129,16 @@ if not st.session_state.logged_in:
       login_button = st.button("Login")
 
       if login_button:
-        if email == "petugas@jr.co.id" and password == "123456":
+        if username.lower() == "petugas" and password == "123456":
           st.session_state.logged_in = True
           st.session_state.role = "Petugas SAMSAT"
           st.rerun()
-        elif email == "pimpinan@jr.co.id" and password == "123456":
+        elif username.lower() == "pimpinan" and password == "123456":
           st.session_state.logged_in = True
           st.session_state.role = "Pimpinan"
           st.rerun()
         else:
-          st.error("❌ Email atau Password salah!")
+          st.error("❌ ID Pengguna atau Password salah!")
 
       st.markdown(
           "<p style='text-align: center; font-size: 13px; margin-top:"
