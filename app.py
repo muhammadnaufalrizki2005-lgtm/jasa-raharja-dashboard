@@ -44,37 +44,27 @@ def init_connection():
 
 supabase = init_connection()
 
-st.markdown(
-    """
+if "logged_in" not in st.session_state:
+  qp_logged = st.query_params.get("logged_in")
+  qp_role = st.query_params.get("role")
+  if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
+    st.session_state.logged_in = True
+    st.session_state.role = qp_role
+  else:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+
+# CSS Umum
+css_base = """
     <style>
     .stApp {
         background-color: #f8f9fa;
     }
-    [data-testid="stHeader"] {
-        display: none !important;
-    }
-    [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    [data-testid="stSidebar"] {
-        display: none !important;
-    }
-    .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] {
-        display: none !important;
-    }
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-        overflow: hidden !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-    }
-    ::-webkit-scrollbar {
-        display: none !important;
-        width: 0px !important;
-        background: transparent !important;
-    }
+    [data-testid="stHeader"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stSidebar"] { display: none !important; }
+    .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] { display: none !important; }
     div.stButton > button:first-child, div.stFormSubmitButton > button:first-child {
         background-color: #005ba8;
         color: white;
@@ -90,22 +80,24 @@ st.markdown(
     }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    </style>
-""",
-    unsafe_allow_html=True,
-)
-
-if "logged_in" not in st.session_state:
-  qp_logged = st.query_params.get("logged_in")
-  qp_role = st.query_params.get("role")
-  if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
-    st.session_state.logged_in = True
-    st.session_state.role = qp_role
-  else:
-    st.session_state.logged_in = False
-    st.session_state.role = None
+"""
 
 if not st.session_state.logged_in:
+  # Kunci scroll khusus halaman login
+  st.markdown(
+      css_base
+      + """
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+            overflow: hidden !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+        }
+        ::-webkit-scrollbar { display: none !important; width: 0px !important; }
+        </style>
+    """,
+      unsafe_allow_html=True,
+  )
+
   col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
@@ -170,6 +162,35 @@ if not st.session_state.logged_in:
       )
 
 else:
+  if st.session_state.role == "Pimpinan":
+    # Izinkan scroll normal untuk Pimpinan agar grafik dan tabel bawah terlihat leluasa
+    st.markdown(
+        css_base
+        + """
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+            overflow: auto !important;
+            height: auto !important;
+        }
+        </style>
+    """,
+        unsafe_allow_html=True,
+    )
+  else:
+    # Petugas tetap dikunci agar pas satu layar
+    st.markdown(
+        css_base
+        + """
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+            overflow: hidden !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+        }
+        ::-webkit-scrollbar { display: none !important; width: 0px !important; }
+        </style>
+    """,
+        unsafe_allow_html=True,
+    )
+
   header_col1, header_col2 = st.columns([4, 1])
   with header_col1:
     if st.session_state.role == "Petugas SAMSAT":
