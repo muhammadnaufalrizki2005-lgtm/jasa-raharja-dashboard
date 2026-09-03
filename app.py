@@ -8,15 +8,15 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# Kustomisasi CSS Bersih & Menyembunyikan Header/Tombol Fork
 st.markdown(
     """
     <style>
     .stApp {
         background-color: #f8f9fa;
     }
-    /* Menyembunyikan header bawaan Streamlit termasuk tombol Fork */
     header {visibility: hidden;}
-    
     div.stButton > button:first-child {
         background-color: #005ba8;
         color: white;
@@ -36,6 +36,7 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
@@ -46,33 +47,6 @@ def init_connection():
 
 
 supabase = init_connection()
-
-# Kustomisasi CSS Bersih & Profesional (Warna khas Jasa Raharja)
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #f8f9fa;
-    }
-    div.stButton > button:first-child {
-        background-color: #005ba8;
-        color: white;
-        width: 100%;
-        border-radius: 8px;
-        padding: 10px;
-        font-weight: bold;
-        border: none;
-    }
-    div.stButton > button:first-child:hover {
-        background-color: #004580;
-        color: white;
-    }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    </style>
-""",
-    unsafe_allow_html=True,
-)
 
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
@@ -87,7 +61,6 @@ if not st.session_state.logged_in:
     st.write("")
     with st.container():
       st.image("LOGO_JASA_RAHARJA_2024.png", use_container_width=True)
-      # Menggunakan div biasa agar logo tautan (🔗) tidak muncul
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
           " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
