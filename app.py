@@ -9,7 +9,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Kustomisasi CSS untuk menyembunyikan header dan tombol fork secara mutlak
 st.markdown(
     """
     <style>
@@ -102,10 +101,11 @@ if not st.session_state.logged_in:
         else:
           st.error("❌ Email atau Password salah!")
 
+      # Keterangan pengganti registrasi mandiri
       st.markdown(
-          "<p style='text-align: center; font-size: 14px; margin-top:"
-          " 15px; color: #333333;'>Belum Memiliki Akun? <b style='color:"
-          " #005ba8;'>Registrasi Disini</b></p>",
+          "<p style='text-align: center; font-size: 13px; margin-top:"
+          " 20px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
+          " Administrator Kanwil.</p>",
           unsafe_allow_html=True,
       )
 
