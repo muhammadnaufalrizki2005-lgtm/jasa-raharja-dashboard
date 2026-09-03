@@ -40,7 +40,12 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    [data-testid="stStatusWidget"], .viewerBadge, iframe[src*="streamlit.app"] {
+    /* Sembunyikan badge/widget Streamlit Cloud di pojok kanan bawah untuk semua akun */
+    [data-testid="stStatusWidget"], 
+    .viewerBadge, 
+    div[class*="viewerBadge"], 
+    div[class*="styles_viewerBadge"], 
+    iframe[src*="streamlit.app"] {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
