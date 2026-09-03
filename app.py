@@ -2,6 +2,7 @@ import base64
 from datetime import date
 from PIL import Image
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 from supabase import create_client
 
@@ -364,9 +365,9 @@ else:
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
       st.markdown("---")
-      st.markdown("### 📉 Grafik Tren Penerimaan")
+      st.markdown("### 📈 Grafik Tren Penerimaan")
 
-      # Grafik disesuaikan dengan mode waktu agar sumbu-X nya bersih sesuai tanggal/bulan/tahun
+      # Menggunakan Plotly Bar Chart yang bersih, modern, dan mudah dibaca
       if mode_waktu == "Harian":
         df_chart = (
             df_filtered.groupby("dt_tanggal")["realisasi"]
@@ -376,25 +377,40 @@ else:
         df_chart["Periode"] = pd.to_datetime(
             df_chart["dt_tanggal"]
         ).dt.strftime("%Y-%m-%d")
-        df_chart = df_chart.set_index("Periode")[["realisasi"]]
+        x_axis = "Periode"
       elif mode_waktu == "Bulanan":
         df_chart = (
             df[(df["Bulan"] >= start_bln) & (df["Bulan"] <= end_bln)]
             .groupby("Bulan")["realisasi"]
             .sum()
             .reset_index()
-            .set_index("Bulan")[["realisasi"]]
         )
+        x_axis = "Bulan"
       else:
         df_chart = (
             df[(df["Tahun"] >= start_thn) & (df["Tahun"] <= end_thn)]
             .groupby("Tahun")["realisasi"]
             .sum()
             .reset_index()
-            .set_index("Tahun")[["realisasi"]]
         )
+        x_axis = "Tahun"
 
-      st.line_chart(df_chart)
+      if not df_chart.empty:
+        fig = px.bar(
+            df_chart,
+            x=x_axis,
+            y="realisasi",
+            color_discrete_sequence=["#005ba8"],
+            labels={"realisasi": "Total Realisasi (Rp)", x_axis: mode_waktu},
+        )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=20, r=20, t=10, b=20),
+            xaxis=dict(showgrid=False, type="category"),
+            yaxis=dict(showgrid=True, gridcolor="#e5e5e5"),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     else:
       st.warning("Belum ada data di dalam database.")
