@@ -85,7 +85,7 @@ if "role" not in st.session_state:
   st.session_state.role = None
 
 if not st.session_state.logged_in:
-  # CSS agresif untuk mengunci total scrollbar khusus halaman login
+  # CSS untuk mengunci scroll dan memposisikan login di tengah layar secara vertikal
   st.markdown(
       """
         <style>
@@ -94,21 +94,25 @@ if not st.session_state.logged_in:
             height: 100vh !important;
             max-height: 100vh !important;
         }
+        /* Mengatur agar area login berada pas di tengah */
+        .block-container {
+            padding-top: 5vh !important;
+        }
         </style>
     """,
       unsafe_allow_html=True,
   )
 
-  col1, col2, col3 = st.columns([1, 1.2, 1])
+  col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
-    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 2vh;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
             f"""
-                <div style="text-align: center; margin-bottom: 5px;">
-                    <img src="data:image/png;base64,{img_base64}" width="220" style="display: block; margin: 0 auto; height: auto;">
+                <div style="text-align: center; margin-bottom: 8px;">
+                    <img src="data:image/png;base64,{img_base64}" width="270" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -121,8 +125,8 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
-          " font-weight: 600; margin-top: 5px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #333333; font-size: 1.3rem;"
+          " font-weight: 600; margin-top: 8px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
@@ -149,8 +153,8 @@ if not st.session_state.logged_in:
           st.error("❌ ID Pengguna atau Password salah!")
 
       st.markdown(
-          "<p style='text-align: center; font-size: 12px; margin-top:"
-          " 15px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
+          "<p style='text-align: center; font-size: 13px; margin-top:"
+          " 18px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
           " Administrator Kanwil.</p>",
           unsafe_allow_html=True,
       )
