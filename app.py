@@ -6,7 +6,7 @@ from supabase import create_client
 
 st.set_page_config(
     page_title="Dashboard Jasa Raharja DIY",
-    page_icon="LOGO_JASA_RAHARJA_2024.png",
+    page_icon="logo-jasa-raharja.webp",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -22,7 +22,7 @@ def get_img_base64(file_path):
     return ""
 
 
-img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
+img_base64 = get_img_base64("logo-jasa-raharja.webp")
 
 st.markdown(
     """
@@ -39,17 +39,6 @@ st.markdown(
     }
     [data-testid="stDecoration"] {
         display: none !important;
-    }
-    /* Sembunyikan badge/widget Streamlit Cloud di pojok kanan bawah untuk semua akun */
-    [data-testid="stStatusWidget"], 
-    .viewerBadge, 
-    div[class*="viewerBadge"], 
-    div[class*="styles_viewerBadge"], 
-    iframe[src*="streamlit.app"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
     }
     div.stButton > button:first-child {
         background-color: #005ba8;
@@ -98,7 +87,7 @@ if not st.session_state.logged_in:
         st.markdown(
             f"""
                 <div style="text-align: center; margin-bottom: 10px;">
-                    <img src="data:image/png;base64,{img_base64}" width="240" style="display: block; margin: 0 auto; height: auto;">
+                    <img src="data:image/webp;base64,{img_base64}" width="160" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -149,7 +138,7 @@ else:
     st.sidebar.markdown(
         f"""
             <div style="text-align: center; margin-bottom: 10px;">
-                <img src="data:image/png;base64,{img_base64}" width="180" style="display: block; margin: 0 auto; height: auto;">
+                <img src="data:image/webp;base64,{img_base64}" width="120" style="display: block; margin: 0 auto; height: auto;">
             </div>
             """,
         unsafe_allow_html=True,
