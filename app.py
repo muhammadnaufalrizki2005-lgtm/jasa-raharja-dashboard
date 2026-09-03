@@ -95,7 +95,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Sinkronisasi status login dengan query_params agar tidak tereset saat refresh
 if "logged_in" not in st.session_state:
   qp_logged = st.query_params.get("logged_in")
   qp_role = st.query_params.get("role")
@@ -250,34 +249,86 @@ else:
       )
 
       if mode_waktu == "Harian":
-        list_tanggal = sorted(df["dt_tanggal"].dt.date.unique(), reverse=True)
-        pilih_tgl = st.selectbox("Pilih Tanggal", list_tanggal)
-        df_filtered = df[df["dt_tanggal"].dt.date == pilih_tgl]
-        st.info(f"Menampilkan Laporan Tanggal: **{pilih_tgl}**")
+        min_tgl = df["dt_tanggal"].dt.date.min()
+        max_tgl = df["dt_tanggal"].dt.date.max()
+        date_range = st.date_input(
+            "Pilih Rentang Tanggal", value=(min_tgl, max_tgl)
+        )
+
+        if isinstance(date_range, tuple):
+          if len(date_range) == 2:
+            start_tgl, end_tgl = date_range
+          else:
+            start_tgl = end_tgl = date_range[0]
+        else:
+          start_tgl = end_tgl = date_range
+
+        df_filtered = df[
+            (df["dt_tanggal"].dt.date >= start_tgl)
+            & (df["dt_tanggal"].dt.date <= end_tgl)
+        ]
+        if start_tgl == end_tgl:
+          st.info(f"Menampilkan Laporan Tanggal: **{start_tgl}**")
+        else:
+          st.info(
+              f"Menampilkan Laporan dari **{start_tgl}** sampai **{end_tgl}**"
+          )
+
       elif mode_waktu == "Bulanan":
-        list_bulan = sorted(df["Bulan"].unique(), reverse=True)
-        pilih_bln = st.selectbox("Pilih Bulan", list_bulan)
+        all_months = sorted(df["Bulan"].unique())
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+          start_bln = st.selectbox(
+              "Dari Bulan", all_months, index=0, key="start_bln"
+          )
+        with col_m2:
+          end_bln = st.selectbox(
+              "Sampai Bulan",
+              all_months,
+              index=len(all_months) - 1,
+              key="end_bln",
+          )
+
+        if start_bln > end_bln:
+          start_bln, end_bln = end_bln, start_bln
+
         df_filtered = (
-            df[df["Bulan"] == pilih_bln]
+            df[(df["Bulan"] >= start_bln) & (df["Bulan"] <= end_bln)]
             .groupby(["loket", "jenis_dana"])[
                 ["realisasi", "prosentase_siklikal", "siklikal_yty"]
             ]
             .mean()
             .reset_index()
         )
-        st.info(f"Menampilkan Rata-rata Bulan: **{pilih_bln}**")
+        st.info(f"Menampilkan Rata-rata Bulan: **{start_bln} s.d. {end_bln}**")
+
       else:
-        list_tahun = sorted(df["Tahun"].unique(), reverse=True)
-        pilih_thn = st.selectbox("Pilih Tahun", list_tahun)
+        all_years = sorted(df["Tahun"].unique())
+        col_y1, col_y2 = st.columns(2)
+        with col_y1:
+          start_thn = st.selectbox(
+              "Dari Tahun", all_years, index=0, key="start_thn"
+          )
+        with col_y2:
+          end_thn = st.selectbox(
+              "Sampai Tahun",
+              all_years,
+              index=len(all_years) - 1,
+              key="end_thn",
+          )
+
+        if start_thn > end_thn:
+          start_thn, end_thn = end_thn, start_thn
+
         df_filtered = (
-            df[df["Tahun"] == pilih_thn]
+            df[(df["Tahun"] >= start_thn) & (df["Tahun"] <= end_thn)]
             .groupby(["loket", "jenis_dana"])[
                 ["realisasi", "prosentase_siklikal", "siklikal_yty"]
             ]
             .mean()
             .reset_index()
         )
-        st.info(f"Menampilkan Rekap Tahun: **{pilih_thn}**")
+        st.info(f"Menampilkan Rekap Tahun: **{start_thn} s.d. {end_thn}**")
 
       if not df_filtered.empty:
         df_tampilan = df_filtered.copy()
