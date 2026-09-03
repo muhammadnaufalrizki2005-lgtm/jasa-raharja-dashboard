@@ -40,8 +40,11 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    [data-testid="stStatusWidget"] {
+    [data-testid="stStatusWidget"], .viewerBadge, iframe[src*="streamlit.app"] {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     div.stButton > button:first-child {
         background-color: #005ba8;
