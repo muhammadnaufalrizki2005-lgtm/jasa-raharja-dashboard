@@ -25,11 +25,14 @@ st.markdown(
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    [data-testid="stImageToolbar"] {
-        display: none !important;
+    div[data-testid="stImage"] > div {
+        pointer-events: none;
     }
+    div[data-testid="stImage"] button,
+    [data-testid="stImageToolbar"],
     [data-testid="StyledFullScreenButton"] {
         display: none !important;
+        visibility: hidden !important;
     }
     div.stButton > button:first-child {
         background-color: #005ba8;
