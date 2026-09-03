@@ -109,9 +109,10 @@ if not st.session_state.logged_in:
             unsafe_allow_html=True,
         )
 
+      # PERUBAHAN TEKS LOGIN DI SINI
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
-          " font-weight: 600; margin-top: 10px;'>Login Member Jasa Raharja</div>",
+          " font-weight: 600; margin-top: 10px;'>Portal Monitoring Kanwil DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown("---")
