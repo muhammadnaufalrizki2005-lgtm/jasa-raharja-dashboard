@@ -50,22 +50,22 @@ supabase = init_connection()
 
 @st.cache_resource
 def init_gsheets():
-  scope = [
-      "https://www.googleapis.com/auth/spreadsheets",
-      "https://www.googleapis.com/auth/drive",
-  ]
-  creds_dict = dict(st.secrets["gcp_service_account"])
-  creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-  client = gspread.authorize(creds)
-  return client.open_by_url(
-      "https://docs.google.com/spreadsheets/d/1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc/edit?usp=sharing"
-  ).sheet1
+  try:
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    client = gspread.authorize(creds)
+    return client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc/edit?usp=sharing"
+    ).sheet1
+  except Exception:
+    return None
 
 
-try:
-  sheet = init_gsheets()
-except Exception:
-  sheet = None
+sheet = init_gsheets()
 
 if "logged_in" not in st.session_state:
   qp_logged = st.query_params.get("logged_in")
@@ -398,12 +398,19 @@ else:
       st.markdown("### 📋 Rekapitulasi Data")
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
-      # Sinkronisasi Data Lama ke Google Sheets
+      # Sinkronisasi Data Lama ke Google Sheets dengan Penanganan Error API
       with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
         if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
-          try:
-            if sheet:
-              all_data = supabase.table("penerimaan_harian").select("*").execute()
+          if sheet is None:
+            st.error(
+                "❌ Koneksi ke Google Sheets gagal. Pastikan Google Sheets API"
+                " & Google Drive API sudah diaktifkan di Google Cloud Console."
+            )
+          else:
+            try:
+              all_data = (
+                  supabase.table("penerimaan_harian").select("*").execute()
+              )
               if all_data.data:
                 rows_to_insert = []
                 for item in all_data.data:
@@ -422,8 +429,8 @@ else:
                 )
               else:
                 st.warning("Tidak ada data di database untuk disinkronkan.")
-          except Exception as e:
-            st.error(f"❌ Gagal sinkronisasi: {e}")
+            except Exception as e:
+              st.error(f"❌ Gagal sinkronisasi: {e}")
 
       # Fitur Audit & Deteksi Anomali
       st.markdown("---")
