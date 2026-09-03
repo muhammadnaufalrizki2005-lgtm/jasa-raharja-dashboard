@@ -1,6 +1,8 @@
 import base64
 from datetime import date
 from PIL import Image
+from google.oauth2.service_account import Credentials
+import gspread
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -44,6 +46,26 @@ def init_connection():
 
 
 supabase = init_connection()
+
+
+@st.cache_resource
+def init_gsheets():
+  scope = [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive",
+  ]
+  creds_dict = dict(st.secrets["gcp_service_account"])
+  creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+  client = gspread.authorize(creds)
+  return client.open_by_url(
+      "https://docs.google.com/spreadsheets/d/1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc/edit?usp=sharing"
+  ).sheet1
+
+
+try:
+  sheet = init_gsheets()
+except Exception:
+  sheet = None
 
 if "logged_in" not in st.session_state:
   qp_logged = st.query_params.get("logged_in")
@@ -245,7 +267,21 @@ else:
         }
         try:
           supabase.table("penerimaan_harian").insert(data_insert).execute()
-          st.success("✅ Data berhasil disimpan ke database!")
+
+          if sheet:
+            sheet.append_row([
+                str(f_tanggal),
+                f_loket,
+                f_jenis,
+                f_realisasi,
+                f_siklikal,
+                f_yty,
+            ])
+
+          st.success(
+              "✅ Data berhasil disimpan ke database & disinkronkan ke Google"
+              " Sheets!"
+          )
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
@@ -361,6 +397,70 @@ else:
 
       st.markdown("### 📋 Rekapitulasi Data")
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
+
+      # Sinkronisasi Data Lama ke Google Sheets
+      with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
+        if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
+          try:
+            if sheet:
+              all_data = supabase.table("penerimaan_harian").select("*").execute()
+              if all_data.data:
+                rows_to_insert = []
+                for item in all_data.data:
+                  rows_to_insert.append([
+                      str(item.get("tanggal")),
+                      str(item.get("loket")),
+                      str(item.get("jenis_dana")),
+                      float(item.get("realisasi", 0)),
+                      float(item.get("prosentase_siklikal", 0)),
+                      float(item.get("siklikal_yty", 0)),
+                  ])
+                sheet.append_rows(rows_to_insert)
+                st.success(
+                    f"✅ Berhasil menyinkronkan {len(rows_to_insert)} data lama"
+                    " ke Google Sheets!"
+                )
+              else:
+                st.warning("Tidak ada data di database untuk disinkronkan.")
+          except Exception as e:
+            st.error(f"❌ Gagal sinkronisasi: {e}")
+
+      # Fitur Audit & Deteksi Anomali
+      st.markdown("---")
+      with st.expander(
+          "🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)",
+          expanded=False,
+      ):
+        st.write(
+            "Sistem mendeteksi anomali seperti nilai nol atau data duplikat."
+        )
+        df_zero = df[df["realisasi"] <= 0]
+        df_dup = df[
+            df.duplicated(subset=["tanggal", "loket", "jenis_dana"], keep=False)
+        ]
+
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
+          st.markdown("##### ⚠️ Realisasi Bernilai 0 / Negatif")
+          if not df_zero.empty:
+            st.dataframe(
+                df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+          else:
+            st.success("✅ Tidak ada data realisasi bernilai 0 atau negatif.")
+
+        with col_a2:
+          st.markdown("##### ⚠️ Data Duplikat (Input Ganda)")
+          if not df_dup.empty:
+            st.dataframe(
+                df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+          else:
+            st.success("✅ Tidak ditemukan data duplikat.")
 
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
