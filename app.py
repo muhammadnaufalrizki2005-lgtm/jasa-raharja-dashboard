@@ -101,7 +101,6 @@ if not st.session_state.logged_in:
         else:
           st.error("❌ Email atau Password salah!")
 
-      # Keterangan pengganti registrasi mandiri
       st.markdown(
           "<p style='text-align: center; font-size: 13px; margin-top:"
           " 20px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
