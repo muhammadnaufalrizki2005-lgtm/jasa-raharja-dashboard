@@ -367,27 +367,39 @@ else:
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
 
-      # Filter Multi-Select untuk Wilayah dan Jenis Dana pada Grafik
+      # Opsi Pilih Semua dengan Checkbox agar praktis 1-klik
       all_lokets = sorted(df["loket"].unique())
       all_jenis = sorted(df["jenis_dana"].unique())
 
       gc1, gc2 = st.columns(2)
       with gc1:
-        selected_lokets = st.multiselect(
-            "Pilih Wilayah (Loket)",
-            options=all_lokets,
-            default=all_lokets,
-            key="multi_loket",
-        )
-      with gc2:
-        selected_jenis = st.multiselect(
-            "Pilih Jenis Dana",
-            options=all_jenis,
-            default=all_jenis,
-            key="multi_jenis",
-        )
+        pilih_semua_loket = st.checkbox("Pilih Semua Wilayah", value=True)
+        if pilih_semua_loket:
+          selected_lokets = st.multiselect(
+              "Pilih Wilayah (Loket)",
+              options=all_lokets,
+              default=all_lokets,
+              key="ms_loket",
+          )
+        else:
+          selected_lokets = st.multiselect(
+              "Pilih Wilayah (Loket)", options=all_lokets, default=[], key="ms_loket"
+          )
 
-      # Pengolahan data grafik berdasarkan rentang waktu dan pilihan multi-select
+      with gc2:
+        pilih_semua_jenis = st.checkbox("Pilih Semua Jenis Dana", value=True)
+        if pilih_semua_jenis:
+          selected_jenis = st.multiselect(
+              "Pilih Jenis Dana",
+              options=all_jenis,
+              default=all_jenis,
+              key="ms_jenis",
+          )
+        else:
+          selected_jenis = st.multiselect(
+              "Pilih Jenis Dana", options=all_jenis, default=[], key="ms_jenis"
+          )
+
       df_c = df.copy()
       if mode_waktu == "Harian":
         df_c = df_c[
@@ -403,14 +415,12 @@ else:
         df_c = df_c[(df_c["Tahun"] >= start_thn) & (df_c["Tahun"] <= end_thn)]
         x_axis_val = "Tahun"
 
-      # Terapkan filter multi-select wilayah dan jenis dana
       if selected_lokets:
         df_c = df_c[df_c["loket"].isin(selected_lokets)]
       if selected_jenis:
         df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
       if not df_c.empty:
-        # Agregasi data dengan menggabungkan Wilayah dan Jenis Dana sebagai kategori visual
         df_chart_agg = (
             df_c.groupby([x_axis_val, "loket", "jenis_dana"])["realisasi"]
             .sum()
