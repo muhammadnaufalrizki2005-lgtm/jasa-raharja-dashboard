@@ -1,8 +1,6 @@
 import base64
 from datetime import date
 from PIL import Image
-from google.oauth2.service_account import Credentials
-import gspread
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -52,74 +50,6 @@ def init_connection():
 
 
 supabase = init_connection()
-
-
-# ==========================================
-# KONEKSI GOOGLE SHEETS (DENGAN SAFE KEY DECODER)
-# ==========================================
-@st.cache_resource
-def init_gsheets():
-  try:
-    scope = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    
-    # Menggunakan embedded dictionary dengan konversi escape character \n yang aman
-    creds_dict = {
-        "type": "service_account",
-        "project_id": "jasaraharjadashboard",
-        "private_key_id": "fca1063dd8a90dbee8a185221818d4e643c048e2",
-        "private_key": (
-            "-----BEGIN PRIVATE KEY-----\n"
-            "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4\n"
-            "Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo\n"
-            "/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH\n"
-            "qeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k\n"
-            "mE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ\n"
-            "DxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP\n"
-            "hh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4\n"
-            "0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc\n"
-            "34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz\n"
-            "DOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb\n"
-            "TTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN\n"
-            "no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA\n"
-            "KDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU\n"
-            "FBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL\n"
-            "AgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH\n"
-            "cx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC\n"
-            "qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4\n"
-            "5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk\n"
-            "ppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl\n"
-            "rrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP\n"
-            "4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP\n"
-            "QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo\n"
-            "NsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v\n"
-            "Fp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz\n"
-            "QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS\n"
-            "7M2Pdte3nlzd/frODIInjxo=\n"
-            "-----END PRIVATE KEY-----"
-        ),
-        "client_email": "jasa-raharja-bot@jasaraharjadashboard.iam.gserviceaccount.com",
-        "client_id": "110247833615002975222",
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/jasa-raharja-bot%40jasaraharjadashboard.iam.gserviceaccount.com",
-        "universe_domain": "googleapis.com"
-    }
-
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-    client = gspread.authorize(creds)
-    return client.open_by_key(
-        "1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc"
-    ).sheet1
-  except Exception as e:
-    # Jika gagal terhubung ke Sheets, aplikasi tetap berjalan normal via Supabase
-    return None
-
-
-sheet = init_gsheets()
 
 # ==========================================
 # SISTEM LOGIN & SESI
@@ -289,7 +219,7 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (INPUT DATA)
+  # TAMPILAN: PETUGAS SAMSAT (INPUT DATA + LIVE PREVIEW)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
     with st.form("form_penerimaan"):
@@ -329,32 +259,34 @@ else:
             "siklikal_yty": f_yty,
         }
         try:
-          # Simpan ke Supabase
           supabase.table("penerimaan_harian").insert(data_insert).execute()
-
-          # Simpan ke Google Sheets jika koneksi siap
-          if sheet:
-            sheet.append_row([
-                str(f_tanggal),
-                f_loket,
-                f_jenis,
-                f_realisasi,
-                f_siklikal,
-                f_yty,
-            ])
-            st.success(
-                "✅ Data berhasil disimpan ke database & disinkronkan ke"
-                " Google Sheets!"
-            )
-          else:
-            st.success(
-                "✅ Data berhasil disimpan ke database Supabase!"
-            )
+          st.success("✅ Data berhasil disimpan ke database!")
+          st.rerun()
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
+    # VERIFIKASI LANGSUNG (PENGGANTI GOOGLE SHEETS)
+    st.markdown("---")
+    st.markdown("### 👀 Verifikasi Input Terbaru")
+    st.caption("Cek tabel di bawah ini untuk memastikan nilai realisasi yang baru diinput sudah benar (tidak salah ketik).")
+    
+    try:
+      res_recent = supabase.table("penerimaan_harian").select("*").order("id", desc=True).limit(10).execute()
+      df_recent = pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
+      if not df_recent.empty:
+        df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+        st.dataframe(
+            df_recent[["tanggal", "loket", "jenis_dana", "realisasi_fmt", "prosentase_siklikal"]],
+            use_container_width=True,
+            hide_index=True
+        )
+      else:
+        st.info("Belum ada data yang diinput.")
+    except Exception:
+      st.info("Memuat riwayat input...")
+
   # ----------------------------------------
-  # TAMPILAN: PIMPINAN (REKAP & ANALISIS)
+  # TAMPILAN: PIMPINAN (REKAP, AUDIT & ANALISIS)
   # ----------------------------------------
   elif st.session_state.role == "Pimpinan":
     try:
@@ -470,78 +402,42 @@ else:
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
       # ==========================================
-      # TOMBOL SINKRONISASI DATA LAMA
-      # ==========================================
-      with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
-        if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
-          if sheet is None:
-            st.error(
-                "❌ Koneksi Google Sheets tidak aktif (fitur sinkronisasi dilewati)."
-            )
-          else:
-            try:
-              all_data = (
-                  supabase.table("penerimaan_harian").select("*").execute()
-              )
-              if all_data.data:
-                rows_to_insert = []
-                for item in all_data.data:
-                  rows_to_insert.append([
-                      str(item.get("tanggal")),
-                      str(item.get("loket")),
-                      str(item.get("jenis_dana")),
-                      float(item.get("realisasi", 0)),
-                      float(item.get("prosentase_siklikal", 0)),
-                      float(item.get("siklikal_yty", 0)),
-                  ])
-                sheet.append_rows(rows_to_insert)
-                st.success(
-                    f"✅ Berhasil menyinkronkan {len(rows_to_insert)} data lama"
-                    " ke Google Sheets!"
-                )
-              else:
-                st.warning("Tidak ada data di database untuk disinkronkan.")
-            except Exception as e:
-              st.error(f"❌ Gagal saat memasukkan data ke Sheets: {e}")
-
-      # ==========================================
-      # FITUR AUDIT
+      # FITUR AUDIT OTOMATIS (DETEKSI TYPO / ANOMALI)
       # ==========================================
       st.markdown("---")
       with st.expander(
           "🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)",
           expanded=False,
       ):
-        st.write(
-            "Sistem mendeteksi anomali seperti nilai nol atau data duplikat."
-        )
+        st.write("Sistem mendeteksi anomali seperti nilai nol, duplikat, atau lonjakan ekstrem (potensi salah ketik).")
+        
         df_zero = df[df["realisasi"] <= 0]
         df_dup = df[
             df.duplicated(subset=["tanggal", "loket", "jenis_dana"], keep=False)
         ]
+        df_outlier = df[df["realisasi"] > 500000000]
 
-        col_a1, col_a2 = st.columns(2)
+        col_a1, col_a2, col_a3 = st.columns(3)
         with col_a1:
-          st.markdown("##### ⚠️ Realisasi Bernilai 0 / Negatif")
+          st.markdown("##### ⚠️ Realisasi 0 / Negatif")
           if not df_zero.empty:
-            st.dataframe(
-                df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]],
-                use_container_width=True,
-                hide_index=True,
-            )
+            st.dataframe(df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
           else:
-            st.success("✅ Tidak ada data realisasi bernilai 0 atau negatif.")
+            st.success("✅ Aman")
 
         with col_a2:
-          st.markdown("##### ⚠️ Data Duplikat (Input Ganda)")
+          st.markdown("##### ⚠️ Duplikat Input")
           if not df_dup.empty:
-            st.dataframe(
-                df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]],
-                use_container_width=True,
-                hide_index=True,
-            )
+            st.dataframe(df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
           else:
-            st.success("✅ Tidak ditemukan data duplikat.")
+            st.success("✅ Aman")
+
+        with col_a3:
+          st.markdown("##### ⚠️ Potensi Typo (>500 Juta)")
+          if not df_outlier.empty:
+            st.dataframe(df_outlier[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
+          else:
+            st.success("✅ Aman")
 
       # ==========================================
       # GRAFIK ANALISIS
