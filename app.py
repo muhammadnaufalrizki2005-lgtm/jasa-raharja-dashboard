@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STACKED BAR)
+      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -450,30 +450,28 @@ else:
 
       gc1, gc2 = st.columns(2)
       with gc1:
-        if "ms_loket" not in st.session_state:
-          st.session_state.ms_loket = all_lokets
-
-        def toggle_all_loket():
-          if st.session_state.chk_all_loket:
-            st.session_state.ms_loket = all_lokets
-          else:
-            st.session_state.ms_loket = []
-
-        pilih_semua_loket = st.checkbox("Pilih Semua Wilayah", value=True, key="chk_all_loket", on_change=toggle_all_loket)
-        selected_lokets = st.multiselect("Pilih Wilayah (Loket)", options=all_lokets, key="ms_loket")
+        selected_loket_raw = st.multiselect(
+            "Pilih Wilayah (Loket)",
+            options=["Select all"] + all_lokets,
+            default=all_lokets,
+            key="ms_loket_box"
+        )
+        if "Select all" in selected_loket_raw or not selected_loket_raw:
+          selected_lokets = all_lokets
+        else:
+          selected_lokets = selected_loket_raw
 
       with gc2:
-        if "ms_jenis" not in st.session_state:
-          st.session_state.ms_jenis = all_jenis
-
-        def toggle_all_jenis():
-          if st.session_state.chk_all_jenis:
-            st.session_state.ms_jenis = all_jenis
-          else:
-            st.session_state.ms_jenis = []
-
-        pilih_semua_jenis = st.checkbox("Pilih Semua Jenis Dana", value=True, key="chk_all_jenis", on_change=toggle_all_jenis)
-        selected_jenis = st.multiselect("Pilih Jenis Dana", options=all_jenis, key="ms_jenis")
+        selected_jenis_raw = st.multiselect(
+            "Pilih Jenis Dana",
+            options=["Select all"] + all_jenis,
+            default=all_jenis,
+            key="ms_jenis_box"
+        )
+        if "Select all" in selected_jenis_raw or not selected_jenis_raw:
+          selected_jenis = all_jenis
+        else:
+          selected_jenis = selected_jenis_raw
 
       df_c = df.copy()
       if mode_waktu == "Harian":
