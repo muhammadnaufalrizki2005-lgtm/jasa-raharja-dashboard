@@ -26,6 +26,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+
 @st.cache_data
 def get_img_base64(file_path):
   try:
@@ -35,6 +36,7 @@ def get_img_base64(file_path):
   except Exception:
     return ""
 
+
 img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
 # ==========================================
@@ -43,14 +45,17 @@ img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
+
 @st.cache_resource
 def init_connection():
   return create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 supabase = init_connection()
 
+
 # ==========================================
-# KONEKSI GOOGLE SHEETS VIA FILE service_account.json
+# KONEKSI GOOGLE SHEETS (EMBEDDED CREDENTIALS)
 # ==========================================
 @st.cache_resource
 def init_gsheets():
@@ -59,14 +64,34 @@ def init_gsheets():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    # Membaca langsung file service_account.json dari repositori GitHub
-    creds = Credentials.from_service_account_file("service_account.json", scopes=scope)
+    creds_dict = {
+        "type": "service_account",
+        "project_id": "jasaraharjadashboard",
+        "private_key_id": "fca1063dd8a90dbee8a185221818d4e643c048e2",
+        "private_key": (
+            "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4\nUirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo\n/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH\nqeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k\nmE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ\nDxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP\nhh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4\n0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc\n34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz\nDOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb\nTTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN\no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA\nKDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU\nFBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL\nAgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH\ncx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC\qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4\n5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk\nppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl\nrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP\4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP\QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo\nNsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v\nFp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz\QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS\7M2Pdte3nlzd/frODIInjxo=\n-----END PRIVATE KEY-----"
+        ),
+        "client_email": (
+            "jasa-raharja-bot@jasaraharjadashboard.iam.gserviceaccount.com"
+        ),
+        "client_id": "110247833615002975222",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": (
+            "https://www.googleapis.com/robot/v1/metadata/x509/jasa-raharja-bot%40jasaraharjadashboard.iam.gserviceaccount.com"
+        ),
+        "universe_domain": "googleapis.com",
+    }
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
-    
-    return client.open_by_key("1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc").sheet1
+    return client.open_by_key(
+        "1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc"
+    ).sheet1
   except Exception as e:
-    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}. Pastikan file 'service_account.json' sudah diunggah ke folder utama GitHub Anda.")
+    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}")
     return None
+
 
 sheet = init_gsheets()
 
@@ -142,20 +167,26 @@ if not st.session_state.logged_in:
         )
       else:
         st.markdown(
-            "<h2 style='text-align: center; color: #005ba8; margin-bottom: 0;'>PT JASA RAHARJA</h2>",
+            "<h2 style='text-align: center; color: #005ba8; margin-bottom:"
+            " 0;'>PT JASA RAHARJA</h2>",
             unsafe_allow_html=True,
         )
 
       st.markdown(
           "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
-          " font-weight: 600; margin-bottom: 5px;'>Portal Monitoring Kanwil DIY</div>",
+          " font-weight: 600; margin-bottom: 5px;'>Portal Monitoring Kanwil"
+          " DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown("---")
 
       with st.form("form_login_portal"):
-        username = st.text_input("ID Pengguna", placeholder="Masukkan ID Pengguna")
-        password = st.text_input("Password", type="password", placeholder="Masukkan Password")
+        username = st.text_input(
+            "ID Pengguna", placeholder="Masukkan ID Pengguna"
+        )
+        password = st.text_input(
+            "Password", type="password", placeholder="Masukkan Password"
+        )
         st.write("")
         login_button = st.form_submit_button("Login")
 
@@ -177,7 +208,8 @@ if not st.session_state.logged_in:
 
       st.markdown(
           "<p style='text-align: center; font-size: 12px; margin-top:"
-          " 10px; color: #666666;'>Akun akses dikelola dan disediakan oleh Administrator Kanwil.</p>",
+          " 10px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
+          " Administrator Kanwil.</p>",
           unsafe_allow_html=True,
       )
 
@@ -253,7 +285,9 @@ else:
 
       col3, col4 = st.columns(2)
       with col3:
-        f_siklikal = st.number_input("Prosentase Siklikal (%)", min_value=0.0, step=0.01)
+        f_siklikal = st.number_input(
+            "Prosentase Siklikal (%)", min_value=0.0, step=0.01
+        )
       with col4:
         f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
 
@@ -269,10 +303,8 @@ else:
             "siklikal_yty": f_yty,
         }
         try:
-          # Simpan ke Supabase
           supabase.table("penerimaan_harian").insert(data_insert).execute()
 
-          # Simpan ke Google Sheets secara real-time
           if sheet:
             sheet.append_row([
                 str(f_tanggal),
@@ -282,9 +314,15 @@ else:
                 f_siklikal,
                 f_yty,
             ])
-            st.success("✅ Data berhasil disimpan ke database & disinkronkan ke Google Sheets!")
+            st.success(
+                "✅ Data berhasil disimpan ke database & disinkronkan ke"
+                " Google Sheets!"
+            )
           else:
-             st.warning("⚠️ Data tersimpan di database Supabase, namun gagal disinkronkan ke Google Sheets karena koneksi belum siap.")
+            st.warning(
+                "⚠️ Data tersimpan di database Supabase, namun gagal"
+                " disinkronkan ke Google Sheets karena koneksi belum siap."
+            )
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
@@ -304,7 +342,9 @@ else:
       df["Bulan"] = df["dt_tanggal"].dt.to_period("M").astype(str)
       df["Tahun"] = df["dt_tanggal"].dt.year.astype(str)
 
-      mode_waktu = st.radio("Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True)
+      mode_waktu = st.radio(
+          "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
+      )
 
       if mode_waktu == "Harian":
         min_tgl = df["dt_tanggal"].dt.date.min()
@@ -320,28 +360,41 @@ else:
           start_tgl, end_tgl = end_tgl, start_tgl
 
         df_filtered = df[
-            (df["dt_tanggal"].dt.date >= start_tgl) & (df["dt_tanggal"].dt.date <= end_tgl)
+            (df["dt_tanggal"].dt.date >= start_tgl)
+            & (df["dt_tanggal"].dt.date <= end_tgl)
         ]
         if start_tgl == end_tgl:
           st.info(f"Menampilkan Laporan Tanggal: **{start_tgl}**")
         else:
-          st.info(f"Menampilkan Laporan dari **{start_tgl}** sampai **{end_tgl}**")
+          st.info(
+              f"Menampilkan Laporan dari **{start_tgl}** sampai **{end_tgl}**"
+          )
 
       elif mode_waktu == "Bulanan":
         all_months = sorted(df["Bulan"].unique())
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-          start_bln = st.selectbox("Dari Bulan", all_months, index=0, key="start_bln")
+          start_bln = st.selectbox(
+              "Dari Bulan", all_months, index=0, key="start_bln"
+          )
         with col_m2:
-          end_bln = st.selectbox("Sampai Bulan", all_months, index=len(all_months) - 1, key="end_bln")
+          end_bln = st.selectbox(
+              "Sampai Bulan",
+              all_months,
+              index=len(all_months) - 1,
+              key="end_bln",
+          )
 
         if start_bln > end_bln:
           start_bln, end_bln = end_bln, start_bln
 
         df_filtered = (
             df[(df["Bulan"] >= start_bln) & (df["Bulan"] <= end_bln)]
-            .groupby(["loket", "jenis_dana"])[["realisasi", "prosentase_siklikal", "siklikal_yty"]]
-            .mean().reset_index()
+            .groupby(["loket", "jenis_dana"])[
+                ["realisasi", "prosentase_siklikal", "siklikal_yty"]
+            ]
+            .mean()
+            .reset_index()
         )
         st.info(f"Menampilkan Rata-rata Bulan: **{start_bln} s.d. {end_bln}**")
 
@@ -349,26 +402,40 @@ else:
         all_years = sorted(df["Tahun"].unique())
         col_y1, col_y2 = st.columns(2)
         with col_y1:
-          start_thn = st.selectbox("Dari Tahun", all_years, index=0, key="start_thn")
+          start_thn = st.selectbox(
+              "Dari Tahun", all_years, index=0, key="start_thn"
+          )
         with col_y2:
-          end_thn = st.selectbox("Sampai Tahun", all_years, index=len(all_years) - 1, key="end_thn")
+          end_thn = st.selectbox(
+              "Sampai Tahun",
+              all_years,
+              index=len(all_years) - 1,
+              key="end_thn",
+          )
 
         if start_thn > end_thn:
           start_thn, end_thn = end_thn, start_thn
 
         df_filtered = (
             df[(df["Tahun"] >= start_thn) & (df["Tahun"] <= end_thn)]
-            .groupby(["loket", "jenis_dana"])[["realisasi", "prosentase_siklikal", "siklikal_yty"]]
-            .mean().reset_index()
+            .groupby(["loket", "jenis_dana"])[
+                ["realisasi", "prosentase_siklikal", "siklikal_yty"]
+            ]
+            .mean()
+            .reset_index()
         )
         st.info(f"Menampilkan Rekap Tahun: **{start_thn} s.d. {end_thn}**")
 
       if not df_filtered.empty:
         df_tampilan = df_filtered.copy()
         if "dt_tanggal" in df_tampilan.columns:
-          df_tampilan["dt_tanggal"] = pd.to_datetime(df_tampilan["dt_tanggal"]).dt.strftime("%Y-%m-%d")
+          df_tampilan["dt_tanggal"] = pd.to_datetime(
+              df_tampilan["dt_tanggal"]
+          ).dt.strftime("%Y-%m-%d")
         if "realisasi" in df_tampilan.columns:
-          df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+          df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
+              lambda x: f"Rp {x:,.0f}".replace(",", ".")
+          )
       else:
         df_tampilan = df_filtered
 
@@ -381,10 +448,15 @@ else:
       with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
         if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
           if sheet is None:
-            st.error("❌ Koneksi Google Sheets belum terhubung. Periksa kembali file 'service_account.json' di GitHub.")
+            st.error(
+                "❌ Koneksi Google Sheets belum terhubung. Periksa kredensial"
+                " Anda."
+            )
           else:
             try:
-              all_data = supabase.table("penerimaan_harian").select("*").execute()
+              all_data = (
+                  supabase.table("penerimaan_harian").select("*").execute()
+              )
               if all_data.data:
                 rows_to_insert = []
                 for item in all_data.data:
@@ -397,7 +469,10 @@ else:
                       float(item.get("siklikal_yty", 0)),
                   ])
                 sheet.append_rows(rows_to_insert)
-                st.success(f"✅ Berhasil menyinkronkan {len(rows_to_insert)} data lama ke Google Sheets!")
+                st.success(
+                    f"✅ Berhasil menyinkronkan {len(rows_to_insert)} data lama"
+                    " ke Google Sheets!"
+                )
               else:
                 st.warning("Tidak ada data di database untuk disinkronkan.")
             except Exception as e:
@@ -407,23 +482,38 @@ else:
       # FITUR AUDIT
       # ==========================================
       st.markdown("---")
-      with st.expander("🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)", expanded=False):
-        st.write("Sistem mendeteksi anomali seperti nilai nol atau data duplikat.")
+      with st.expander(
+          "🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)",
+          expanded=False,
+      ):
+        st.write(
+            "Sistem mendeteksi anomali seperti nilai nol atau data duplikat."
+        )
         df_zero = df[df["realisasi"] <= 0]
-        df_dup = df[df.duplicated(subset=["tanggal", "loket", "jenis_dana"], keep=False)]
+        df_dup = df[
+            df.duplicated(subset=["tanggal", "loket", "jenis_dana"], keep=False)
+        ]
 
         col_a1, col_a2 = st.columns(2)
         with col_a1:
           st.markdown("##### ⚠️ Realisasi Bernilai 0 / Negatif")
           if not df_zero.empty:
-            st.dataframe(df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
+            st.dataframe(
+                df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                use_container_width=True,
+                hide_index=True,
+            )
           else:
             st.success("✅ Tidak ada data realisasi bernilai 0 atau negatif.")
 
         with col_a2:
           st.markdown("##### ⚠️ Data Duplikat (Input Ganda)")
           if not df_dup.empty:
-            st.dataframe(df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
+            st.dataframe(
+                df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                use_container_width=True,
+                hide_index=True,
+            )
           else:
             st.success("✅ Tidak ditemukan data duplikat.")
 
@@ -440,20 +530,37 @@ else:
       with gc1:
         pilih_semua_loket = st.checkbox("Pilih Semua Wilayah", value=True)
         if pilih_semua_loket:
-          selected_lokets = st.multiselect("Pilih Wilayah (Loket)", options=all_lokets, default=all_lokets, key="ms_loket")
+          selected_lokets = st.multiselect(
+              "Pilih Wilayah (Loket)",
+              options=all_lokets,
+              default=all_lokets,
+              key="ms_loket",
+          )
         else:
-          selected_lokets = st.multiselect("Pilih Wilayah (Loket)", options=all_lokets, default=[], key="ms_loket")
+          selected_lokets = st.multiselect(
+              "Pilih Wilayah (Loket)", options=all_lokets, default=[], key="ms_loket"
+          )
 
       with gc2:
         pilih_semua_jenis = st.checkbox("Pilih Semua Jenis Dana", value=True)
         if pilih_semua_jenis:
-          selected_jenis = st.multiselect("Pilih Jenis Dana", options=all_jenis, default=all_jenis, key="ms_jenis")
+          selected_jenis = st.multiselect(
+              "Pilih Jenis Dana",
+              options=all_jenis,
+              default=all_jenis,
+              key="ms_jenis",
+          )
         else:
-          selected_jenis = st.multiselect("Pilih Jenis Dana", options=all_jenis, default=[], key="ms_jenis")
+          selected_jenis = st.multiselect(
+              "Pilih Jenis Dana", options=all_jenis, default=[], key="ms_jenis"
+          )
 
       df_c = df.copy()
       if mode_waktu == "Harian":
-        df_c = df_c[(df_c["dt_tanggal"].dt.date >= start_tgl) & (df_c["dt_tanggal"].dt.date <= end_tgl)]
+        df_c = df_c[
+            (df_c["dt_tanggal"].dt.date >= start_tgl)
+            & (df_c["dt_tanggal"].dt.date <= end_tgl)
+        ]
         x_axis_val = "Periode"
         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
       elif mode_waktu == "Bulanan":
@@ -469,8 +576,14 @@ else:
         df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
       if not df_c.empty:
-        df_chart_agg = df_c.groupby([x_axis_val, "loket", "jenis_dana"])["realisasi"].sum().reset_index()
-        df_chart_agg["Kategori"] = df_chart_agg["loket"] + " - " + df_chart_agg["jenis_dana"]
+        df_chart_agg = (
+            df_c.groupby([x_axis_val, "loket", "jenis_dana"])["realisasi"]
+            .sum()
+            .reset_index()
+        )
+        df_chart_agg["Kategori"] = (
+            df_chart_agg["loket"] + " - " + df_chart_agg["jenis_dana"]
+        )
 
         fig = px.bar(
             df_chart_agg,
@@ -491,7 +604,9 @@ else:
             margin=dict(l=20, r=20, t=10, b=20),
             xaxis=dict(showgrid=False, type="category"),
             yaxis=dict(showgrid=True, gridcolor="#e5e5e5"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+            ),
         )
         st.plotly_chart(fig, use_container_width=True)
       else:
