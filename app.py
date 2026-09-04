@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS
+      # GRAFIK ANALISIS (STACKED BAR)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -512,7 +512,7 @@ else:
             x=x_axis_val,
             y="realisasi",
             color="Kategori",
-            barmode="group",
+            barmode="stack",  # Menggabungkan batang per periode menjadi 1 kolom bertumpuk
             labels={
                 "realisasi": "Total Realisasi (Rp)",
                 x_axis_val: "Periode",
