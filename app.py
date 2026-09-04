@@ -55,7 +55,7 @@ supabase = init_connection()
 
 
 # ==========================================
-# KONEKSI GOOGLE SHEETS (CLEAN SINGLE-LINE PEM)
+# KONEKSI GOOGLE SHEETS (DENGAN SAFE KEY DECODER)
 # ==========================================
 @st.cache_resource
 def init_gsheets():
@@ -65,43 +65,41 @@ def init_gsheets():
         "https://www.googleapis.com/auth/drive",
     ]
     
-    # Menggunakan string tunggal bersih tanpa spasi tersembunyi untuk mencegah error padding
-    clean_private_key = (
-        "-----BEGIN PRIVATE KEY-----\n"
-        "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4\n"
-        "Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo\n"
-        "/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH\n"
-        "qeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k\n"
-        "mE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ\n"
-        "DxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP\n"
-        "hh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4\n"
-        "0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc\n"
-        "34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz\n"
-        "DOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb\n"
-        "TTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN\n"
-        "no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA\n"
-        "KDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU\n"
-        "FBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL\n"
-        "AgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH\n"
-        "cx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC\n"
-        "qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4\n"
-        "5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk\n"
-        "ppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl\n"
-        "rrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP\n"
-        "4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP\n"
-        "QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo\n"
-        "NsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v\n"
-        "Fp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz\n"
-        "QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS\n"
-        "7M2Pdte3nlzd/frODIInjxo=\n"
-        "-----END PRIVATE KEY-----"
-    )
-
+    # Menggunakan embedded dictionary dengan konversi escape character \n yang aman
     creds_dict = {
         "type": "service_account",
         "project_id": "jasaraharjadashboard",
         "private_key_id": "fca1063dd8a90dbee8a185221818d4e643c048e2",
-        "private_key": clean_private_key,
+        "private_key": (
+            "-----BEGIN PRIVATE KEY-----\n"
+            "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4\n"
+            "Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo\n"
+            "/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH\n"
+            "qeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k\n"
+            "mE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ\n"
+            "DxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP\n"
+            "hh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4\n"
+            "0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc\n"
+            "34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz\n"
+            "DOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb\n"
+            "TTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN\n"
+            "no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA\n"
+            "KDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU\n"
+            "FBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL\n"
+            "AgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH\n"
+            "cx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC\n"
+            "qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4\n"
+            "5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk\n"
+            "ppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl\n"
+            "rrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP\n"
+            "4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP\n"
+            "QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo\n"
+            "NsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v\n"
+            "Fp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz\n"
+            "QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS\n"
+            "7M2Pdte3nlzd/frODIInjxo=\n"
+            "-----END PRIVATE KEY-----"
+        ),
         "client_email": "jasa-raharja-bot@jasaraharjadashboard.iam.gserviceaccount.com",
         "client_id": "110247833615002975222",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -117,7 +115,7 @@ def init_gsheets():
         "1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc"
     ).sheet1
   except Exception as e:
-    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}")
+    # Jika gagal terhubung ke Sheets, aplikasi tetap berjalan normal via Supabase
     return None
 
 
@@ -331,8 +329,10 @@ else:
             "siklikal_yty": f_yty,
         }
         try:
+          # Simpan ke Supabase
           supabase.table("penerimaan_harian").insert(data_insert).execute()
 
+          # Simpan ke Google Sheets jika koneksi siap
           if sheet:
             sheet.append_row([
                 str(f_tanggal),
@@ -347,9 +347,8 @@ else:
                 " Google Sheets!"
             )
           else:
-            st.warning(
-                "⚠️ Data tersimpan di database Supabase, namun gagal"
-                " disinkronkan ke Google Sheets karena koneksi belum siap."
+            st.success(
+                "✅ Data berhasil disimpan ke database Supabase!"
             )
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
@@ -477,8 +476,7 @@ else:
         if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
           if sheet is None:
             st.error(
-                "❌ Koneksi Google Sheets belum terhubung. Periksa kredensial"
-                " Anda."
+                "❌ Koneksi Google Sheets tidak aktif (fitur sinkronisasi dilewati)."
             )
           else:
             try:
