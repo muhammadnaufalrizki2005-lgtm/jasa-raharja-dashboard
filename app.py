@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL CALLBACK BERSIH)
+      # GRAFIK ANALISIS (STACKED BAR DENGAN NATIVE SELECT ALL)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -448,34 +448,21 @@ else:
       all_lokets = sorted(df["loket"].unique())
       all_jenis = sorted(df["jenis_dana"].unique())
 
-      if "ms_loket_key" not in st.session_state:
-        st.session_state.ms_loket_key = all_lokets
-      if "ms_jenis_key" not in st.session_state:
-        st.session_state.ms_jenis_key = all_jenis
-
-      def update_lokets():
-        if "Select all" in st.session_state.ms_loket_key:
-          st.session_state.ms_loket_key = all_lokets
-
-      def update_jenis():
-        if "Select all" in st.session_state.ms_jenis_key:
-          st.session_state.ms_jenis_key = all_jenis
-
       gc1, gc2 = st.columns(2)
       with gc1:
         selected_lokets = st.multiselect(
             "Pilih Wilayah (Loket)",
-            options=["Select all"] + all_lokets,
-            key="ms_loket_key",
-            on_change=update_lokets
+            options=all_lokets,
+            default=all_lokets,
+            key="ms_loket_clean"
         )
 
       with gc2:
         selected_jenis = st.multiselect(
             "Pilih Jenis Dana",
-            options=["Select all"] + all_jenis,
-            key="ms_jenis_key",
-            on_change=update_jenis
+            options=all_jenis,
+            default=all_jenis,
+            key="ms_jenis_clean"
         )
 
       df_c = df.copy()
