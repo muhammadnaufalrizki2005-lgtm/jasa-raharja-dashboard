@@ -330,19 +330,26 @@ else:
           )
 
       elif mode_waktu == "Bulanan":
-        all_months = sorted(df["Bulan"].unique(), reverse=True)
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-          start_bln = st.selectbox(
-              "Dari Bulan", all_months, index=len(all_months) - 1, key="start_bln"
-          )
-        with col_m2:
-          end_bln = st.selectbox(
-              "Sampai Bulan",
-              all_months,
-              index=0,
-              key="end_bln",
-          )
+        all_years_list = sorted(df["Tahun"].unique())
+        month_names = {
+            "01": "Januari", "02": "Februari", "03": "Maret", "04": "April",
+            "05": "Mei", "06": "Juni", "07": "Juli", "08": "Agustus",
+            "09": "September", "10": "Oktober", "11": "November", "12": "Desember"
+        }
+        all_months_num = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+
+        mc1, mc2, mc3, mc4 = st.columns(4)
+        with mc1:
+          start_y = st.selectbox("Dari Tahun", all_years_list, index=0, key="s_y")
+        with mc2:
+          start_m = st.selectbox("Dari Bulan", all_months_num, format_func=lambda x: month_names[x], index=0, key="s_m")
+        with mc3:
+          end_y = st.selectbox("Sampai Tahun", all_years_list, index=len(all_years_list)-1, key="e_y")
+        with mc4:
+          end_m = st.selectbox("Sampai Bulan", all_months_num, format_func=lambda x: month_names[x], index=11, key="e_m")
+
+        start_bln = f"{start_y}-{start_m}"
+        end_bln = f"{end_y}-{end_m}"
 
         if start_bln > end_bln:
           start_bln, end_bln = end_bln, start_bln
@@ -355,22 +362,15 @@ else:
             .mean()
             .reset_index()
         )
-        st.info(f"Menampilkan Rata-rata Bulan: **{start_bln} s.d. {end_bln}**")
+        st.info(f"Menampilkan Rata-rata Bulan: **{month_names[start_m]} {start_y} s.d. {month_names[end_m]} {end_y}**")
 
       else:
-        all_years = sorted(df["Tahun"].unique(), reverse=True)
-        col_y1, col_y2 = st.columns(2)
-        with col_y1:
-          start_thn = st.selectbox(
-              "Dari Tahun", all_years, index=len(all_years) - 1, key="start_thn"
-          )
-        with col_y2:
-          end_thn = st.selectbox(
-              "Sampai Tahun",
-              all_years,
-              index=0,
-              key="end_thn",
-          )
+        all_years_list = sorted(df["Tahun"].unique())
+        yc1, yc2 = st.columns(2)
+        with yc1:
+          start_thn = st.selectbox("Dari Tahun", all_years_list, index=0, key="start_thn")
+        with yc2:
+          end_thn = st.selectbox("Sampai Tahun", all_years_list, index=len(all_years_list)-1, key="end_thn")
 
         if start_thn > end_thn:
           start_thn, end_thn = end_thn, start_thn
@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STRICT FILTER & TERBARU DI ATAS)
+      # GRAFIK ANALISIS (STRICT FILTER)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
