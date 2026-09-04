@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL CALLBACK)
+      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL CALLBACK BERSIH)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -448,31 +448,34 @@ else:
       all_lokets = sorted(df["loket"].unique())
       all_jenis = sorted(df["jenis_dana"].unique())
 
-      def handle_loket_change():
-        if "Select all" in st.session_state.ms_loket_box:
-          st.session_state.ms_loket_box = all_lokets
+      if "ms_loket_key" not in st.session_state:
+        st.session_state.ms_loket_key = all_lokets
+      if "ms_jenis_key" not in st.session_state:
+        st.session_state.ms_jenis_key = all_jenis
 
-      def handle_jenis_change():
-        if "Select all" in st.session_state.ms_jenis_box:
-          st.session_state.ms_jenis_box = all_jenis
+      def update_lokets():
+        if "Select all" in st.session_state.ms_loket_key:
+          st.session_state.ms_loket_key = all_lokets
+
+      def update_jenis():
+        if "Select all" in st.session_state.ms_jenis_key:
+          st.session_state.ms_jenis_key = all_jenis
 
       gc1, gc2 = st.columns(2)
       with gc1:
         selected_lokets = st.multiselect(
             "Pilih Wilayah (Loket)",
             options=["Select all"] + all_lokets,
-            default=all_lokets,
-            key="ms_loket_box",
-            on_change=handle_loket_change
+            key="ms_loket_key",
+            on_change=update_lokets
         )
 
       with gc2:
         selected_jenis = st.multiselect(
             "Pilih Jenis Dana",
             options=["Select all"] + all_jenis,
-            default=all_jenis,
-            key="ms_jenis_box",
-            on_change=handle_jenis_change
+            key="ms_jenis_key",
+            on_change=update_jenis
         )
 
       df_c = df.copy()
