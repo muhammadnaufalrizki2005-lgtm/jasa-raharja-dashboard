@@ -330,17 +330,17 @@ else:
           )
 
       elif mode_waktu == "Bulanan":
-        all_months = sorted(df["Bulan"].unique())
+        all_months = sorted(df["Bulan"].unique(), reverse=True)
         col_m1, col_m2 = st.columns(2)
         with col_m1:
           start_bln = st.selectbox(
-              "Dari Bulan", all_months, index=0, key="start_bln"
+              "Dari Bulan", all_months, index=len(all_months) - 1, key="start_bln"
           )
         with col_m2:
           end_bln = st.selectbox(
               "Sampai Bulan",
               all_months,
-              index=len(all_months) - 1,
+              index=0,
               key="end_bln",
           )
 
@@ -358,17 +358,17 @@ else:
         st.info(f"Menampilkan Rata-rata Bulan: **{start_bln} s.d. {end_bln}**")
 
       else:
-        all_years = sorted(df["Tahun"].unique())
+        all_years = sorted(df["Tahun"].unique(), reverse=True)
         col_y1, col_y2 = st.columns(2)
         with col_y1:
           start_thn = st.selectbox(
-              "Dari Tahun", all_years, index=0, key="start_thn"
+              "Dari Tahun", all_years, index=len(all_years) - 1, key="start_thn"
           )
         with col_y2:
           end_thn = st.selectbox(
               "Sampai Tahun",
               all_years,
-              index=len(all_years) - 1,
+              index=0,
               key="end_thn",
           )
 
@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STRICT FILTER / KOSONG JIKA TIDAK DIPILIH)
+      # GRAFIK ANALISIS (STRICT FILTER & TERBARU DI ATAS)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -480,7 +480,6 @@ else:
         df_c = df_c[(df_c["Tahun"] >= start_thn) & (df_c["Tahun"] <= end_thn)]
         x_axis_val = "Tahun"
 
-      # Jika multiselect kosong, filter akan mengosongkan dataframe (grafik kosong)
       df_c = df_c[df_c["loket"].isin(selected_lokets)]
       df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
