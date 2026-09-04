@@ -55,7 +55,7 @@ supabase = init_connection()
 
 
 # ==========================================
-# KONEKSI GOOGLE SHEETS (STABLE LIST-BASED PEM)
+# KONEKSI GOOGLE SHEETS (CLEAN SINGLE-LINE PEM)
 # ==========================================
 @st.cache_resource
 def init_gsheets():
@@ -65,43 +65,43 @@ def init_gsheets():
         "https://www.googleapis.com/auth/drive",
     ]
     
-    # Menyusun baris privat key secara terstruktur untuk mencegah error padding/simbol 61
-    pk_lines = [
-        "-----BEGIN PRIVATE KEY-----",
-        "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4",
-        "Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo",
-        "/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH",
-        "qeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k",
-        "mE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ",
-        "DxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP",
-        "hh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4",
-        "0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc",
-        "34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz",
-        "DOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb",
-        "TTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN",
-        "no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA",
-        "KDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU",
-        "FBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL",
-        "AgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH",
-        "cx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC",
-        "qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4",
-        "5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk",
-        "ppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl",
-        "rrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP",
-        "4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP",
-        "QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo",
-        "NsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v",
-        "Fp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz",
-        "QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS",
-        "7M2Pdte3nlzd/frODIInjxo=",
+    # Menggunakan string tunggal bersih tanpa spasi tersembunyi untuk mencegah error padding
+    clean_private_key = (
+        "-----BEGIN PRIVATE KEY-----\n"
+        "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4\n"
+        "Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo\n"
+        "/VpDy+WX5wKyjmy7zDw+sijZoZhu1+BHxsKO8QQkVp5cI3/zZ2tiXApp3r0D82uH\n"
+        "qeb4dPdMUd6qp2C897mHKIeQ6H0NsWKreW1X7EdohohLl4Am+jjRRRqd1ooae77k\n"
+        "mE52dvkNVYVWaOAXz+SGbDEOcVenXJNh5t0TAAHojg4cM2MLSQmOb1Br/L6ZQDxQ\n"
+        "DxP8gvQCViW/iTTNCKY7QSyw15R5PXVRiJadvYlTHmS4Vlttlt11U+zNSRRNCAeP\n"
+        "hh0NB2EHAgMBAAECggEABi4hhGTBiP3t3R3CFclzfM7UMw3617QXjIg0naC5z7q4\n"
+        "0LHZTjgVYtC6p6b/WmVYPbLcPT1HOynXSKyl+T1SIPFunWQDMiJAKlBxqtbHVHFc\n"
+        "34OEKqkQ958BVs43K68c4m99Gmb2DSzSr0j8bqHPxXYrHhrYd2l9R0l37aTENvnz\n"
+        "DOlnc14FjbhGU3z3f4iabz5RgqvmNKTD4B5rNNLtAzUUA1vTFlLrAg3CgVprJsgb\n"
+        "TTLnNwSwTd0loXTW4D5qxUxN/ir6o306os23bo3teDUuCbPrjWXOWqyg7ol2i2bN\n"
+        "no5ElSwQgJ0SdM3WCf3Jm4PSK7n55m+mN3NL/HZppoQKBgQD19qyb8Fl0jRuIJ3RA\n"
+        "KDXkKvl0nshrhVGzwseK1NRF5XxJSXvDcbMVmDzbPqi3UgoOoiPnrbPOTFtJ/XlU\n"
+        "FBcTmucTRG2Tgw1MYf1DRw0JG3uc0m8F1c7ROipdeFQY0Dw8OoofMG4Vi0pGq2zL\n"
+        "AgOutkkrLX3KPKv0rZjQS8LLuQKBgQDZHX+/TLjj3RIa8xBTXugHky+rVNudNGFH\n"
+        "cx1ZRTR5DaKJZj6PEq6r/pm/Ei9aWAJYIeCIpNAdUKNbzxnO0Rm8HqkN9nSrIgLC\n"
+        "qn5CQPfFs/Jg/emR6thMLdXrpFxcjM2wcmqvEb2wwAhEZX37cz9PAHd8TbICSar4\n"
+        "5QalfkFyvwKBgBXNLJWR40v6afNSk/JP3h8AVCYrINau9YP6gtdicAJWCgMw+UBk\n"
+        "ppwGZ3aDgk7lfbC4XHhfpC1oBTt0tTlnongBZfQGP7QwjJA1q044UQZ6oiVPXbnl\n"
+        "rrRK9JBeZw3f/0bTZYTINSnBs+65qSYBYrQswiWKnbi8Uf2ZGY9096o5AoGAP2bP\n"
+        "4UtESrZKDTihsdbrJxsiNoQnRbcAGV9SWLlO43LJ3hnPdvRbsbo9p4Bl95nvxVDP\n"
+        "QtfuNkFQEwVdYfnJ7BeAAqXP2BGsgLBNAof6Uu+DfjNnu8a6tzRDXfa3SgeMIVSo\n"
+        "NsuVe0H4qBCDQ6SZ/jYCrnf53ZUpqlknIbjG3/0CgYEAuIR1pPrU853azsppfr5v\n"
+        "Fp4X43Xaru9NDw7rZY+PbxIBbSHA0tOn9Ktu7cXzJPcaK9zjNkLrzgYoTa8x6pSz\n"
+        "QIypdDklgH+WMQjdEmQrOiOImW6wSYwpS1pHSgUpPL5fPwTY8nP1EEdhHri3IqaS\n"
+        "7M2Pdte3nlzd/frODIInjxo=\n"
         "-----END PRIVATE KEY-----"
-    ]
-    
+    )
+
     creds_dict = {
         "type": "service_account",
         "project_id": "jasaraharjadashboard",
         "private_key_id": "fca1063dd8a90dbee8a185221818d4e643c048e2",
-        "private_key": "\n".join(pk_lines),
+        "private_key": clean_private_key,
         "client_email": "jasa-raharja-bot@jasaraharjadashboard.iam.gserviceaccount.com",
         "client_id": "110247833615002975222",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
