@@ -241,6 +241,9 @@ else:
         f_realisasi = st.number_input(
             "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
         )
+        # Bantuan pembacaan format Rupiah secara live
+        f_realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
+        st.caption(f"💡 Terbaca: **{f_realisasi_str}**")
 
       col3, col4 = st.columns(2)
       with col3:
@@ -270,11 +273,10 @@ else:
           try:
             supabase.table("penerimaan_harian").insert(data_insert).execute()
             st.session_state.toast_count += 1
-            realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
             st.toast(
                 f"[{st.session_state.toast_count}] Data berhasil disimpan!"
                 f" Loket: {f_loket} | Jenis: {f_jenis} | Realisasi:"
-                f" {realisasi_str}",
+                f" {f_realisasi_str}",
                 icon="✅",
             )
             st.rerun()
