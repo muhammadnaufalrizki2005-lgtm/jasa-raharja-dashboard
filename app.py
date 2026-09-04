@@ -231,7 +231,6 @@ else:
             ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
         )
       with col2:
-        # Pilihan Total Penerimaan ditiadakan agar dihitung otomatis dari komponen rincian
         f_jenis = st.selectbox(
             "Jenis Dana",
             ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
@@ -451,32 +450,30 @@ else:
 
       gc1, gc2 = st.columns(2)
       with gc1:
-        pilih_semua_loket = st.checkbox("Pilih Semua Wilayah", value=True)
-        if pilih_semua_loket:
-          selected_lokets = st.multiselect(
-              "Pilih Wilayah (Loket)",
-              options=all_lokets,
-              default=all_lokets,
-              key="ms_loket",
-          )
-        else:
-          selected_lokets = st.multiselect(
-              "Pilih Wilayah (Loket)", options=all_lokets, default=[], key="ms_loket"
-          )
+        if "ms_loket" not in st.session_state:
+          st.session_state.ms_loket = all_lokets
+
+        def toggle_all_loket():
+          if st.session_state.chk_all_loket:
+            st.session_state.ms_loket = all_lokets
+          else:
+            st.session_state.ms_loket = []
+
+        pilih_semua_loket = st.checkbox("Pilih Semua Wilayah", value=True, key="chk_all_loket", on_change=toggle_all_loket)
+        selected_lokets = st.multiselect("Pilih Wilayah (Loket)", options=all_lokets, key="ms_loket")
 
       with gc2:
-        pilih_semua_jenis = st.checkbox("Pilih Semua Jenis Dana", value=True)
-        if pilih_semua_jenis:
-          selected_jenis = st.multiselect(
-              "Pilih Jenis Dana",
-              options=all_jenis,
-              default=all_jenis,
-              key="ms_jenis",
-          )
-        else:
-          selected_jenis = st.multiselect(
-              "Pilih Jenis Dana", options=all_jenis, default=[], key="ms_jenis"
-          )
+        if "ms_jenis" not in st.session_state:
+          st.session_state.ms_jenis = all_jenis
+
+        def toggle_all_jenis():
+          if st.session_state.chk_all_jenis:
+            st.session_state.ms_jenis = all_jenis
+          else:
+            st.session_state.ms_jenis = []
+
+        pilih_semua_jenis = st.checkbox("Pilih Semua Jenis Dana", value=True, key="chk_all_jenis", on_change=toggle_all_jenis)
+        selected_jenis = st.multiselect("Pilih Jenis Dana", options=all_jenis, key="ms_jenis")
 
       df_c = df.copy()
       if mode_waktu == "Harian":
@@ -513,7 +510,7 @@ else:
             x=x_axis_val,
             y="realisasi",
             color="Kategori",
-            barmode="stack",  # Menggabungkan batang per periode menjadi 1 kolom bertumpuk yang bersih
+            barmode="stack",
             labels={
                 "realisasi": "Total Realisasi (Rp)",
                 x_axis_val: "Periode",
