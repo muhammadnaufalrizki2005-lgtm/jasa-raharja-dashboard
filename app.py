@@ -65,7 +65,7 @@ def init_gsheets():
         "https://www.googleapis.com/auth/drive",
     ]
     
-    # Private key menggunakan multiline string murni tanpa backslash (\)
+    # Menggunakan triple quotes agar baris baru terbaca murni tanpa escape code
     private_key_content = """-----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDQmm/+6MkR+wG4
 Uirl+hQ+J2ZAGf8SPwtfi4zW0x8zNAUNm6DKglttzugmYblGES0cDIeBJaBoqRZo
