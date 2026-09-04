@@ -61,7 +61,8 @@ def init_gsheets():
     return client.open_by_url(
         "https://docs.google.com/spreadsheets/d/1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc/edit?usp=sharing"
     ).sheet1
-  except Exception:
+  except Exception as e:
+    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}")
     return None
 
 
@@ -398,13 +399,13 @@ else:
       st.markdown("### 📋 Rekapitulasi Data")
       st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
 
-      # Sinkronisasi Data Lama ke Google Sheets dengan Penanganan Error API
+      # Sinkronisasi Data Lama ke Google Sheets dengan Diagnostik Error
       with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
         if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
           if sheet is None:
             st.error(
-                "❌ Koneksi ke Google Sheets gagal. Pastikan Google Sheets API"
-                " & Google Drive API sudah diaktifkan di Google Cloud Console."
+                "❌ Koneksi Google Sheets bernilai None. Lihat pesan error merah"
+                " di bagian atas untuk detail kesalahan koneksi."
             )
           else:
             try:
@@ -430,7 +431,7 @@ else:
               else:
                 st.warning("Tidak ada data di database untuk disinkronkan.")
             except Exception as e:
-              st.error(f"❌ Gagal sinkronisasi: {e}")
+              st.error(f"❌ Gagal saat memasukkan data ke Sheets: {e}")
 
       # Fitur Audit & Deteksi Anomali
       st.markdown("---")
