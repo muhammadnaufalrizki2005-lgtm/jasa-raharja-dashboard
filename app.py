@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STACKED BAR DENGAN NATIVE SELECT ALL)
+      # GRAFIK ANALISIS (STRICT FILTER / KOSONG JIKA TIDAK DIPILIH)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -480,10 +480,9 @@ else:
         df_c = df_c[(df_c["Tahun"] >= start_thn) & (df_c["Tahun"] <= end_thn)]
         x_axis_val = "Tahun"
 
-      if selected_lokets:
-        df_c = df_c[df_c["loket"].isin(selected_lokets)]
-      if selected_jenis:
-        df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
+      # Jika multiselect kosong, filter akan mengosongkan dataframe (grafik kosong)
+      df_c = df_c[df_c["loket"].isin(selected_lokets)]
+      df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
       if not df_c.empty:
         df_chart_agg = (
@@ -520,7 +519,7 @@ else:
         )
         st.plotly_chart(fig, use_container_width=True)
       else:
-        st.warning("Tidak ada data untuk kombinasi filter yang dipilih.")
+        st.warning("Silakan pilih minimal satu wilayah dan jenis dana untuk menampilkan grafik.")
 
     else:
       st.warning("Belum ada data di dalam database.")
