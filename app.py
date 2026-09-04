@@ -50,7 +50,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==========================================
-# KONEKSI GOOGLE SHEETS (DENGAN PEMBERSIH PEM OTOMATIS)
+# KONEKSI GOOGLE SHEETS VIA FILE service_account.json
 # ==========================================
 @st.cache_resource
 def init_gsheets():
@@ -59,22 +59,13 @@ def init_gsheets():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    
-    creds_dict = dict(st.secrets["gcp_service_account"])
-    
-    # Pembersihan otomatis format private key agar bebas error padding/PEM
-    pk = creds_dict["private_key"]
-    pk = pk.strip().strip('"').strip("'")
-    if "\\n" in pk:
-      pk = pk.replace("\\n", "\n")
-    creds_dict["private_key"] = pk
-
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    # Membaca langsung file service_account.json dari repositori GitHub
+    creds = Credentials.from_service_account_file("service_account.json", scopes=scope)
     client = gspread.authorize(creds)
     
     return client.open_by_key("1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc").sheet1
   except Exception as e:
-    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}")
+    st.error(f"❌ DETAIL ERROR GOOGLE SHEETS: {e}. Pastikan file 'service_account.json' sudah diunggah ke folder utama GitHub Anda.")
     return None
 
 sheet = init_gsheets()
@@ -293,7 +284,7 @@ else:
             ])
             st.success("✅ Data berhasil disimpan ke database & disinkronkan ke Google Sheets!")
           else:
-             st.warning("⚠️ Data tersimpan di database Supabase, namun gagal disinkronkan ke Google Sheets karena koneksi bermasalah.")
+             st.warning("⚠️ Data tersimpan di database Supabase, namun gagal disinkronkan ke Google Sheets karena koneksi belum siap.")
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
@@ -390,7 +381,7 @@ else:
       with st.expander("⚙️ Pengaturan & Sinkronisasi Google Sheets"):
         if st.button("🔄 Sinkronkan Semua Data Lama ke Google Sheets"):
           if sheet is None:
-            st.error("❌ Koneksi Google Sheets belum terhubung. Periksa kredensial Secrets Anda.")
+            st.error("❌ Koneksi Google Sheets belum terhubung. Periksa kembali file 'service_account.json' di GitHub.")
           else:
             try:
               all_data = supabase.table("penerimaan_harian").select("*").execute()
