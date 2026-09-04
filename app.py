@@ -457,7 +457,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STRICT FILTER)
+      # GRAFIK ANALISIS (TOTAL / 1 WARNA SERAGAM)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -501,27 +501,22 @@ else:
       df_c = df_c[df_c["jenis_dana"].isin(selected_jenis)]
 
       if not df_c.empty:
+        # Ditotal per periode sehingga menghasilkan 1 batang tunggal
         df_chart_agg = (
-            df_c.groupby([x_axis_val, "loket", "jenis_dana"])["realisasi"]
+            df_c.groupby(x_axis_val)["realisasi"]
             .sum()
             .reset_index()
-        )
-        df_chart_agg["Kategori"] = (
-            df_chart_agg["loket"] + " - " + df_chart_agg["jenis_dana"]
         )
 
         fig = px.bar(
             df_chart_agg,
             x=x_axis_val,
             y="realisasi",
-            color="Kategori",
-            barmode="stack",
             labels={
                 "realisasi": "Total Realisasi (Rp)",
                 x_axis_val: "Periode",
-                "Kategori": "Wilayah & Jenis Dana",
             },
-            color_discrete_sequence=px.colors.qualitative.Bold,
+            color_discrete_sequence=["#005ba8"],  # Warna biru seragam
         )
         fig.update_layout(
             plot_bgcolor="rgba(0,0,0,0)",
@@ -529,9 +524,7 @@ else:
             margin=dict(l=20, r=20, t=10, b=20),
             xaxis=dict(showgrid=False, type="category"),
             yaxis=dict(showgrid=True, gridcolor="#e5e5e5"),
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-            ),
+            showlegend=False,
         )
         st.plotly_chart(fig, use_container_width=True)
       else:
