@@ -250,19 +250,26 @@ else:
       submit_button = st.form_submit_button("💾 Simpan Data")
 
       if submit_button:
-        data_insert = {
-            "tanggal": str(f_tanggal),
-            "loket": f_loket,
-            "jenis_dana": f_jenis,
-            "realisasi": f_realisasi,
-            "prosentase_siklikal": f_siklikal,
-            "siklikal_yty": f_yty,
-        }
-        try:
-          supabase.table("penerimaan_harian").insert(data_insert).execute()
-          st.toast("Data berhasil disimpan ke database!", icon="✅")
-        except Exception as e:
-          st.error(f"❌ Gagal menyimpan data: {e}")
+        if f_realisasi <= 0:
+          st.error(
+              "❌ Field Realisasi (Rp) tidak boleh 0 atau kosong. Harap isi"
+              " nilai realisasi dengan benar!"
+          )
+        else:
+          data_insert = {
+              "tanggal": str(f_tanggal),
+              "loket": f_loket,
+              "jenis_dana": f_jenis,
+              "realisasi": f_realisasi,
+              "prosentase_siklikal": f_siklikal,
+              "siklikal_yty": f_yty,
+          }
+          try:
+            supabase.table("penerimaan_harian").insert(data_insert).execute()
+            st.toast("Data berhasil disimpan ke database!", icon="✅")
+            st.rerun()
+          except Exception as e:
+            st.error(f"❌ Gagal menyimpan data: {e}")
 
     # VERIFIKASI LANGSUNG (LIVE PREVIEW)
     st.markdown("---")
