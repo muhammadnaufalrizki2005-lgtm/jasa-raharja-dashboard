@@ -1,5 +1,7 @@
 import base64
 from datetime import date
+import json
+import tempfile
 from PIL import Image
 from google.oauth2.service_account import Credentials
 import gspread
@@ -55,7 +57,7 @@ supabase = init_connection()
 
 
 # ==========================================
-# KONEKSI GOOGLE SHEETS (FIXED PRIVATE KEY)
+# KONEKSI GOOGLE SHEETS (TEMPORARY FILE FIX)
 # ==========================================
 @st.cache_resource
 def init_gsheets():
@@ -65,7 +67,7 @@ def init_gsheets():
         "https://www.googleapis.com/auth/drive",
     ]
     
-    creds_dict = {
+    creds_data = {
         "type": "service_account",
         "project_id": "jasaraharjadashboard",
         "private_key_id": "fca1063dd8a90dbee8a185221818d4e643c048e2",
@@ -108,7 +110,11 @@ def init_gsheets():
         "universe_domain": "googleapis.com"
     }
 
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+      json.dump(creds_data, f)
+      temp_filename = f.name
+
+    creds = Credentials.from_service_account_file(temp_filename, scopes=scope)
     client = gspread.authorize(creds)
     return client.open_by_key(
         "1Qs0gqCmq83_GgeA1pBmdDv58rJuXYuFWqscmZurlCdc"
