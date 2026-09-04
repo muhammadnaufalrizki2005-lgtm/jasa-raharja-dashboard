@@ -64,6 +64,9 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
 
+if "toast_count" not in st.session_state:
+  st.session_state.toast_count = 0
+
 css_base = """
     <style>
     .stApp { background-color: #f8f9fa; }
@@ -266,10 +269,12 @@ else:
           }
           try:
             supabase.table("penerimaan_harian").insert(data_insert).execute()
+            st.session_state.toast_count += 1
             realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
             st.toast(
-                f"Data berhasil disimpan! Loket: {f_loket} | Jenis: {f_jenis} |"
-                f" Realisasi: {realisasi_str}",
+                f"[{st.session_state.toast_count}] Data berhasil disimpan!"
+                f" Loket: {f_loket} | Jenis: {f_jenis} | Realisasi:"
+                f" {realisasi_str}",
                 icon="✅",
             )
             st.rerun()
