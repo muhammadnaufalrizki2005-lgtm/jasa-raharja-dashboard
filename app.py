@@ -231,9 +231,10 @@ else:
             ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
         )
       with col2:
+        # Pilihan Total Penerimaan ditiadakan agar dihitung otomatis dari komponen rincian
         f_jenis = st.selectbox(
             "Jenis Dana",
-            ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda", "Total Penerimaan"],
+            ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
         )
         f_realisasi = st.number_input(
             "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
@@ -265,7 +266,7 @@ else:
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
 
-    # VERIFIKASI LANGSUNG (PENGGANTI GOOGLE SHEETS)
+    # VERIFIKASI LANGSUNG (LIVE PREVIEW)
     st.markdown("---")
     st.markdown("### 👀 Verifikasi Input Terbaru")
     st.caption("Cek tabel di bawah ini untuk memastikan nilai realisasi yang baru diinput sudah benar (tidak salah ketik).")
@@ -512,7 +513,7 @@ else:
             x=x_axis_val,
             y="realisasi",
             color="Kategori",
-            barmode="stack",  # Menggabungkan batang per periode menjadi 1 kolom bertumpuk
+            barmode="stack",  # Menggabungkan batang per periode menjadi 1 kolom bertumpuk yang bersih
             labels={
                 "realisasi": "Total Realisasi (Rp)",
                 x_axis_val: "Periode",
