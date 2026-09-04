@@ -64,9 +64,6 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
 
-if "recent_submits" not in st.session_state:
-  st.session_state.recent_submits = []
-
 css_base = """
     <style>
     .stApp { background-color: #f8f9fa; }
@@ -225,11 +222,6 @@ else:
   # TAMPILAN: PETUGAS SAMSAT (INPUT DATA + LIVE PREVIEW)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
-    # Menampilkan riwayat verifikasi yang bertumpuk (terbaru di atas)
-    if st.session_state.recent_submits:
-      for sub_msg in st.session_state.recent_submits:
-        st.success(sub_msg)
-
     with st.form("form_penerimaan"):
       col1, col2 = st.columns(2)
       with col1:
@@ -275,11 +267,11 @@ else:
           try:
             supabase.table("penerimaan_harian").insert(data_insert).execute()
             realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
-            msg = (
-                f"✅ Data berhasil disimpan! Loket: **{f_loket}** | Jenis:"
-                f" **{f_jenis}** | Realisasi: **{realisasi_str}**"
+            st.toast(
+                f"Data berhasil disimpan! Loket: {f_loket} | Jenis: {f_jenis} |"
+                f" Realisasi: {realisasi_str}",
+                icon="✅",
             )
-            st.session_state.recent_submits.insert(0, msg)
             st.rerun()
           except Exception as e:
             st.error(f"❌ Gagal menyimpan data: {e}")
