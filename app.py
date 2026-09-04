@@ -64,6 +64,9 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
 
+if "success_msg" not in st.session_state:
+  st.session_state.success_msg = ""
+
 css_base = """
     <style>
     .stApp { background-color: #f8f9fa; }
@@ -222,6 +225,10 @@ else:
   # TAMPILAN: PETUGAS SAMSAT (INPUT DATA + LIVE PREVIEW)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
+    if st.session_state.success_msg:
+      st.success(st.session_state.success_msg)
+      st.session_state.success_msg = ""  # Bersihkan pesan setelah ditampilkan
+
     with st.form("form_penerimaan"):
       col1, col2 = st.columns(2)
       with col1:
@@ -260,7 +267,9 @@ else:
         }
         try:
           supabase.table("penerimaan_harian").insert(data_insert).execute()
-          st.success("✅ Data berhasil disimpan ke database!")
+          st.session_state.success_msg = (
+              "✅ Data berhasil disimpan ke database!"
+          )
           st.rerun()
         except Exception as e:
           st.error(f"❌ Gagal menyimpan data: {e}")
