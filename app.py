@@ -440,7 +440,7 @@ else:
             st.success("✅ Aman")
 
       # ==========================================
-      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL)
+      # GRAFIK ANALISIS (STACKED BAR DENGAN SELECT ALL CALLBACK)
       # ==========================================
       st.markdown("---")
       st.markdown("### 📉 Grafik Tren Penerimaan & Analisis Multi-Indikator")
@@ -448,30 +448,32 @@ else:
       all_lokets = sorted(df["loket"].unique())
       all_jenis = sorted(df["jenis_dana"].unique())
 
+      def handle_loket_change():
+        if "Select all" in st.session_state.ms_loket_box:
+          st.session_state.ms_loket_box = all_lokets
+
+      def handle_jenis_change():
+        if "Select all" in st.session_state.ms_jenis_box:
+          st.session_state.ms_jenis_box = all_jenis
+
       gc1, gc2 = st.columns(2)
       with gc1:
-        selected_loket_raw = st.multiselect(
+        selected_lokets = st.multiselect(
             "Pilih Wilayah (Loket)",
             options=["Select all"] + all_lokets,
             default=all_lokets,
-            key="ms_loket_box"
+            key="ms_loket_box",
+            on_change=handle_loket_change
         )
-        if "Select all" in selected_loket_raw or not selected_loket_raw:
-          selected_lokets = all_lokets
-        else:
-          selected_lokets = selected_loket_raw
 
       with gc2:
-        selected_jenis_raw = st.multiselect(
+        selected_jenis = st.multiselect(
             "Pilih Jenis Dana",
             options=["Select all"] + all_jenis,
             default=all_jenis,
-            key="ms_jenis_box"
+            key="ms_jenis_box",
+            on_change=handle_jenis_change
         )
-        if "Select all" in selected_jenis_raw or not selected_jenis_raw:
-          selected_jenis = all_jenis
-        else:
-          selected_jenis = selected_jenis_raw
 
       df_c = df.copy()
       if mode_waktu == "Harian":
