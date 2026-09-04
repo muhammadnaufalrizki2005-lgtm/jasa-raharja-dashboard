@@ -274,10 +274,10 @@ else:
     # VERIFIKASI LANGSUNG (LIVE PREVIEW)
     st.markdown("---")
     st.markdown("### 👀 Verifikasi Input Terbaru")
-    st.caption("Cek tabel di bawah ini untuk memastikan nilai realisasi yang baru diinput sudah benar (tidak salah ketik).")
+    st.caption("Data yang baru saja diinput akan langsung muncul di baris paling atas.")
     
     try:
-      res_recent = supabase.table("penerimaan_harian").select("*").order("id", desc=True).limit(10).execute()
+      res_recent = supabase.table("penerimaan_harian").select("*").order("id", desc=True).limit(5).execute()
       df_recent = pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
       if not df_recent.empty:
         df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
