@@ -110,9 +110,11 @@ if "toast_count" not in st.session_state:
   st.session_state.toast_count = 0
 
 # ==========================================
-# GAYA UI KORPORAT JASA RAHARJA (CLEAN & PROFESSIONAL)
+# TAMPILAN HALAMAN LOGIN
 # ==========================================
-css_base = """
+if not st.session_state.logged_in:
+  st.markdown(
+      """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
@@ -122,14 +124,12 @@ css_base = """
         color: #1a1a1a;
     }
     
-    /* Sembunyikan elemen bawaan Streamlit */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
     .stHeadingAnchor { display: none !important; }
 
-    /* Kustomisasi Tombol Primary (Biru Jasa Raharja) */
     button[kind="primary"] {
         background-color: #005ba8 !important;
         border-color: #005ba8 !important;
@@ -145,7 +145,6 @@ css_base = """
         box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2) !important;
     }
 
-    /* Container Card Style untuk Form */
     div[data-testid="stForm"] {
         background-color: #ffffff;
         border: 1px solid #eaedf2;
@@ -154,59 +153,17 @@ css_base = """
         box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
     }
 
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 24px;
-        border-bottom: 2px solid #eaedf2;
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+        overflow: hidden !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        background-color: #f4f7fc;
     }
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: nowrap;
-        background-color: transparent;
-        border-radius: 0;
-        font-weight: 600;
-        color: #6c757d;
-        padding: 0 4px;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #005ba8 !important;
-        border-bottom: 3px solid #005ba8 !important;
-        background-color: transparent !important;
-    }
-
-    /* DataFrame Polish */
-    [data-testid="stDataFrame"] {
-        border: 1px solid #eaedf2;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-    }
-    
-    [data-testid="stDataFrame"] > div:hover {
-        box-shadow: none !important;
-    }
+    ::-webkit-scrollbar { display: none !important; width: 0px !important; }
 
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
-"""
-
-# ==========================================
-# TAMPILAN HALAMAN LOGIN
-# ==========================================
-if not st.session_state.logged_in:
-  st.markdown(
-      css_base
-      + """
-        <style>
-        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-            overflow: hidden !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
-            background-color: #f4f7fc;
-        }
-        ::-webkit-scrollbar { display: none !important; width: 0px !important; }
-        </style>
     """,
       unsafe_allow_html=True,
   )
@@ -283,16 +240,84 @@ if not st.session_state.logged_in:
 # ==========================================
 else:
   st.markdown(
-      css_base
-      + """
-      <style>
-      html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-          overflow: auto !important;
-          height: auto !important;
-          background-color: #ffffff;
-      }
-      </style>
-  """,
+      """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    .stApp { 
+        background-color: #ffffff; 
+        font-family: 'Inter', sans-serif;
+        color: #1a1a1a;
+    }
+    
+    [data-testid="stHeader"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stSidebar"] { display: none !important; }
+    .stHeadingAnchor { display: none !important; }
+
+    button[kind="primary"] {
+        background-color: #005ba8 !important;
+        border-color: #005ba8 !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        padding: 8px 24px !important;
+        transition: all 0.3s ease !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #004580 !important;
+        border-color: #004580 !important;
+        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2) !important;
+    }
+
+    div[data-testid="stForm"] {
+        background-color: #ffffff;
+        border: 1px solid #eaedf2;
+        border-radius: 12px;
+        padding: 32px 24px;
+        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+        border-bottom: 2px solid #eaedf2;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: nowrap;
+        background-color: transparent;
+        border-radius: 0;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 0 4px;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #005ba8 !important;
+        border-bottom: 3px solid #005ba8 !important;
+        background-color: transparent !important;
+    }
+
+    [data-testid="stDataFrame"] {
+        border: 1px solid #eaedf2;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+    [data-testid="stDataFrame"] > div:hover {
+        box-shadow: none !important;
+    }
+
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+        overflow: auto !important;
+        height: auto !important;
+        background-color: #ffffff;
+    }
+
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """,
       unsafe_allow_html=True,
   )
 
