@@ -216,13 +216,14 @@ if not st.session_state.logged_in:
         login_button = st.form_submit_button("Login")
 
         if login_button:
-          if username.lower() == "petugas" and password == "123456":
+          # Sandi baru yang aman dan tidak terdeteksi breach oleh Google
+          if username.lower() == "petugas" and password == "SamsatDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
             st.query_params["logged_in"] = "true"
             st.query_params["role"] = "Petugas SAMSAT"
             st.rerun()
-          elif username.lower() == "pimpinan" and password == "123456":
+          elif username.lower() == "pimpinan" and password == "PimpinanDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Pimpinan"
             st.query_params["logged_in"] = "true"
