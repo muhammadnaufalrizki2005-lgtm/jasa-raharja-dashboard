@@ -182,7 +182,6 @@ css_base = """
 
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    </style>
 """
 
 # ==========================================
