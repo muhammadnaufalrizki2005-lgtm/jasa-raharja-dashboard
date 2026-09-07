@@ -249,7 +249,7 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT)
+  # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT DENGAN FILTER TANGGAL)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
     st.markdown("### 📥 Formulir Input Laporan Penerimaan Harian")
@@ -325,19 +325,28 @@ else:
           st.error(f"❌ Gagal menyimpan laporan: {e}")
 
     st.markdown("---")
-    st.markdown("### 👀 Riwayat & Koreksi Laporan")
+    st.markdown("### 👀 Riwayat & Koreksi Laporan Berdasarkan Tanggal")
     st.write(
-        "Jika ada data laporan yang salah atau tidak sesuai, Anda dapat"
-        " melihat daftar riwayat di bawah ini, lalu lakukan koreksi atau hapus"
-        " pada bagian menu edit."
+        "Pilih rentang tanggal laporan yang ingin Anda tampilkan untuk"
+        " diperiksa, dikoreksi, atau dihapus."
     )
+
+    # Widget Filter Tanggal untuk Petugas
+    fc_tgl1, fc_tgl2 = st.columns(2)
+    with fc_tgl1:
+      filter_dari = st.date_input(
+          "Tampilkan Dari Tanggal", value=date.today().replace(day=1)
+      )
+    with fc_tgl2:
+      filter_sampai = st.date_input("Sampai Tanggal", value=date.today())
 
     try:
       res_recent = (
           supabase.table("penerimaan_harian")
           .select("*")
-          .order("id", desc=True)
-          .limit(10)
+          .gte("tanggal", str(filter_dari))
+          .lte("tanggal", str(filter_sampai))
+          .order("tanggal", desc=True)
           .execute()
       )
       df_recent = (
@@ -345,7 +354,7 @@ else:
       )
 
       if not df_recent.empty:
-        # Tampilkan tabel riwayat
+        # Tampilkan tabel riwayat sesuai rentang tanggal
         df_show = df_recent.copy()
         df_show["Jumlah Penerimaan"] = df_show["realisasi"].apply(
             lambda x: f"Rp {x:,.0f}".replace(",", ".")
@@ -386,7 +395,8 @@ else:
 
           if options_record:
             selected_label = st.selectbox(
-                "Pilih Laporan yang Ingin Dikoreksi / Dihapus", options=options_record
+                "Pilih Laporan yang Ingin Dikoreksi / Dihapus",
+                options=options_record,
             )
             selected_row = record_map[selected_label]
             sel_id = int(selected_row["id"])
@@ -399,12 +409,28 @@ else:
               e_loket = st.selectbox(
                   "Koreksi Loket SAMSAT",
                   ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
-                  index=["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"].index(selected_row["loket"]) if selected_row["loket"] in ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"] else 0
+                  index=[
+                      "Kota",
+                      "Sleman",
+                      "Bantul",
+                      "Kulon Progo",
+                      "Gunung Kidul",
+                  ].index(selected_row["loket"])
+                  if selected_row["loket"]
+                  in ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"]
+                  else 0,
               )
               e_jenis = st.selectbox(
                   "Koreksi Jenis Pembayaran",
                   ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
-                  index=["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"].index(selected_row["jenis_dana"]) if selected_row["jenis_dana"] in ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"] else 0
+                  index=[
+                      "Kartu Dana / Sertifikat",
+                      "SWDKLLJ",
+                      "Denda",
+                  ].index(selected_row["jenis_dana"])
+                  if selected_row["jenis_dana"]
+                  in ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"]
+                  else 0,
               )
               e_realisasi = st.number_input(
                   "Koreksi Jumlah Uang Masuk / Penerimaan (Rp)",
@@ -456,9 +482,8 @@ else:
                   st.rerun()
                 except Exception as e:
                   st.error(f"❌ Gagal menghapus: {e}")
-
       else:
-        st.info("Belum ada laporan penerimaan yang diinput.")
+        st.info("Tidak ada data laporan pada rentang tanggal tersebut.")
     except Exception as err:
       st.info(f"Memuat riwayat laporan... ({err})")
 
