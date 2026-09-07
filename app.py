@@ -171,13 +171,14 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.2, 1])
 
   with col2:
-    st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
+    # Spacer atas diperkecil dari 10vh menjadi 2vh agar lebih ke atas
+    st.markdown("<div style='height: 2vh;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
             f"""
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <img src="data:image/png;base64,{img_base64}" width="220" style="display: block; margin: 0 auto; height: auto;">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <img src="data:image/png;base64,{img_base64}" width="200" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -190,14 +191,14 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #1a1a1a; font-size: 1.4rem;"
-          " font-weight: 700; margin-bottom: 8px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #1a1a1a; font-size: 1.3rem;"
+          " font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<div style='text-align: center; color: #6c757d; font-size: 0.95rem;"
-          " margin-bottom: 32px;'>Silakan masuk menggunakan kredensial resmi"
+          "<div style='text-align: center; color: #6c757d; font-size: 0.9rem;"
+          " margin-bottom: 20px;'>Silakan masuk menggunakan kredensial resmi"
           " Anda</div>",
           unsafe_allow_html=True,
       )
@@ -229,9 +230,9 @@ if not st.session_state.logged_in:
             st.error("ID Pengguna atau Password salah. Silakan coba lagi.")
 
       st.markdown(
-          "<p style='text-align: center; font-size: 12px; margin-top:"
-          " 40px; color: #a0aabf;'>© 2026 PT Jasa Raharja Kanwil DIY — Hak Cipta"
-          " Dilindungi Undang-Undang.</p>",
+          "<p style='text-align: center; font-size: 11px; margin-top:"
+          " 20px; color: #a0aabf;'>© 2026 PT Jasa Raharja Kanwil DIY — Hak"
+          " Cipta Dilindungi Undang-Undang.</p>",
           unsafe_allow_html=True,
       )
 
