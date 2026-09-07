@@ -249,29 +249,34 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (HANYA FORM INPUT HARIAN)
+  # TAMPILAN: PETUGAS SAMSAT (ISTILAH RAMAH PENGGUNA AWAM)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
-    st.markdown("### 📥 Form Input Data Realisasi Harian")
+    st.markdown("### 📥 Formulir Input Laporan Penerimaan Harian")
     st.write(
-        "Silakan masukkan data realisasi penerimaan harian sesuai loket SAMSAT"
-        " dan jenis dana masing-masing."
+        "Silakan masukkan jumlah penerimaan harian berdasarkan Loket SAMSAT"
+        " dan Jenis Pembayaran yang melayani."
     )
 
     col1, col2 = st.columns(2)
     with col1:
-      f_tanggal = st.date_input("Tanggal Laporan", value=date.today())
+      f_tanggal = st.date_input(
+          "Tanggal Transaksi / Laporan", value=date.today()
+      )
       f_loket = st.selectbox(
           "Loket SAMSAT",
           ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
       )
     with col2:
       f_jenis = st.selectbox(
-          "Jenis Dana",
+          "Jenis Pembayaran / Dana",
           ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
       )
       f_realisasi = st.number_input(
-          "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
+          "Jumlah Uang Masuk / Penerimaan (Rp)",
+          min_value=0.0,
+          step=1000.0,
+          format="%.2f",
       )
       f_realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
       st.caption(f"💡 Terbaca: **{f_realisasi_str}**")
@@ -279,17 +284,25 @@ else:
     col3, col4 = st.columns(2)
     with col3:
       f_siklikal = st.number_input(
-          "Prosentase Siklikal (%)", min_value=0.0, step=0.01
+          "Persentase Siklus Bulanan (%)",
+          min_value=0.0,
+          step=0.01,
+          help="Persentase target bulanan berdasarkan pola siklus penerimaan.",
       )
     with col4:
-      f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
+      f_yty = st.number_input(
+          "Target Pertumbuhan Tahun Lalu / YoY (%)",
+          min_value=0.0,
+          step=0.01,
+          help="Perbandingan atau target pertumbuhan dibanding periode yang sama tahun lalu.",
+      )
 
     st.write("")
-    submit_button = st.button("💾 Simpan Data ke Database")
+    submit_button = st.button("💾 Simpan Laporan Penerimaan")
 
     if submit_button:
       if f_realisasi <= 0:
-        st.error("❌ Field Realisasi (Rp) tidak boleh 0 atau kosong.")
+        st.error("❌ Jumlah Uang Masuk / Penerimaan (Rp) tidak boleh 0 atau kosong.")
       else:
         data_insert = {
             "tanggal": str(f_tanggal),
@@ -303,16 +316,16 @@ else:
           supabase.table("penerimaan_harian").insert(data_insert).execute()
           st.session_state.toast_count += 1
           st.toast(
-              f"[{st.session_state.toast_count}] Data berhasil disimpan ke"
-              f" Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
+              f"[{st.session_state.toast_count}] Laporan berhasil disimpan ke"
+              f" sistem! Loket: {f_loket} | Jenis: {f_jenis}",
               icon="✅",
           )
           st.rerun()
         except Exception as e:
-          st.error(f"❌ Gagal menyimpan data: {e}")
+          st.error(f"❌ Gagal menyimpan laporan: {e}")
 
     st.markdown("---")
-    st.markdown("### 👀 Verifikasi Input Terbaru Anda")
+    st.markdown("### 👀 Riwayat Laporan yang Baru Saja Dikirim")
     try:
       res_recent = (
           supabase.table("penerimaan_harian")
@@ -328,21 +341,31 @@ else:
         df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(
             lambda x: f"Rp {x:,.0f}".replace(",", ".")
         )
+        # Menyesuaikan nama kolom tabel verifikasi agar lebih ramah dibaca
+        df_recent = df_recent.rename(
+            columns={
+                "tanggal": "Tanggal",
+                "loket": "Loket SAMSAT",
+                "jenis_dana": "Jenis Pembayaran",
+                "realisasi_fmt": "Jumlah Penerimaan",
+                "prosentase_siklikal": "Siklus Bulanan (%)",
+            }
+        )
         st.dataframe(
             df_recent[[
-                "tanggal",
-                "loket",
-                "jenis_dana",
-                "realisasi_fmt",
-                "prosentase_siklikal",
+                "Tanggal",
+                "Loket SAMSAT",
+                "Jenis Pembayaran",
+                "Jumlah Penerimaan",
+                "Siklus Bulanan (%)",
             ]],
             use_container_width=True,
             hide_index=True,
         )
       else:
-        st.info("Belum ada data yang diinput.")
+        st.info("Belum ada laporan penerimaan yang diinput.")
     except Exception:
-      st.info("Memuat riwayat input...")
+      st.info("Memuat riwayat laporan...")
 
   # ----------------------------------------
   # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
