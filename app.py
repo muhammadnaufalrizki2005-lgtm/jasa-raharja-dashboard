@@ -17,45 +17,34 @@ SIKLIKAL = {
     "Total (Overall)": 66.28,
     "Kartu Dana / Sertifikat": 47.92,
     "SWDKLLJ": 47.00,
-    "Denda": 48.00
+    "Denda": 48.00,
 }
 
-NILAI_UNKNOWN_VAR = 0.0 
-
-# 2. Anggaran (Tahun X / 2026) per Loket dan Jenis Dana
-ANGGARAN = {
-    "Kartu Dana / Sertifikat": {
-        "Kota": 1037512719,
-        "Sleman": 2380596443,
-        "Bantul": 1683568180,
-        "Kulon Progo": 649532400,
-        "Gunung Kidul": 769790258
-    },
-    "SWDKLLJ": {
-        "Kota": 20208306150,
-        "Sleman": 46843772335,
-        "Bantul": 30642670062,
-        "Kulon Progo": 10750188799,
-        "Gunung Kidul": 13133062654
-    },
-    "Denda": {
-        "Kota": 2092236653,
-        "Sleman": 4314248445,
-        "Bantul": 2883281483,
-        "Kulon Progo": 906326216,
-        "Gunung Kidul": 1339907203
-    }
-}
+NILAI_UNKNOWN_VAR = 0.0
 
 # ==========================================
-# FUNGSI PEMBACAAN MULTI-SHEET EXCEL HISTORIS
+# FUNGSI PEMBACAAN EXCEL (MULTI-SHEET)
 # ==========================================
 @st.cache_data
 def load_historis_excel(tahun):
   try:
     sheet_name = f"Historis{tahun}"
-    df_h = pd.read_excel("Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name)
+    df_h = pd.read_excel(
+        "Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name
+    )
     return df_h
+  except Exception:
+    return pd.DataFrame()
+
+
+@st.cache_data
+def load_anggaran_excel(tahun):
+  try:
+    sheet_name = f"Anggaran{tahun}"
+    df_ang = pd.read_excel(
+        "Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name
+    )
+    return df_ang
   except Exception:
     return pd.DataFrame()
 
@@ -78,6 +67,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+
 @st.cache_data
 def get_img_base64(file_path):
   try:
@@ -87,6 +77,7 @@ def get_img_base64(file_path):
   except Exception:
     return ""
 
+
 img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
 # ==========================================
@@ -95,9 +86,11 @@ img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
 SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
 
+
 @st.cache_resource
 def init_connection():
   return create_client(SUPABASE_URL, SUPABASE_KEY)
+
 
 supabase = init_connection()
 
@@ -262,7 +255,7 @@ else:
   if st.session_state.role == "Petugas SAMSAT":
     tab_petugas_1, tab_petugas_2 = st.tabs([
         "📥 Form Input Data Harian",
-        "🧮 Kalkulator & Simulator Manual"
+        "🧮 Kalkulator & Simulator Manual",
     ])
 
     with tab_petugas_1:
@@ -286,7 +279,9 @@ else:
 
       col3, col4 = st.columns(2)
       with col3:
-        f_siklikal = st.number_input("Prosentase Siklikal (%)", min_value=0.0, step=0.01)
+        f_siklikal = st.number_input(
+            "Prosentase Siklikal (%)", min_value=0.0, step=0.01
+        )
       with col4:
         f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
 
@@ -309,7 +304,8 @@ else:
             supabase.table("penerimaan_harian").insert(data_insert).execute()
             st.session_state.toast_count += 1
             st.toast(
-                f"[{st.session_state.toast_count}] Data berhasil disimpan ke Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
+                f"[{st.session_state.toast_count}] Data berhasil disimpan ke"
+                f" Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
                 icon="✅",
             )
             st.rerun()
@@ -319,13 +315,32 @@ else:
       st.markdown("---")
       st.markdown("### 👀 Verifikasi Input Terbaru")
       try:
-        res_recent = supabase.table("penerimaan_harian").select("*").order("id", desc=True).limit(5).execute()
-        df_recent = pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
+        res_recent = (
+            supabase.table("penerimaan_harian")
+            .select("*")
+            .order("id", desc=True)
+            .limit(5)
+            .execute()
+        )
+        df_recent = (
+            pd.DataFrame(res_recent.data)
+            if res_recent.data
+            else pd.DataFrame()
+        )
         if not df_recent.empty:
-          df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+          df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(
+              lambda x: f"Rp {x:,.0f}".replace(",", ".")
+          )
           st.dataframe(
-              df_recent[["tanggal", "loket", "jenis_dana", "realisasi_fmt", "prosentase_siklikal"]],
-              use_container_width=True, hide_index=True
+              df_recent[[
+                  "tanggal",
+                  "loket",
+                  "jenis_dana",
+                  "realisasi_fmt",
+                  "prosentase_siklikal",
+              ]],
+              use_container_width=True,
+              hide_index=True,
           )
         else:
           st.info("Belum ada data yang diinput.")
@@ -336,13 +351,21 @@ else:
       st.markdown("### 🧮 Kalkulator Simulasi Format Excel")
       c1, c2, c3, c4 = st.columns(4)
       with c1:
-        p_jenis = st.selectbox("Kategori Dana", ["Kartu Dana", "SWDKLLJ", "Denda", "Total"])
+        p_jenis = st.selectbox(
+            "Kategori Dana", ["Kartu Dana", "SWDKLLJ", "Denda", "Total"]
+        )
       with c2:
-        p_bulan_ke = st.number_input("Bulan Ke (1-12)", min_value=1, max_value=12, value=8)
+        p_bulan_ke = st.number_input(
+            "Bulan Ke (1-12)", min_value=1, max_value=12, value=8
+        )
       with c3:
-        p_siklikal = st.number_input("Nilai Siklikal (%)", value=30.0, step=0.1, key="sim_sik")
+        p_siklikal = st.number_input(
+            "Nilai Siklikal (%)", value=30.0, step=0.1, key="sim_sik"
+        )
       with c4:
-        p_unknown = st.number_input("Nilai Pengurang Unknown (%)", value=0.0, step=0.1, key="sim_unk")
+        p_unknown = st.number_input(
+            "Nilai Pengurang Unknown (%)", value=0.0, step=0.1, key="sim_unk"
+        )
 
       if "df_input" not in st.session_state:
         st.session_state.df_input = pd.DataFrame({
@@ -354,7 +377,9 @@ else:
             "Jan s.d Bln (X)": [0.0, 0.0, 0.0, 0.0, 0.0],
         })
 
-      edited_df = st.data_editor(st.session_state.df_input, use_container_width=True, hide_index=True)
+      edited_df = st.data_editor(
+          st.session_state.df_input, use_container_width=True, hide_index=True
+      )
 
       if st.button("🚀 Hitung Simulasi"):
         df_calc = edited_df.copy()
@@ -369,25 +394,48 @@ else:
         df_calc = pd.concat([df_calc, jumlah_row], ignore_index=True)
 
         def safe_div(a, b):
-            return np.where(b == 0, 0, a / b)
+          return np.where(b == 0, 0, a / b)
 
-        df_calc["Akt Khusus (%)"] = safe_div(df_calc["Khusus Bln (X)"] - df_calc["Khusus Bln (X-1)"], df_calc["Khusus Bln (X-1)"]) * 100
-        df_calc["Real (%)"] = safe_div(df_calc["Jan s.d Bln (X)"], df_calc["Anggaran (Thn X)"]) * 100
-        df_calc["Aktv (%)"] = safe_div(df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"], df_calc["Jan s.d Bln (X-1)"]) * 100
-        df_calc["Kurang/Lebih Pencapaian"] = df_calc["Jan s.d Bln (X)"] - (df_calc["Anggaran (Thn X)"] * p_bulan_ke / 12)
+        df_calc["Akt Khusus (%)"] = (
+            safe_div(
+                df_calc["Khusus Bln (X)"] - df_calc["Khusus Bln (X-1)"],
+                df_calc["Khusus Bln (X-1)"],
+            )
+            * 100
+        )
+        df_calc["Real (%)"] = (
+            safe_div(df_calc["Jan s.d Bln (X)"], df_calc["Anggaran (Thn X)"])
+            * 100
+        )
+        df_calc["Aktv (%)"] = (
+            safe_div(
+                df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"],
+                df_calc["Jan s.d Bln (X-1)"],
+            )
+            * 100
+        )
+        df_calc["Kurang/Lebih Pencapaian"] = df_calc[
+            "Jan s.d Bln (X)"
+        ] - (df_calc["Anggaran (Thn X)"] * p_bulan_ke / 12)
         df_calc["Perbulan"] = df_calc["Anggaran (Thn X)"] / 12
         df_calc["Rata Perhari"] = df_calc["Anggaran (Thn X)"] / (12 * 25)
-        df_calc["(+/-) Realisasi"] = df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"]
+        df_calc["(+/-) Realisasi"] = (
+            df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"]
+        )
         df_calc["Real vs Unknown (%)"] = df_calc["Real (%)"] - p_unknown
         df_calc["Real vs Siklikal (%)"] = df_calc["Real (%)"] - p_siklikal
-        df_calc["Seharusnya"] = df_calc["Anggaran (Thn X)"] * (p_siklikal / 100)
-        df_calc["Selisih vs Seharusnya"] = df_calc["Jan s.d Bln (X)"] - df_calc["Seharusnya"]
+        df_calc["Seharusnya"] = df_calc["Anggaran (Thn X)"] * (
+            p_siklikal / 100
+        )
+        df_calc["Selisih vs Seharusnya"] = (
+            df_calc["Jan s.d Bln (X)"] - df_calc["Seharusnya"]
+        )
 
         for col in df_calc.columns:
-            if col not in ["Loket"] and "(%)" not in col:
-                df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.0f}")
-            elif "(%)" in col:
-                df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.2f}%")
+          if col not in ["Loket"] and "(%)" not in col:
+            df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.0f}")
+          elif "(%)" in col:
+            df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.2f}%")
 
         st.success("✅ Simulasi Berhasil!")
         st.dataframe(df_calc, use_container_width=True, hide_index=True)
@@ -399,7 +447,7 @@ else:
     tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3 = st.tabs([
         "📊 Laporan Format Excel (Otomatis)",
         "📈 Dashboard Rekap & Grafik",
-        "📂 Viewer File Excel Asli"
+        "📂 Viewer File Excel Asli",
     ])
 
     # Ambil data inputan harian dari Supabase
@@ -414,63 +462,135 @@ else:
       df_db = pd.DataFrame()
 
     def safe_div(a, b):
-        return np.where(b == 0, 0, a / b)
+      return np.where(b == 0, 0, a / b)
 
     # ---------------- TAB 1: LAPORAN FORMAT EXCEL (DYNAMIC FILTER BULAN & TAHUN) ----------------
     with tab_pimpinan_1:
       st.markdown("### 📊 Laporan Realisasi Kinerja SAMSAT")
-      st.write("Pilih Tahun dan Bulan target laporan di bawah ini. Sistem otomatis membaca data dari sheet Excel multi-tahun (Historis2024, Historis2025, Historis2026) dan melengkapinya dengan input harian Supabase.")
+      st.write(
+          "Pilih Tahun dan Bulan target laporan di bawah ini. Anggaran dan data"
+          " historis otomatis ditarik dari file Excel multi-sheet"
+          " (AnggaranX & HistorisX) dan dipadukan dengan input harian Supabase."
+      )
 
       # Widget Filter Interaktif untuk Pimpinan
       fc1, fc2, fc3 = st.columns(3)
       with fc1:
-        target_tahun_pilih = st.selectbox("Tahun Berjalan (X)", [2026, 2025, 2024, 2027], index=0)
+        target_tahun_pilih = st.selectbox(
+            "Tahun Berjalan (X)", [2026, 2025, 2024, 2027], index=0
+        )
       with fc2:
         bulan_mapping = {
-            1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni",
-            7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+            1: "Januari",
+            2: "Februari",
+            3: "Maret",
+            4: "April",
+            5: "Mei",
+            6: "Juni",
+            7: "Juli",
+            8: "Agustus",
+            9: "September",
+            10: "Oktober",
+            11: "November",
+            12: "Desember",
         }
         target_bulan_pilih = st.selectbox(
             "Bulan Target (Khusus & Jan s.d)",
             options=list(bulan_mapping.keys()),
             format_func=lambda x: bulan_mapping[x],
-            index=7 # Default Agustus (8)
+            index=7,  # Default Agustus (8)
         )
       with fc3:
         kat_pilihan = st.selectbox(
             "Kategori Pendanaan",
-            ["Total (Overall)", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"]
+            ["Total (Overall)", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
         )
 
       tahun_x1 = target_tahun_pilih - 1
-      loket_col_map = {"Kota": "Kota", "Sleman": "Sleman", "Bantul": "Bantul", "Kulon Progo": "Kulon_Progo", "Gunung Kidul": "Gunung_Kidul"}
+      loket_col_map = {
+          "Kota": "Kota",
+          "Sleman": "Sleman",
+          "Bantul": "Bantul",
+          "Kulon Progo": "Kulon_Progo",
+          "Gunung Kidul": "Gunung_Kidul",
+      }
 
       # Load sheet Excel dinamis berdasarkan tahun
+      df_anggaran_x = load_anggaran_excel(target_tahun_pilih)
       df_hist_x = load_historis_excel(target_tahun_pilih)
       df_hist_x1 = load_historis_excel(tahun_x1)
 
-      def get_data_value(df_sheet, tahun_val, bulan_val, jenis_dana, col_name, is_cumulative=False):
+      def get_anggaran_value(df_ang, jenis_dana, loket):
+        if df_ang.empty:
+          return 0.0
+        m = df_ang["Jenis_Dana"].str.strip() == jenis_dana.strip()
+        if m.any():
+          c_name = loket_col_map.get(loket, loket)
+          if c_name in df_ang.columns:
+            return float(df_ang.loc[m, c_name].values[0])
+        return 0.0
+
+      def get_data_value(
+          df_sheet, tahun_val, bulan_val, jenis_dana, col_name, is_cumulative=False
+      ):
         val = 0.0
         # 1. Cek input harian baru di Supabase
         if not df_db.empty:
           if is_cumulative:
-            m_db = (df_db["loket"].str.lower() == col_name.replace("_", " ").lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= bulan_val) & (df_db["Tahun"] == tahun_val)
+            m_db = (
+                (
+                    df_db["loket"].str.lower()
+                    == col_name.replace("_", " ").lower()
+                )
+                & (
+                    df_db["jenis_dana"].str.contains(
+                        jenis_dana[:5], case=False, na=False
+                    )
+                )
+                & (df_db["Bulan"] <= bulan_val)
+                & (df_db["Tahun"] == tahun_val)
+            )
           else:
-            m_db = (df_db["loket"].str.lower() == col_name.replace("_", " ").lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == bulan_val) & (df_db["Tahun"] == tahun_val)
-          
+            m_db = (
+                (
+                    df_db["loket"].str.lower()
+                    == col_name.replace("_", " ").lower()
+                )
+                & (
+                    df_db["jenis_dana"].str.contains(
+                        jenis_dana[:5], case=False, na=False
+                    )
+                )
+                & (df_db["Bulan"] == bulan_val)
+                & (df_db["Tahun"] == tahun_val)
+            )
+
           if m_db.any():
             val = df_db.loc[m_db, "realisasi"].sum()
-            if val > 0: return val
+            if val > 0:
+              return val
 
         # 2. Ambil dari sheet Excel Historis{tahun}
         if not df_sheet.empty:
-          excel_col = col_name if col_name in df_sheet.columns else "Kulon_Progo" if "Kulon" in col_name else "Gunung_Kidul"
+          excel_col = (
+              col_name
+              if col_name in df_sheet.columns
+              else (
+                  "Kulon_Progo"
+                  if "Kulon" in col_name
+                  else "Gunung_Kidul"
+              )
+          )
           if is_cumulative:
-            m_ex = (df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_sheet["Bulan"] <= bulan_val)
+            m_ex = (
+                df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()
+            ) & (df_sheet["Bulan"] <= bulan_val)
             if m_ex.any():
               val = float(df_sheet.loc[m_ex, excel_col].sum())
           else:
-            m_ex = (df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_sheet["Bulan"] == bulan_val)
+            m_ex = (
+                df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()
+            ) & (df_sheet["Bulan"] == bulan_val)
             if m_ex.any():
               val = float(df_sheet.loc[m_ex, excel_col].values[0])
         return val
@@ -478,18 +598,48 @@ else:
       def generate_excel_table(jenis_dana):
         lokets = ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"]
         rows = []
-        
+
         for loket in lokets:
-          anggaran_x = ANGGARAN[jenis_dana].get(loket, 0)
+          anggaran_x = get_anggaran_value(
+              df_anggaran_x, jenis_dana, loket
+          )  # Dinamis dari Excel AnggaranX
           siklikal = SIKLIKAL[jenis_dana]
           col_name = loket_col_map.get(loket, loket)
 
           # Ambil data X-1 dan Tahun X dari multi-sheet Excel / Supabase
-          khusus_x1 = get_data_value(df_hist_x1, tahun_x1, target_bulan_pilih, jenis_dana, col_name, is_cumulative=False)
-          jan_sd_x1 = get_data_value(df_hist_x1, tahun_x1, target_bulan_pilih, jenis_dana, col_name, is_cumulative=True)
+          khusus_x1 = get_data_value(
+              df_hist_x1,
+              tahun_x1,
+              target_bulan_pilih,
+              jenis_dana,
+              col_name,
+              is_cumulative=False,
+          )
+          jan_sd_x1 = get_data_value(
+              df_hist_x1,
+              tahun_x1,
+              target_bulan_pilih,
+              jenis_dana,
+              col_name,
+              is_cumulative=True,
+          )
 
-          khusus_x = get_data_value(df_hist_x, target_tahun_pilih, target_bulan_pilih, jenis_dana, col_name, is_cumulative=False)
-          jan_sd_x = get_data_value(df_hist_x, target_tahun_pilih, target_bulan_pilih, jenis_dana, col_name, is_cumulative=True)
+          khusus_x = get_data_value(
+              df_hist_x,
+              target_tahun_pilih,
+              target_bulan_pilih,
+              jenis_dana,
+              col_name,
+              is_cumulative=False,
+          )
+          jan_sd_x = get_data_value(
+              df_hist_x,
+              target_tahun_pilih,
+              target_bulan_pilih,
+              jenis_dana,
+              col_name,
+              is_cumulative=True,
+          )
 
           rows.append({
               "Loket": f"LOKET SAMSAT {loket.upper()}",
@@ -498,11 +648,11 @@ else:
               "Khusus Bln (X)": khusus_x,
               "Jan s.d Bln (X-1)": jan_sd_x1,
               "Jan s.d Bln (X)": jan_sd_x,
-              "Siklikal_H": siklikal
+              "Siklikal_H": siklikal,
           })
 
         df_calc = pd.DataFrame(rows)
-        
+
         jumlah_row = pd.DataFrame({
             "Loket": ["JUMLAH"],
             "Anggaran (Thn X)": [df_calc["Anggaran (Thn X)"].sum()],
@@ -510,22 +660,45 @@ else:
             "Khusus Bln (X)": [df_calc["Khusus Bln (X)"].sum()],
             "Jan s.d Bln (X-1)": [df_calc["Jan s.d Bln (X-1)"].sum()],
             "Jan s.d Bln (X)": [df_calc["Jan s.d Bln (X)"].sum()],
-            "Siklikal_H": [SIKLIKAL[jenis_dana]]
+            "Siklikal_H": [SIKLIKAL[jenis_dana]],
         })
         df_calc = pd.concat([df_calc, jumlah_row], ignore_index=True)
 
         # RUMUS EXCEL LENGKAP
-        df_calc["Akt Khusus (%)"] = safe_div(df_calc["Khusus Bln (X)"] - df_calc["Khusus Bln (X-1)"], df_calc["Khusus Bln (X-1)"]) * 100
-        df_calc["Real (%)"] = safe_div(df_calc["Jan s.d Bln (X)"], df_calc["Anggaran (Thn X)"]) * 100
-        df_calc["Aktv (%)"] = safe_div(df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"], df_calc["Jan s.d Bln (X-1)"]) * 100
-        df_calc["Kurang/Lebih Pencapaian"] = df_calc["Jan s.d Bln (X)"] - (df_calc["Anggaran (Thn X)"] * target_bulan_pilih / 12)
+        df_calc["Akt Khusus (%)"] = (
+            safe_div(
+                df_calc["Khusus Bln (X)"] - df_calc["Khusus Bln (X-1)"],
+                df_calc["Khusus Bln (X-1)"],
+            )
+            * 100
+        )
+        df_calc["Real (%)"] = (
+            safe_div(df_calc["Jan s.d Bln (X)"], df_calc["Anggaran (Thn X)"])
+            * 100
+        )
+        df_calc["Aktv (%)"] = (
+            safe_div(
+                df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"],
+                df_calc["Jan s.d Bln (X-1)"],
+            )
+            * 100
+        )
+        df_calc["Kurang/Lebih Pencapaian"] = df_calc[
+            "Jan s.d Bln (X)"
+        ] - (df_calc["Anggaran (Thn X)"] * target_bulan_pilih / 12)
         df_calc["Perbulan"] = df_calc["Anggaran (Thn X)"] / 12
         df_calc["Rata Perhari"] = df_calc["Anggaran (Thn X)"] / (12 * 25)
-        df_calc["(+/-) Realisasi"] = df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"]
+        df_calc["(+/-) Realisasi"] = (
+            df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"]
+        )
         df_calc["Real vs Var_X (%)"] = df_calc["Real (%)"] - NILAI_UNKNOWN_VAR
         df_calc["Real vs Siklikal (%)"] = df_calc["Real (%)"] - df_calc["Siklikal_H"]
-        df_calc["Seharusnya"] = df_calc["Anggaran (Thn X)"] * (df_calc["Siklikal_H"] / 100)
-        df_calc["Selisih vs Seharusnya"] = df_calc["Jan s.d Bln (X)"] - df_calc["Seharusnya"]
+        df_calc["Seharusnya"] = df_calc["Anggaran (Thn X)"] * (
+            df_calc["Siklikal_H"] / 100
+        )
+        df_calc["Selisih vs Seharusnya"] = (
+            df_calc["Jan s.d Bln (X)"] - df_calc["Seharusnya"]
+        )
 
         df_calc = df_calc.drop(columns=["Siklikal_H"])
         return df_calc
@@ -534,59 +707,133 @@ else:
         df_kd = generate_excel_table("Kartu Dana / Sertifikat")
         df_sw = generate_excel_table("SWDKLLJ")
         df_dn = generate_excel_table("Denda")
-        
-        df_total = df_kd[["Loket", "Anggaran (Thn X)", "Khusus Bln (X-1)", "Khusus Bln (X)", "Jan s.d Bln (X-1)", "Jan s.d Bln (X)"]].copy()
-        for col in ["Anggaran (Thn X)", "Khusus Bln (X-1)", "Khusus Bln (X)", "Jan s.d Bln (X-1)", "Jan s.d Bln (X)"]:
-            df_total[col] = df_kd[col] + df_sw[col] + df_dn[col]
-            
-        df_total["Akt Khusus (%)"] = safe_div(df_total["Khusus Bln (X)"] - df_total["Khusus Bln (X-1)"], df_total["Khusus Bln (X-1)"]) * 100
-        df_total["Real (%)"] = safe_div(df_total["Jan s.d Bln (X)"], df_total["Anggaran (Thn X)"]) * 100
-        df_total["Aktv (%)"] = safe_div(df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"], df_total["Jan s.d Bln (X-1)"]) * 100
-        df_total["Kurang/Lebih Pencapaian"] = df_total["Jan s.d Bln (X)"] - (df_total["Anggaran (Thn X)"] * target_bulan_pilih / 12)
+
+        df_total = df_kd[[
+            "Loket",
+            "Anggaran (Thn X)",
+            "Khusus Bln (X-1)",
+            "Khusus Bln (X)",
+            "Jan s.d Bln (X-1)",
+            "Jan s.d Bln (X)",
+        ]].copy()
+        for col in [
+            "Anggaran (Thn X)",
+            "Khusus Bln (X-1)",
+            "Khusus Bln (X)",
+            "Jan s.d Bln (X-1)",
+            "Jan s.d Bln (X)",
+        ]:
+          df_total[col] = df_kd[col] + df_sw[col] + df_dn[col]
+
+        df_total["Akt Khusus (%)"] = (
+            safe_div(
+                df_total["Khusus Bln (X)"] - df_total["Khusus Bln (X-1)"],
+                df_total["Khusus Bln (X-1)"],
+            )
+            * 100
+        )
+        df_total["Real (%)"] = (
+            safe_div(df_total["Jan s.d Bln (X)"], df_total["Anggaran (Thn X)"])
+            * 100
+        )
+        df_total["Aktv (%)"] = (
+            safe_div(
+                df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"],
+                df_total["Jan s.d Bln (X-1)"],
+            )
+            * 100
+        )
+        df_total["Kurang/Lebih Pencapaian"] = df_total[
+            "Jan s.d Bln (X)"
+        ] - (df_total["Anggaran (Thn X)"] * target_bulan_pilih / 12)
         df_total["Perbulan"] = df_total["Anggaran (Thn X)"] / 12
         df_total["Rata Perhari"] = df_total["Anggaran (Thn X)"] / (12 * 25)
-        df_total["(+/-) Realisasi"] = df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"]
-        
+        df_total["(+/-) Realisasi"] = (
+            df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"]
+        )
+
         siklikal_tot = SIKLIKAL["Total (Overall)"]
         df_total["Real vs Var_X (%)"] = df_total["Real (%)"] - NILAI_UNKNOWN_VAR
         df_total["Real vs Siklikal (%)"] = df_total["Real (%)"] - siklikal_tot
-        df_total["Seharusnya"] = df_total["Anggaran (Thn X)"] * (siklikal_tot / 100)
-        df_total["Selisih vs Seharusnya"] = df_total["Jan s.d Bln (X)"] - df_total["Seharusnya"]
-        
+        df_total["Seharusnya"] = df_total["Anggaran (Thn X)"] * (
+            siklikal_tot / 100
+        )
+        df_total["Selisih vs Seharusnya"] = (
+            df_total["Jan s.d Bln (X)"] - df_total["Seharusnya"]
+        )
+
         df_final = df_total
       else:
         df_final = generate_excel_table(kat_pilihan)
 
       df_display = df_final.copy()
       for col in df_display.columns:
-          if col not in ["Loket"] and "(%)" not in col:
-              df_display[col] = df_display[col].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
-          elif "(%)" in col:
-              df_display[col] = df_display[col].apply(lambda x: f"{x:,.2f}%" if pd.notnull(x) else "0.00%")
+        if col not in ["Loket"] and "(%)" not in col:
+          df_display[col] = df_display[col].apply(
+              lambda x: f"Rp {x:,.0f}".replace(",", ".")
+          )
+        elif "(%)" in col:
+          df_display[col] = df_display[col].apply(
+              lambda x: f"{x:,.2f}%" if pd.notnull(x) else "0.00%"
+          )
 
-      st.markdown(f"**Menampilkan Laporan Periode: {bulan_mapping[target_bulan_pilih]} {target_tahun_pilih} (Komparasi vs {tahun_x1})**")
+      st.markdown(
+          f"**Menampilkan Laporan Periode: {bulan_mapping[target_bulan_pilih]}"
+          f" {target_tahun_pilih} (Komparasi vs {tahun_x1})**"
+      )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
-        df_db["Bulan_Str"] = df_db["dt_tanggal"].dt.to_period("M").astype(str)
+        df_db["Bulan_Str"] = (
+            df_db["dt_tanggal"].dt.to_period("M").astype(str)
+        )
         df_db["Tahun_Str"] = df_db["dt_tanggal"].dt.year.astype(str)
 
-        mode_waktu = st.radio("Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True)
+        mode_waktu = st.radio(
+            "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
+        )
 
         if mode_waktu == "Harian":
-          min_tgl, max_tgl = df_db["dt_tanggal"].dt.date.min(), df_db["dt_tanggal"].dt.date.max()
+          min_tgl, max_tgl = (
+              df_db["dt_tanggal"].dt.date.min(),
+              df_db["dt_tanggal"].dt.date.max(),
+          )
           dc1, dc2 = st.columns(2)
-          with dc1: start_tgl = st.date_input("Dari Tanggal", value=min_tgl)
-          with dc2: end_tgl = st.date_input("Sampai Tanggal", value=max_tgl)
-          df_filtered = df_db[(df_db["dt_tanggal"].dt.date >= start_tgl) & (df_db["dt_tanggal"].dt.date <= end_tgl)]
+          with dc1:
+            start_tgl = st.date_input("Dari Tanggal", value=min_tgl)
+          with dc2:
+            end_tgl = st.date_input("Sampai Tanggal", value=max_tgl)
+          df_filtered = df_db[
+              (df_db["dt_tanggal"].dt.date >= start_tgl)
+              & (df_db["dt_tanggal"].dt.date <= end_tgl)
+          ]
         elif mode_waktu == "Bulanan":
           all_years = sorted(df_db["Tahun_Str"].unique())
           mc1, mc2 = st.columns(2)
-          with mc1: start_y = st.selectbox("Tahun", all_years, key="p_sy")
-          with mc2: start_m = st.selectbox("Bulan (01-12)", ["01","02","03","04","05","06","07","08","09","10","11","12"], key="p_sm")
+          with mc1:
+            start_y = st.selectbox("Tahun", all_years, key="p_sy")
+          with mc2:
+            start_m = st.selectbox(
+                "Bulan (01-12)",
+                [
+                    "01",
+                    "02",
+                    "03",
+                    "04",
+                    "05",
+                    "06",
+                    "07",
+                    "08",
+                    "09",
+                    "10",
+                    "11",
+                    "12",
+                ],
+                key="p_sm",
+            )
           target_bln_str = f"{start_y}-{start_m}"
           df_filtered = df_db[df_db["Bulan_Str"] == target_bln_str]
         else:
@@ -595,32 +842,72 @@ else:
           df_filtered = df_db[df_db["Tahun_Str"] == thn_pilih]
 
         if not df_filtered.empty:
-          df_tampilan = df_filtered.drop(columns=[c for c in ["dt_tanggal", "Bulan", "Tahun", "id", "Bulan_Str", "Tahun_Str"] if c in df_filtered.columns]).copy()
-          df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+          df_tampilan = df_filtered.drop(
+              columns=[
+                  c
+                  for c in [
+                      "dt_tanggal",
+                      "Bulan",
+                      "Tahun",
+                      "id",
+                      "Bulan_Str",
+                      "Tahun_Str",
+                  ]
+                  if c in df_filtered.columns
+              ]
+          ).copy()
+          df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
+              lambda x: f"Rp {x:,.0f}".replace(",", ".")
+          )
           st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
         else:
           st.info("Tidak ada data pada filter tersebut.")
 
         # FITUR AUDIT OTOMATIS (ANOMALI)
         st.markdown("---")
-        with st.expander("🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)", expanded=False):
+        with st.expander(
+            "🔍 Audit & Deteksi Otomatis Kesalahan Ketik (Anomali Data)",
+            expanded=False,
+        ):
           df_zero = df_db[df_db["realisasi"] <= 0]
-          df_dup = df_db[df_db.duplicated(subset=["tanggal", "loket", "jenis_dana"], keep=False)]
+          df_dup = df_db[
+              df_db.duplicated(
+                  subset=["tanggal", "loket", "jenis_dana"], keep=False
+              )
+          ]
           df_outlier = df_db[df_db["realisasi"] > 500000000]
 
           col_a1, col_a2, col_a3 = st.columns(3)
           with col_a1:
             st.markdown("##### ⚠️ Realisasi 0 / Negatif")
-            if not df_zero.empty: st.dataframe(df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
-            else: st.success("✅ Aman")
+            if not df_zero.empty:
+              st.dataframe(
+                  df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                  use_container_width=True,
+                  hide_index=True,
+              )
+            else:
+              st.success("✅ Aman")
           with col_a2:
             st.markdown("##### ⚠️ Duplikat Input")
-            if not df_dup.empty: st.dataframe(df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
-            else: st.success("✅ Aman")
+            if not df_dup.empty:
+              st.dataframe(
+                  df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                  use_container_width=True,
+                  hide_index=True,
+              )
+            else:
+              st.success("✅ Aman")
           with col_a3:
             st.markdown("##### ⚠️ Potensi Typo (>500 Juta)")
-            if not df_outlier.empty: st.dataframe(df_outlier[["tanggal", "loket", "jenis_dana", "realisasi"]], use_container_width=True, hide_index=True)
-            else: st.success("✅ Aman")
+            if not df_outlier.empty:
+              st.dataframe(
+                  df_outlier[["tanggal", "loket", "jenis_dana", "realisasi"]],
+                  use_container_width=True,
+                  hide_index=True,
+              )
+            else:
+              st.success("✅ Aman")
 
         # GRAFIK TREN
         st.markdown("---")
@@ -628,15 +915,35 @@ else:
         all_lokets = sorted(df_db["loket"].unique())
         all_jenis = sorted(df_db["jenis_dana"].unique())
         gc1, gc2 = st.columns(2)
-        with gc1: sel_loket_gr = st.multiselect("Loket", options=all_lokets, default=all_lokets, key="g_loket")
-        with gc2: sel_jenis_gr = st.multiselect("Jenis Dana", options=all_jenis, default=all_jenis, key="g_jenis")
+        with gc1:
+          sel_loket_gr = st.multiselect(
+              "Loket", options=all_lokets, default=all_lokets, key="g_loket"
+          )
+        with gc2:
+          sel_jenis_gr = st.multiselect(
+              "Jenis Dana", options=all_jenis, default=all_jenis, key="g_jenis"
+          )
 
-        df_c = df_db[df_db["loket"].isin(sel_loket_gr) & df_db["jenis_dana"].isin(sel_jenis_gr)].copy()
+        df_c = df_db[
+            df_db["loket"].isin(sel_loket_gr)
+            & df_db["jenis_dana"].isin(sel_jenis_gr)
+        ].copy()
         if not df_c.empty:
           df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
-          df_chart_agg = df_c.groupby("Periode")["realisasi"].sum().reset_index()
-          fig = px.bar(df_chart_agg, x="Periode", y="realisasi", color_discrete_sequence=["#005ba8"])
-          fig.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=20, r=20, t=10, b=20))
+          df_chart_agg = (
+              df_c.groupby("Periode")["realisasi"].sum().reset_index()
+          )
+          fig = px.bar(
+              df_chart_agg,
+              x="Periode",
+              y="realisasi",
+              color_discrete_sequence=["#005ba8"],
+          )
+          fig.update_layout(
+              plot_bgcolor="rgba(0,0,0,0)",
+              paper_bgcolor="rgba(0,0,0,0)",
+              margin=dict(l=20, r=20, t=10, b=20),
+          )
           st.plotly_chart(fig, use_container_width=True)
       else:
         st.warning("Belum ada data di database.")
@@ -647,24 +954,33 @@ else:
       selected_kategori_ex = st.selectbox(
           "Pilih Tabel dari File Excel",
           ["Total (Overall)", "Kartu Dana (KD)", "SWDKLLJ (SW)", "Denda"],
-          key="viewer_excel"
+          key="viewer_excel",
       )
 
       try:
-        wb_excel = openpyxl.load_workbook("Penerimaan Sektor UU 34 Tahun 1964.xlsx", data_only=True)
-        sheet_excel = wb_excel['HARIAN BARU (2)']
+        wb_excel = openpyxl.load_workbook(
+            "Penerimaan Sektor UU 34 Tahun 1964.xlsx", data_only=True
+        )
+        sheet_excel = wb_excel["HARIAN BARU (2)"]
         raw_data = [list(r) for r in sheet_excel.iter_rows(values_only=True)]
         df_raw = pd.DataFrame(raw_data)
 
-        if selected_kategori_ex == "Total (Overall)": start_r, end_r = 31, 39
-        elif selected_kategori_ex == "Kartu Dana (KD)": start_r, end_r = 41, 49
-        elif selected_kategori_ex == "SWDKLLJ (SW)": start_r, end_r = 51, 59
-        else: start_r, end_r = 61, 69
+        if selected_kategori_ex == "Total (Overall)":
+          start_r, end_r = 31, 39
+        elif selected_kategori_ex == "Kartu Dana (KD)":
+          start_r, end_r = 41, 49
+        elif selected_kategori_ex == "SWDKLLJ (SW)":
+          start_r, end_r = 51, 59
+        else:
+          start_r, end_r = 61, 69
 
-        table_subset = df_raw.iloc[start_r:end_r+1, 1:21].copy()
+        table_subset = df_raw.iloc[start_r : end_r + 1, 1:21].copy()
         table_subset.columns = table_subset.iloc[0]
         table_subset = table_subset.iloc[1:].reset_index(drop=True)
 
         st.dataframe(table_subset, use_container_width=True, hide_index=True)
       except Exception as e:
-        st.info("File Excel cadangan tidak ditemukan di direktori root, namun sistem utama berjalan normal via Supabase.")
+        st.info(
+            "File Excel utama 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' belum"
+            " ditemukan di direktori root."
+        )
