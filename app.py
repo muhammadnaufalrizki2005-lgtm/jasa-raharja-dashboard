@@ -109,29 +109,80 @@ if "logged_in" not in st.session_state:
 if "toast_count" not in st.session_state:
   st.session_state.toast_count = 0
 
+# ==========================================
+# GAYA UI KORPORAT JASA RAHARJA
+# ==========================================
 css_base = """
     <style>
-    .stApp { background-color: #f8f9fa; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    .stApp { 
+        background-color: #ffffff; 
+        font-family: 'Inter', sans-serif;
+        color: #1a1a1a;
+    }
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
     .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] { display: none !important; }
+
+    /* Tombol Korporat Jasa Raharja */
     div.stButton > button:first-child {
         background-color: #005ba8;
         color: white;
         width: 100%;
-        border-radius: 8px;
-        padding: 10px;
-        font-weight: bold;
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-weight: 600;
         border: none;
+        box-shadow: 0 2px 4px rgba(0, 91, 168, 0.2);
+        transition: all 0.2s ease-in-out;
     }
     div.stButton > button:first-child:hover {
         background-color: #004580;
-        color: white;
+        box-shadow: 0 4px 8px rgba(0, 91, 168, 0.3);
     }
+
+    /* Container Card Style */
+    div.stForm {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        border-bottom: 2px solid #f0f2f5;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        white-space: nowrap;
+        background-color: transparent;
+        border-radius: 6px 6px 0 0;
+        font-weight: 600;
+        color: #555555;
+        padding: 0 16px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #f0f7ff !important;
+        color: #005ba8 !important;
+        border-bottom: 2px solid #005ba8;
+    }
+
+    /* DataFrame & Table Polish */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    </style>
 """
 
 # ==========================================
@@ -155,13 +206,13 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.3, 1])
 
   with col2:
-    st.markdown("<div style='height: 3vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
             f"""
-                <div style="text-align: center; margin-bottom: 5px;">
-                    <img src="data:image/png;base64,{img_base64}" width="250" style="display: block; margin: 0 auto; height: auto;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <img src="data:image/png;base64,{img_base64}" width="220" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -174,12 +225,16 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #333333; font-size: 1.2rem;"
-          " font-weight: 600; margin-bottom: 5px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
+          " font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
-      st.markdown("---")
+      st.markdown(
+          "<div style='text-align: center; color: #666666; font-size: 0.9rem;"
+          " margin-bottom: 20px;'>Silakan masuk dengan akun resmi Anda</div>",
+          unsafe_allow_html=True,
+      )
 
       with st.form("form_login_portal"):
         username = st.text_input(
@@ -189,7 +244,7 @@ if not st.session_state.logged_in:
             "Password", type="password", placeholder="Masukkan Password"
         )
         st.write("")
-        login_button = st.form_submit_button("Login")
+        login_button = st.form_submit_button("Masuk Sistem")
 
         if login_button:
           if username.lower() == "petugas" and password == "PetugasDIY2026!":
@@ -209,8 +264,8 @@ if not st.session_state.logged_in:
 
       st.markdown(
           "<p style='text-align: center; font-size: 12px; margin-top:"
-          " 10px; color: #666666;'>Akun akses dikelola dan disediakan oleh"
-          " Administrator Kanwil.</p>",
+          " 20px; color: #888888;'>© 2026 PT Jasa Raharja Kanwil DIY — All"
+          " Rights Reserved</p>",
           unsafe_allow_html=True,
       )
 
@@ -233,11 +288,27 @@ else:
   header_col1, header_col2 = st.columns([4, 1])
   with header_col1:
     if st.session_state.role == "Petugas SAMSAT":
-      st.title("📝 Portal Petugas SAMSAT")
-      st.subheader("Kanwil DIY - Jasa Raharja")
+      st.markdown(
+          "<h2 style='color: #005ba8; margin-bottom: 0; font-weight:"
+          " 700;'>Portal Petugas SAMSAT</h2>",
+          unsafe_allow_html=True,
+      )
+      st.markdown(
+          "<p style='color: #666; margin-top: 2px;'>Kanwil DIY — PT Jasa"
+          " Raharja</p>",
+          unsafe_allow_html=True,
+      )
     else:
-      st.title("📊 Dashboard Laporan Realisasi Kinerja")
-      st.subheader("Monitoring Penerimaan Sektor UU 34 Tahun 1964")
+      st.markdown(
+          "<h2 style='color: #005ba8; margin-bottom: 0; font-weight:"
+          " 700;'>Dashboard Laporan Realisasi Kinerja</h2>",
+          unsafe_allow_html=True,
+      )
+      st.markdown(
+          "<p style='color: #666; margin-top: 2px;'>Monitoring Penerimaan Sektor"
+          " UU 34 Tahun 1964</p>",
+          unsafe_allow_html=True,
+      )
   with header_col2:
     st.write("")
     if st.button("🚪 Keluar"):
@@ -246,7 +317,7 @@ else:
       st.query_params.clear()
       st.rerun()
 
-  st.markdown("---")
+  st.markdown("<hr style='margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
 
   # ----------------------------------------
   # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT DENGAN FILTER TANGGAL)
@@ -332,7 +403,6 @@ else:
         " tanggal tersebut."
     )
 
-    # Widget Filter Tanggal untuk Petugas
     fc_tgl1, fc_tgl2 = st.columns(2)
     with fc_tgl1:
       filter_dari = st.date_input(
@@ -355,7 +425,6 @@ else:
       )
 
       if not df_recent.empty:
-        # Tampilkan tabel riwayat sesuai rentang tanggal
         df_show = df_recent.copy()
         df_show["Jumlah Penerimaan"] = df_show["realisasi"].apply(
             lambda x: f"Rp {x:,.0f}".replace(",", ".")
@@ -382,7 +451,6 @@ else:
             hide_index=True,
         )
 
-        # FITUR KOREKSI / EDIT / HAPUS DATA MENYESUAIKAN FILTER TANGGAL DI ATAS
         st.markdown("#### ✏️ Ubah atau Hapus Laporan Tertentu")
         with st.expander(
             "Klik di sini untuk Mengoreksi / Menghapus Data Sesuai Pilihan"
@@ -501,7 +569,6 @@ else:
         "📂 Viewer File Master Excel",
     ])
 
-    # Ambil data inputan harian dari Supabase
     try:
       response = supabase.table("penerimaan_harian").select("*").execute()
       df_db = pd.DataFrame(response.data) if response.data else pd.DataFrame()
@@ -524,7 +591,6 @@ else:
           " secara otomatis."
       )
 
-      # Widget Filter Interaktif untuk Pimpinan
       fc1, fc2, fc3 = st.columns(3)
       with fc1:
         target_tahun_pilih = st.selectbox(
@@ -549,7 +615,7 @@ else:
             "Pilih Bulan Pelaporan",
             options=list(bulan_mapping.keys()),
             format_func=lambda x: bulan_mapping[x],
-            index=7,  # Default Agustus (8)
+            index=7,
         )
       with fc3:
         kat_pilihan = st.selectbox(
@@ -566,7 +632,6 @@ else:
           "Gunung Kidul": "Gunung_Kidul",
       }
 
-      # Load sheet Excel dinamis berdasarkan tahun
       df_anggaran_x = load_anggaran_excel(target_tahun_pilih)
       df_hist_x = load_historis_excel(target_tahun_pilih)
       df_hist_x1 = load_historis_excel(tahun_x1)
@@ -585,7 +650,6 @@ else:
           df_sheet, tahun_val, bulan_val, jenis_dana, col_name, is_cumulative=False
       ):
         val = 0.0
-        # 1. Cek input harian baru di Supabase
         if not df_db.empty:
           if is_cumulative:
             m_db = (
@@ -621,7 +685,6 @@ else:
             if val > 0:
               return val
 
-        # 2. Ambil dari sheet Excel Historis{tahun}
         if not df_sheet.empty:
           excel_col = (
               col_name
@@ -655,7 +718,6 @@ else:
           siklikal = SIKLIKAL[jenis_dana]
           col_name = loket_col_map.get(loket, loket)
 
-          # Ambil data komparasi tahun lalu dan tahun berjalan
           khusus_x1 = get_data_value(
               df_hist_x1,
               tahun_x1,
@@ -721,7 +783,6 @@ else:
         })
         df_calc = pd.concat([df_calc, jumlah_row], ignore_index=True)
 
-        # RUMUS EXECUTIF / LAPORAN PIMPINAN
         df_calc["Pertumbuhan Bulanan (YoY)"] = (
             safe_div(
                 df_calc["Bulan Ini (Thn Berjalan)"]
@@ -959,7 +1020,7 @@ else:
               & (df_db["dt_tanggal"] <= pd.to_datetime(end_date_str))
           ]
 
-        else:  # Tahunan (Dari Tahun ... Sampai Tahun ...)
+        else:
           st.markdown(
               "**Pilih Rentang Tahun (Dari Tahun ... Sampai Tahun ...)**"
           )
@@ -1000,7 +1061,6 @@ else:
         else:
           st.info("Tidak ada data pada rentang filter tersebut.")
 
-        # FITUR AUDIT OTOMATIS (ANOMALI)
         st.markdown("---")
         with st.expander(
             "🔍 Audit & Deteksi Otomatis Validasi Data", expanded=False
@@ -1045,7 +1105,6 @@ else:
             else:
               st.success("✅ Aman")
 
-        # GRAFIK TREN (DISINKRONKAN DENGAN FILTER PERIODE)
         st.markdown("---")
         st.markdown("### 📉 Grafik Tren Perolehan Realisasi")
 
