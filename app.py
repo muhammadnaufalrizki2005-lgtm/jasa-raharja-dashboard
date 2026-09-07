@@ -840,7 +840,7 @@ else:
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN PILIHAN JENIS GRAFIK) ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (TERSYNCHRONISASI DENGAN FILTER) ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
@@ -965,11 +965,10 @@ else:
             else:
               st.success("✅ Aman")
 
-        # GRAFIK TREN DENGAN PILIHAN BENTUK (BAR, LINE, AREA)
+        # GRAFIK TREN (DISINKRONKAN DENGAN FILTER PERIODE DI ATAS)
         st.markdown("---")
         st.markdown("### 📉 Grafik Tren Perolehan Realisasi")
         
-        # Pilihan Model Grafik untuk Pimpinan
         tipo_grafik = st.radio(
             "Pilih Format Tampilan Grafik:",
             ["Diagram Batang (Bar)", "Grafik Garis (Line)", "Grafik Area (Area)"],
@@ -989,18 +988,23 @@ else:
               "Jenis Dana", options=all_jenis, default=all_jenis, key="g_jenis"
           )
 
-        df_c = df_db[
-            df_db["loket"].isin(sel_loket_gr)
-            & df_db["jenis_dana"].isin(sel_jenis_gr)
+        # MENGGUNAKAN DF_FILTERED AGAR GRAFIK IKUT TERFILTER SESUAI PILIHAN DI ATAS
+        df_c = df_filtered[
+            df_filtered["loket"].isin(sel_loket_gr)
+            & df_filtered["jenis_dana"].isin(sel_jenis_gr)
         ].copy()
         
         if not df_c.empty:
-          df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
+          # Penyesuaian sumbu X berdasarkan mode waktu
+          if mode_waktu == "Tahunan":
+            df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%B %Y")
+          else:
+            df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
+
           df_chart_agg = (
               df_c.groupby("Periode")["realisasi"].sum().reset_index()
           )
 
-          # Render Grafik Berdasarkan Pilihan Pimpinan
           if tipo_grafik == "Diagram Batang (Bar)":
             fig = px.bar(
                 df_chart_agg,
@@ -1016,7 +1020,7 @@ else:
                 markers=True,
                 color_discrete_sequence=["#005ba8"],
             )
-          else:  # Area Chart
+          else:
             fig = px.area(
                 df_chart_agg,
                 x="Periode",
@@ -1030,6 +1034,8 @@ else:
               margin=dict(l=20, r=20, t=10, b=20),
           )
           st.plotly_chart(fig, use_container_width=True)
+        else:
+          st.warning("Tidak ada data grafik yang sesuai dengan filter periode tersebut.")
       else:
         st.warning("Belum ada data realisasi harian di database.")
 
