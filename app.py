@@ -14,34 +14,65 @@ from supabase import create_client
 TARGET_TAHUN = 2026
 TARGET_BULAN = 8  # Agustus (Bulan ke-8)
 
-# 1. Prosentase Siklikal per Jenis Dana (%)
+# 1. Prosentase Siklikal per Jenis Dana & Total (Overall) (%)
 SIKLIKAL = {
-    "Kartu Dana / Sertifikat": 30.93,
-    "SWDKLLJ": 30.30,
-    "Denda": 32.00
+    "Total (Overall)": 66.28,
+    "Kartu Dana / Sertifikat": 47.92,
+    "SWDKLLJ": 47.00,
+    "Denda": 48.00
 }
 
 NILAI_UNKNOWN_VAR = 0.0 
 
-# 2. Anggaran (Tahun X) per Loket dan Jenis Dana
+# 2. Anggaran (Tahun 2026) per Loket dan Jenis Dana
 ANGGARAN = {
-    "Kartu Dana / Sertifikat": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "SWDKLLJ": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "Denda": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0}
+    "Kartu Dana / Sertifikat": {
+        "Kota": 1037512719,
+        "Sleman": 2380596443,
+        "Bantul": 1683568180,
+        "Kulon Progo": 649532400,
+        "Gunung Kidul": 769790258
+    },
+    "SWDKLLJ": {
+        "Kota": 20208306150,
+        "Sleman": 46843772335,
+        "Bantul": 30642670062,
+        "Kulon Progo": 10750188799,
+        "Gunung Kidul": 13133062654
+    },
+    "Denda": {
+        "Kota": 2092236653,
+        "Sleman": 4314248445,
+        "Bantul": 2883281483,
+        "Kulon Progo": 906326216,
+        "Gunung Kidul": 1339907203
+    }
 }
 
-# 3. Data Historis Khusus Bulan tsb (Tahun X-1)
+# 3. Data Historis Khusus Bulan tsb (Tahun X-1 / 2025)
 KHUSUS_X1 = {
-    "Kartu Dana / Sertifikat": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "SWDKLLJ": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "Denda": {"Kota": 48, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0}
+    "Kartu Dana / Sertifikat": {
+        "Kota": 76875000, "Sleman": 172053000, "Bantul": 122148000, "Kulon Progo": 47520000, "Gunung Kidul": 57366000
+    },
+    "SWDKLLJ": {
+        "Kota": 1296735600, "Sleman": 3039293500, "Bantul": 2021767300, "Kulon Progo": 714662800, "Gunung Kidul": 894459300
+    },
+    "Denda": {
+        "Kota": 167815750, "Sleman": 368272250, "Bantul": 257461000, "Kulon Progo": 78307250, "Gunung Kidul": 121105250
+    }
 }
 
-# 4. Data Historis Jan s.d Bulan tsb (Tahun X-1)
+# 4. Data Historis Jan s.d Bulan tsb (Tahun X-1 / 2025)
 JAN_SD_X1 = {
-    "Kartu Dana / Sertifikat": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "SWDKLLJ": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0},
-    "Denda": {"Kota": 0, "Sleman": 0, "Bantul": 0, "Kulon Progo": 0, "Gunung Kidul": 0}
+    "Kartu Dana / Sertifikat": {
+        "Kota": 685650000, "Sleman": 1518258000, "Bantul": 1074000000, "Kulon Progo": 420102000, "Gunung Kidul": 491562000
+    },
+    "SWDKLLJ": {
+        "Kota": 11185117300, "Sleman": 26592664700, "Bantul": 17524337100, "Kulon Progo": 6273058900, "Gunung Kidul": 7580646200
+    },
+    "Denda": {
+        "Kota": 1395625250, "Sleman": 3083833500, "Bantul": 2120938500, "Kulon Progo": 647579000, "Gunung Kidul": 987964500
+    }
 }
 
 
@@ -487,6 +518,13 @@ else:
         df_total["Perbulan"] = df_total["Anggaran (Thn X)"] / 12
         df_total["Rata Perhari"] = df_total["Anggaran (Thn X)"] / (12 * 25)
         df_total["(+/-) Realisasi"] = df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"]
+        
+        siklikal_tot = SIKLIKAL["Total (Overall)"]
+        df_total["Real vs Var_X (%)"] = df_total["Real (%)"] - NILAI_UNKNOWN_VAR
+        df_total["Real vs Siklikal (%)"] = df_total["Real (%)"] - siklikal_tot
+        df_total["Seharusnya"] = df_total["Anggaran (Thn X)"] * (siklikal_tot / 100)
+        df_total["Selisih vs Seharusnya"] = df_total["Jan s.d Bln (X)"] - df_total["Seharusnya"]
+        
         df_final = df_total
       else:
         df_final = generate_excel_table(kat_pilihan)
