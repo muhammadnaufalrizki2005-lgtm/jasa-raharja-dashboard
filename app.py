@@ -132,7 +132,12 @@ if not st.session_state.logged_in:
     [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
-    .stHeadingAnchor { display: none !important; }
+    
+    /* Menghilangkan ikon tautan/anchor pada heading */
+    .stHeadingAnchor, [data-testid="stHeadingAnchor"], h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+        display: none !important;
+        visibility: hidden !important;
+    }
 
     button[kind="primary"] {
         background-color: #005ba8 !important;
@@ -263,7 +268,12 @@ else:
     [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
-    .stHeadingAnchor { display: none !important; }
+    
+    /* Menghilangkan ikon tautan/anchor pada heading */
+    .stHeadingAnchor, [data-testid="stHeadingAnchor"], h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+        display: none !important;
+        visibility: hidden !important;
+    }
 
     button[kind="primary"] {
         background-color: #005ba8 !important;
