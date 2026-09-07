@@ -10,6 +10,50 @@ import streamlit as st
 from supabase import create_client
 
 # ==========================================
+# ⚙️ SISTEM LOGIN & SESI (Dinaikkan ke atas agar terbaca sebelum Page Config)
+# ==========================================
+if "logged_in" not in st.session_state:
+  qp_logged = st.query_params.get("logged_in")
+  qp_role = st.query_params.get("role")
+  if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
+    st.session_state.logged_in = True
+    st.session_state.role = qp_role
+  else:
+    st.session_state.logged_in = False
+    st.session_state.role = None
+
+if "toast_count" not in st.session_state:
+  st.session_state.toast_count = 0
+
+# ==========================================
+# ⚙️ LOGIKA PENENTUAN JUDUL TAB BROWSER (DYNAMIC)
+# ==========================================
+if not st.session_state.logged_in:
+    dynamic_title = "Portal Monitoring DIY"
+elif st.session_state.role == "Petugas SAMSAT":
+    dynamic_title = "Portal Petugas SAMSAT"
+else:
+    dynamic_title = "Dashboard Realisasi"
+
+# ==========================================
+# KONFIGURASI HALAMAN
+# ==========================================
+try:
+  favicon_img = Image.open("jasa raharja logo.png")
+  bbox = favicon_img.getbbox()
+  if bbox:
+    favicon_img = favicon_img.crop(bbox)
+except Exception:
+  favicon_img = "jasa raharja logo.png"
+
+st.set_page_config(
+    page_title=dynamic_title, # Menggunakan judul dinamis
+    page_icon=favicon_img,
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# ==========================================
 # ⚙️ KONFIGURASI DATA MASTER
 # ==========================================
 SIKLIKAL = {
@@ -48,25 +92,6 @@ def load_anggaran_excel(tahun):
     return pd.DataFrame()
 
 
-# ==========================================
-# KONFIGURASI HALAMAN
-# ==========================================
-try:
-  favicon_img = Image.open("jasa raharja logo.png")
-  bbox = favicon_img.getbbox()
-  if bbox:
-    favicon_img = favicon_img.crop(bbox)
-except Exception:
-  favicon_img = "jasa raharja logo.png"
-
-st.set_page_config(
-    page_title="Dashboard Jasa Raharja DIY",
-    page_icon=favicon_img,
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
-
-
 @st.cache_data
 def get_img_base64(file_path):
   try:
@@ -92,22 +117,6 @@ def init_connection():
 
 
 supabase = init_connection()
-
-# ==========================================
-# SISTEM LOGIN & SESI
-# ==========================================
-if "logged_in" not in st.session_state:
-  qp_logged = st.query_params.get("logged_in")
-  qp_role = st.query_params.get("role")
-  if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
-    st.session_state.logged_in = True
-    st.session_state.role = qp_role
-  else:
-    st.session_state.logged_in = False
-    st.session_state.role = None
-
-if "toast_count" not in st.session_state:
-  st.session_state.toast_count = 0
 
 # ==========================================
 # TAMPILAN HALAMAN LOGIN
