@@ -47,51 +47,16 @@ ANGGARAN = {
     }
 }
 
-# 3. Data Historis Bulanan Full (Januari s.d. Desember) Tahun Sebelumnya (Tahun X-1 / 2025)
-HISTORIS_BULANAN_X1 = {
-    "Kartu Dana / Sertifikat": {
-        1:  {"Kota": 70000000,  "Sleman": 150000000, "Bantul": 100000000, "Kulon Progo": 40000000, "Gunung Kidul": 45000000},
-        2:  {"Kota": 72000000,  "Sleman": 155000000, "Bantul": 105000000, "Kulon Progo": 42000000, "Gunung Kidul": 48000000},
-        3:  {"Kota": 75000000,  "Sleman": 160000000, "Bantul": 110000000, "Kulon Progo": 45000000, "Gunung Kidul": 50000000},
-        4:  {"Kota": 74000000,  "Sleman": 158000000, "Bantul": 108000000, "Kulon Progo": 44000000, "Gunung Kidul": 49000000},
-        5:  {"Kota": 78000000,  "Sleman": 165000000, "Bantul": 115000000, "Kulon Progo": 46000000, "Gunung Kidul": 52000000},
-        6:  {"Kota": 77000000,  "Sleman": 163000000, "Bantul": 113000000, "Kulon Progo": 45000000, "Gunung Kidul": 51000000},
-        7:  {"Kota": 75000000,  "Sleman": 160000000, "Bantul": 110000000, "Kulon Progo": 43000000, "Gunung Kidul": 49000000},
-        8:  {"Kota": 76875000,  "Sleman": 172053000, "Bantul": 122148000, "Kulon Progo": 47520000, "Gunung Kidul": 57366000},
-        9:  {"Kota": 79000000,  "Sleman": 171000000, "Bantul": 121000000, "Kulon Progo": 47000000, "Gunung Kidul": 55000000},
-        10: {"Kota": 81000000,  "Sleman": 174000000, "Bantul": 123000000, "Kulon Progo": 48000000, "Gunung Kidul": 56000000},
-        11: {"Kota": 84000000,  "Sleman": 179000000, "Bantul": 126000000, "Kulon Progo": 50000000, "Gunung Kidul": 59000000},
-        12: {"Kota": 90000000,  "Sleman": 190000000, "Bantul": 135000000, "Kulon Progo": 55000000, "Gunung Kidul": 65000000},
-    },
-    "SWDKLLJ": {
-        1:  {"Kota": 1200000000, "Sleman": 2800000000, "Bantul": 1900000000, "Kulon Progo": 650000000, "Gunung Kidul": 800000000},
-        2:  {"Kota": 1250000000, "Sleman": 2900000000, "Bantul": 1950000000, "Kulon Progo": 670000000, "Gunung Kidul": 820000000},
-        3:  {"Kota": 1300000000, "Sleman": 3000000000, "Bantul": 2000000000, "Kulon Progo": 700000000, "Gunung Kidul": 850000000},
-        4:  {"Kota": 1280000000, "Sleman": 2950000000, "Bantul": 1980000000, "Kulon Progo": 690000000, "Gunung Kidul": 840000000},
-        5:  {"Kota": 1350000000, "Sleman": 3100000000, "Bantul": 2050000000, "Kulon Progo": 720000000, "Gunung Kidul": 880000000},
-        6:  {"Kota": 1320000000, "Sleman": 3050000000, "Bantul": 2020000000, "Kulon Progo": 710000000, "Gunung Kidul": 870000000},
-        7:  {"Kota": 1270000000, "Sleman": 2980000000, "Bantul": 1990000000, "Kulon Progo": 695000000, "Gunung Kidul": 845000000},
-        8:  {"Kota": 1296735600, "Sleman": 3039293500, "Bantul": 2021767300, "Kulon Progo": 714662800, "Gunung Kidul": 894459300},
-        9:  {"Kota": 1310000000, "Sleman": 3020000000, "Bantul": 2010000000, "Kulon Progo": 705000000, "Gunung Kidul": 860000000},
-        10: {"Kota": 1340000000, "Sleman": 3080000000, "Bantul": 2040000000, "Kulon Progo": 715000000, "Gunung Kidul": 875000000},
-        11: {"Kota": 1380000000, "Sleman": 3150000000, "Bantul": 2090000000, "Kulon Progo": 735000000, "Gunung Kidul": 900000000},
-        12: {"Kota": 1450000000, "Sleman": 3300000000, "Bantul": 2200000000, "Kulon Progo": 780000000, "Gunung Kidul": 950000000},
-    },
-    "Denda": {
-        1:  {"Kota": 150000000,  "Sleman": 330000000, "Bantul": 230000000, "Kulon Progo": 70000000,  "Gunung Kidul": 110000000},
-        2:  {"Kota": 155000000,  "Sleman": 340000000, "Bantul": 235000000, "Kulon Progo": 72000000,  "Gunung Kidul": 112000000},
-        3:  {"Kota": 160000000,  "Sleman": 350000000, "Bantul": 240000000, "Kulon Progo": 75000000,  "Gunung Kidul": 115000000},
-        4:  {"Kota": 158000000,  "Sleman": 345000000, "Bantul": 238000000, "Kulon Progo": 73000000,  "Gunung Kidul": 113000000},
-        5:  {"Kota": 165000000,  "Sleman": 360000000, "Bantul": 250000000, "Kulon Progo": 77000000,  "Gunung Kidul": 118000000},
-        6:  {"Kota": 162000000,  "Sleman": 355000000, "Bantul": 245000000, "Kulon Progo": 76000000,  "Gunung Kidul": 116000000},
-        7:  {"Kota": 159000000,  "Sleman": 350000000, "Bantul": 242000000, "Kulon Progo": 74000000,  "Gunung Kidul": 114000000},
-        8:  {"Kota": 167815750,  "Sleman": 368272250, "Bantul": 257461000, "Kulon Progo": 78307250,  "Gunung Kidul": 121105250},
-        9:  {"Kota": 161000000,  "Sleman": 352000000, "Bantul": 243000000, "Kulon Progo": 75000000,  "Gunung Kidul": 115000000},
-        10: {"Kota": 164000000,  "Sleman": 358000000, "Bantul": 247000000, "Kulon Progo": 76000000,  "Gunung Kidul": 117000000},
-        11: {"Kota": 168000000,  "Sleman": 365000000, "Bantul": 252000000, "Kulon Progo": 79000000,  "Gunung Kidul": 120000000},
-        12: {"Kota": 180000000,  "Sleman": 390000000, "Bantul": 270000000, "Kulon Progo": 85000000,  "Gunung Kidul": 130000000},
-    }
-}
+# ==========================================
+# FUNGSI PEMBACAAN EXCEL HISTORIS 2025
+# ==========================================
+@st.cache_data
+def load_historis_excel():
+  try:
+    df_h = pd.read_excel("Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name="Historis2025")
+    return df_h
+  except Exception:
+    return pd.DataFrame()
 
 
 # ==========================================
@@ -447,13 +412,16 @@ else:
     except Exception as e:
       df_db = pd.DataFrame()
 
+    # Muat data historis dari sheet Excel Historis2025
+    df_hist = load_historis_excel()
+
     def safe_div(a, b):
         return np.where(b == 0, 0, a / b)
 
     # ---------------- TAB 1: LAPORAN FORMAT EXCEL (DYNAMIC FILTER BULAN & TAHUN) ----------------
     with tab_pimpinan_1:
       st.markdown("### 📊 Laporan Realisasi Kinerja SAMSAT")
-      st.write("Pilih Tahun dan Bulan target laporan di bawah ini. Sistem otomatis menghitung data bulan khusus (X-1) dan akumulasi (Jan s.d Bln X-1) dari data master historis secara presisi.")
+      st.write("Pilih Tahun dan Bulan target laporan di bawah ini. Sistem otomatis membaca data historis X-1 langsung dari sheet 'Historis2025' di file Excel Anda.")
 
       # Widget Filter Interaktif untuk Pimpinan
       fc1, fc2, fc3 = st.columns(3)
@@ -477,6 +445,7 @@ else:
         )
 
       tahun_x1 = target_tahun_pilih - 1
+      loket_col_map = {"Kota": "Kota", "Sleman": "Sleman", "Bantul": "Bantul", "Kulon Progo": "Kulon_Progo", "Gunung Kidul": "Gunung_Kidul"}
 
       def generate_excel_table(jenis_dana):
         lokets = ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"]
@@ -485,14 +454,19 @@ else:
         for loket in lokets:
           anggaran_x = ANGGARAN[jenis_dana].get(loket, 0)
           siklikal = SIKLIKAL[jenis_dana]
+          col_name = loket_col_map.get(loket, loket)
 
-          # Ambil otomatis dari kamus full historis X-1 berdasarkan bulan terpilih
-          khusus_x1 = HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(target_bulan_pilih, {}).get(loket, 0)
-          
-          # Akumulasi Jan s.d Bulan terpilih untuk Tahun X-1
-          jan_sd_x1 = 0
-          for m in range(1, target_bulan_pilih + 1):
-              jan_sd_x1 += HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(m, {}).get(loket, 0)
+          # Ambil otomatis dari sheet Excel 'Historis2025'
+          khusus_x1 = 0.0
+          jan_sd_x1 = 0.0
+          if not df_hist.empty:
+              m_k = (df_hist["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_hist["Bulan"] == target_bulan_pilih)
+              if m_k.any():
+                  khusus_x1 = float(df_hist.loc[m_k, col_name].values[0])
+              
+              m_j = (df_hist["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_hist["Bulan"] <= target_bulan_pilih)
+              if m_j.any():
+                  jan_sd_x1 = float(df_hist.loc[m_j, col_name].sum())
 
           khusus_x = 0
           jan_sd_x = 0
