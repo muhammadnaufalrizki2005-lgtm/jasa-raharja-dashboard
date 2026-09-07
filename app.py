@@ -1,4 +1,5 @@
 import base64
+import calendar
 from datetime import date
 from PIL import Image
 import pandas as pd
@@ -840,14 +841,14 @@ else:
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (TERSYNCHRONISASI DENGAN FILTER) ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN FILTER RENTANG WAKTU) ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
-        df_db["Bulan_Str"] = (
-            df_db["dt_tanggal"].dt.to_period("M").astype(str)
-        )
         df_db["Tahun_Str"] = df_db["dt_tanggal"].dt.year.astype(str)
+        all_years = sorted(df_db["Tahun_Str"].unique())
+        if not all_years:
+          all_years = [str(date.today().year)]
 
         mode_waktu = st.radio(
             "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
@@ -867,14 +868,18 @@ else:
               (df_db["dt_tanggal"].dt.date >= start_tgl)
               & (df_db["dt_tanggal"].dt.date <= end_tgl)
           ]
+
         elif mode_waktu == "Bulanan":
-          all_years = sorted(df_db["Tahun_Str"].unique())
+          st.markdown(
+              "**Pilih Rentang Bulan (Dari Bulan ... Sampai Bulan ...)**"
+          )
           mc1, mc2 = st.columns(2)
           with mc1:
-            start_y = st.selectbox("Tahun", all_years, key="p_sy")
-          with mc2:
-            start_m = st.selectbox(
-                "Bulan (01-12)",
+            start_m_year = st.selectbox(
+                "Dari Tahun", all_years, key="p_sy_start"
+            )
+            start_m_val = st.selectbox(
+                "Dari Bulan",
                 [
                     "01",
                     "02",
@@ -889,14 +894,65 @@ else:
                     "11",
                     "12",
                 ],
-                key="p_sm",
+                key="p_sm_start",
             )
-          target_bln_str = f"{start_y}-{start_m}"
-          df_filtered = df_db[df_db["Bulan_Str"] == target_bln_str]
-        else:
-          all_years = sorted(df_db["Tahun_Str"].unique())
-          thn_pilih = st.selectbox("Pilih Tahun", all_years, key="p_thn")
-          df_filtered = df_db[df_db["Tahun_Str"] == thn_pilih]
+          with mc2:
+            end_m_year = st.selectbox(
+                "Sampai Tahun",
+                all_years,
+                key="p_sy_end",
+                index=len(all_years) - 1,
+            )
+            end_m_val = st.selectbox(
+                "Sampai Bulan",
+                [
+                    "01",
+                    "02",
+                    "03",
+                    "04",
+                    "05",
+                    "06",
+                    "07",
+                    "08",
+                    "09",
+                    "10",
+                    "11",
+                    "12",
+                ],
+                key="p_sm_end",
+                index=11,
+            )
+
+          start_date_str = f"{start_m_year}-{start_m_val}-01"
+          last_day = calendar.monthrange(
+              int(end_m_year), int(end_m_val)
+          )[1]
+          end_date_str = f"{end_m_year}-{end_m_val}-{last_day}"
+
+          df_filtered = df_db[
+              (df_db["dt_tanggal"] >= pd.to_datetime(start_date_str))
+              & (df_db["dt_tanggal"] <= pd.to_datetime(end_date_str))
+          ]
+
+        else:  # Tahunan (Dari Tahun ... Sampai Tahun ...)
+          st.markdown(
+              "**Pilih Rentang Tahun (Dari Tahun ... Sampai Tahun ...)**"
+          )
+          tc1, tc2 = st.columns(2)
+          with tc1:
+            start_thn = st.selectbox("Dari Tahun", all_years, key="p_thn_start")
+          with tc2:
+            end_thn = st.selectbox(
+                "Sampai Tahun",
+                all_years,
+                key="p_thn_end",
+                index=len(all_years) - 1,
+            )
+
+          df_filtered = df_db[
+              (df_db["Tahun"] >= int(start_thn))
+              & (df_db["Tahun"] <= int(end_thn))
+          ]
 
         if not df_filtered.empty:
           df_tampilan = df_filtered.drop(
@@ -907,7 +963,6 @@ else:
                       "Bulan",
                       "Tahun",
                       "id",
-                      "Bulan_Str",
                       "Tahun_Str",
                   ]
                   if c in df_filtered.columns
@@ -918,7 +973,7 @@ else:
           )
           st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
         else:
-          st.info("Tidak ada data pada filter tersebut.")
+          st.info("Tidak ada data pada rentang filter tersebut.")
 
         # FITUR AUDIT OTOMATIS (ANOMALI)
         st.markdown("---")
@@ -965,15 +1020,15 @@ else:
             else:
               st.success("✅ Aman")
 
-        # GRAFIK TREN (DISINKRONKAN DENGAN FILTER PERIODE DI ATAS)
+        # GRAFIK TREN (DISINKRONKAN DENGAN FILTER PERIODE)
         st.markdown("---")
         st.markdown("### 📉 Grafik Tren Perolehan Realisasi")
-        
+
         tipo_grafik = st.radio(
             "Pilih Format Tampilan Grafik:",
             ["Diagram Batang (Bar)", "Grafik Garis (Line)", "Grafik Area (Area)"],
             horizontal=True,
-            key="pilih_jenis_grafik"
+            key="pilih_jenis_grafik",
         )
 
         all_lokets = sorted(df_db["loket"].unique())
@@ -988,15 +1043,15 @@ else:
               "Jenis Dana", options=all_jenis, default=all_jenis, key="g_jenis"
           )
 
-        # MENGGUNAKAN DF_FILTERED AGAR GRAFIK IKUT TERFILTER SESUAI PILIHAN DI ATAS
         df_c = df_filtered[
             df_filtered["loket"].isin(sel_loket_gr)
             & df_filtered["jenis_dana"].isin(sel_jenis_gr)
         ].copy()
-        
+
         if not df_c.empty:
-          # Penyesuaian sumbu X berdasarkan mode waktu
           if mode_waktu == "Tahunan":
+            df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y")
+          elif mode_waktu == "Bulanan":
             df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%B %Y")
           else:
             df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
@@ -1035,7 +1090,10 @@ else:
           )
           st.plotly_chart(fig, use_container_width=True)
         else:
-          st.warning("Tidak ada data grafik yang sesuai dengan filter periode tersebut.")
+          st.warning(
+              "Tidak ada data grafik yang sesuai dengan rentang filter periode"
+              " tersebut."
+          )
       else:
         st.warning("Belum ada data realisasi harian di database.")
 
