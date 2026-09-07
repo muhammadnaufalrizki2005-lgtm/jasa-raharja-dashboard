@@ -488,10 +488,11 @@ else:
 
           # Ambil otomatis dari kamus full historis X-1 berdasarkan bulan terpilih
           khusus_x1 = HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(target_bulan_pilih, {}).get(loket, 0)
-          jan_sd_x1 = sum(
-              HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(m, {}).get(loket, 0)
-              for m in range(1, target_bulan_pilih + 1)
-          )
+          
+          # Akumulasi Jan s.d Bulan terpilih untuk Tahun X-1
+          jan_sd_x1 = 0
+          for m in range(1, target_bulan_pilih + 1):
+              jan_sd_x1 += HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(m, {}).get(loket, 0)
 
           khusus_x = 0
           jan_sd_x = 0
