@@ -182,7 +182,6 @@ css_base = """
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     }
     
-    /* Hapus bayangan tabel standar saat di-hover agar lebih rapi */
     [data-testid="stDataFrame"] > div:hover {
         box-shadow: none !important;
     }
@@ -254,7 +253,6 @@ if not st.session_state.logged_in:
             "Password", type="password", placeholder="Masukkan Password"
         )
         st.markdown("<br>", unsafe_allow_html=True)
-        # Menggunakan type="primary" agar tombol menjadi biru
         login_button = st.form_submit_button("Masuk Sistem", type="primary")
 
         if login_button:
@@ -332,7 +330,11 @@ else:
       st.query_params.clear()
       st.rerun()
 
-  st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 0px; margin-bottom: 30px;'>", unsafe_allow_html=True)
+  st.markdown(
+      "<hr style='border-top: 1px solid #eaedf2; margin-top: 0px; margin-bottom:"
+      " 30px;'>",
+      unsafe_allow_html=True,
+  )
 
   # ----------------------------------------
   # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT)
@@ -343,7 +345,7 @@ else:
         "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan"
         " data penerimaan harian berdasarkan loket SAMSAT dan jenis"
         " pembayaran yang melayani.</p>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     col1, col2 = st.columns(2)
@@ -411,14 +413,17 @@ else:
         except Exception as e:
           st.error(f"Terjadi kesalahan saat menyimpan laporan: {e}")
 
-    st.markdown("<br><hr style='border-top: 1px solid #eaedf2;'><br>", unsafe_allow_html=True)
-    
+    st.markdown(
+        "<br><hr style='border-top: 1px solid #eaedf2;'><br>",
+        unsafe_allow_html=True,
+    )
+
     st.markdown("### Riwayat & Koreksi Laporan")
     st.markdown(
         "<p style='color: #6c757d; margin-bottom: 24px;'>Tentukan rentang"
         " tanggal di bawah ini untuk menampilkan, memeriksa, atau mengoreksi"
         " data historis.</p>",
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     fc_tgl1, fc_tgl2 = st.columns(2)
@@ -546,9 +551,10 @@ else:
               st.markdown("<br>", unsafe_allow_html=True)
               col_btn1, col_btn2 = st.columns(2)
               with col_btn1:
-                update_btn = st.form_submit_button("Perbarui Data", type="primary")
+                update_btn = st.form_submit_button(
+                    "Perbarui Data", type="primary"
+                )
               with col_btn2:
-                # Tombol hapus tidak diberi warna primary agar user berhati-hati
                 delete_btn = st.form_submit_button("Hapus Laporan")
 
               if update_btn:
@@ -609,8 +615,9 @@ else:
       st.markdown("### Laporan Eksekutif Realisasi Penerimaan SAMSAT")
       st.markdown(
           "<p style='color: #6c757d; margin-bottom: 24px;'>Pilih filter di bawah"
-          " ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap tahun sebelumnya.</p>",
-          unsafe_allow_html=True
+          " ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap"
+          " tahun sebelumnya.</p>",
+          unsafe_allow_html=True,
       )
 
       fc1, fc2, fc3 = st.columns(3)
@@ -944,9 +951,10 @@ else:
           )
 
       st.markdown(
-          f"<div style='font-weight: 600; margin-top: 10px; margin-bottom: 10px;'>Ringkasan Performa: {bulan_mapping[target_bulan_pilih]}"
+          f"<div style='font-weight: 600; margin-top: 10px; margin-bottom:"
+          f" 10px;'>Ringkasan Performa: {bulan_mapping[target_bulan_pilih]}"
           f" {target_tahun_pilih} (Komparasi {tahun_x1})</div>",
-          unsafe_allow_html=True
+          unsafe_allow_html=True,
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
@@ -961,7 +969,9 @@ else:
           all_years = [str(date.today().year)]
 
         mode_waktu = st.radio(
-            "Cakupan Periode Analisis:", ["Harian", "Bulanan", "Tahunan"], horizontal=True
+            "Cakupan Periode Analisis:",
+            ["Harian", "Bulanan", "Tahunan"],
+            horizontal=True,
         )
 
         if mode_waktu == "Harian":
@@ -1079,11 +1089,12 @@ else:
         else:
           st.info("Tidak ada data laporan pada rentang filter yang dipilih.")
 
-        st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>", unsafe_allow_html=True)
-        
-        with st.expander(
-            "Audit & Deteksi Validasi Anomali Data"
-        ):
+        st.markdown(
+            "<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>",
+            unsafe_allow_html=True,
+        )
+
+        with st.expander("Audit & Deteksi Validasi Anomali Data"):
           df_zero = df_db[df_db["realisasi"] <= 0]
           df_dup = df_db[
               df_db.duplicated(
@@ -1124,7 +1135,10 @@ else:
             else:
               st.success("Tidak ada anomali")
 
-        st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>", unsafe_allow_html=True)
+        st.markdown(
+            "<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>",
+            unsafe_allow_html=True,
+        )
         st.markdown("### Visualisasi Tren Realisasi")
 
         tipo_grafik = st.radio(
@@ -1143,7 +1157,10 @@ else:
           )
         with gc2:
           sel_jenis_gr = st.multiselect(
-              "Filter Kategori Dana", options=all_jenis, default=all_jenis, key="g_jenis"
+              "Filter Kategori Dana",
+              options=all_jenis,
+              default=all_jenis,
+              key="g_jenis",
           )
 
         df_c = df_filtered[
@@ -1194,7 +1211,8 @@ else:
           st.plotly_chart(fig, use_container_width=True)
         else:
           st.warning(
-              "Data tidak tersedia untuk memuat visualisasi grafik pada parameter yang dipilih."
+              "Data tidak tersedia untuk memuat visualisasi grafik pada parameter"
+              " yang dipilih."
           )
       else:
         st.info("Database laporan realisasi harian masih kosong.")
@@ -1233,5 +1251,6 @@ else:
         st.dataframe(table_subset, use_container_width=True, hide_index=True)
       except Exception:
         st.info(
-            "File direktori 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' tidak ditemukan dalam sistem server."
+            "File direktori 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' tidak"
+            " ditemukan dalam sistem server."
         )
