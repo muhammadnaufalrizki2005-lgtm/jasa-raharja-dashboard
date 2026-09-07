@@ -192,7 +192,6 @@ if not st.session_state.logged_in:
         login_button = st.form_submit_button("Login")
 
         if login_button:
-          # Password Petugas diperbarui menjadi PetugasDIY2026!
           if username.lower() == "petugas" and password == "PetugasDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
@@ -250,222 +249,100 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (INPUT HARIAN)
+  # TAMPILAN: PETUGAS SAMSAT (HANYA FORM INPUT HARIAN)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
-    tab_petugas_1, tab_petugas_2 = st.tabs([
-        "📥 Form Input Data Harian",
-        "🧮 Kalkulator & Simulator Manual",
-    ])
+    st.markdown("### 📥 Form Input Data Realisasi Harian")
+    st.write(
+        "Silakan masukkan data realisasi penerimaan harian sesuai loket SAMSAT"
+        " dan jenis dana masing-masing."
+    )
 
-    with tab_petugas_1:
-      col1, col2 = st.columns(2)
-      with col1:
-        f_tanggal = st.date_input("Tanggal Laporan", value=date.today())
-        f_loket = st.selectbox(
-            "Loket SAMSAT",
-            ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
-        )
-      with col2:
-        f_jenis = st.selectbox(
-            "Jenis Dana",
-            ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
-        )
-        f_realisasi = st.number_input(
-            "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
-        )
-        f_realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
-        st.caption(f"💡 Terbaca: **{f_realisasi_str}**")
-
-      col3, col4 = st.columns(2)
-      with col3:
-        f_siklikal = st.number_input(
-            "Prosentase Siklikal (%)", min_value=0.0, step=0.01
-        )
-      with col4:
-        f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
-
-      st.write("")
-      submit_button = st.button("💾 Simpan Data")
-
-      if submit_button:
-        if f_realisasi <= 0:
-          st.error("❌ Field Realisasi (Rp) tidak boleh 0 atau kosong.")
-        else:
-          data_insert = {
-              "tanggal": str(f_tanggal),
-              "loket": f_loket,
-              "jenis_dana": f_jenis,
-              "realisasi": f_realisasi,
-              "prosentase_siklikal": f_siklikal,
-              "siklikal_yty": f_yty,
-          }
-          try:
-            supabase.table("penerimaan_harian").insert(data_insert).execute()
-            st.session_state.toast_count += 1
-            st.toast(
-                f"[{st.session_state.toast_count}] Data berhasil disimpan ke"
-                f" Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
-                icon="✅",
-            )
-            st.rerun()
-          except Exception as e:
-            st.error(f"❌ Gagal menyimpan data: {e}")
-
-      st.markdown("---")
-      st.markdown("### 👀 Verifikasi Input Terbaru")
-      try:
-        res_recent = (
-            supabase.table("penerimaan_harian")
-            .select("*")
-            .order("id", desc=True)
-            .limit(5)
-            .execute()
-        )
-        df_recent = (
-            pd.DataFrame(res_recent.data)
-            if res_recent.data
-            else pd.DataFrame()
-        )
-        if not df_recent.empty:
-          df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(
-              lambda x: f"Rp {x:,.0f}".replace(",", ".")
-          )
-          st.dataframe(
-              df_recent[[
-                  "tanggal",
-                  "loket",
-                  "jenis_dana",
-                  "realisasi_fmt",
-                  "prosentase_siklikal",
-              ]],
-              use_container_width=True,
-              hide_index=True,
-          )
-        else:
-          st.info("Belum ada data yang diinput.")
-      except Exception:
-        st.info("Memuat riwayat input...")
-
-    with tab_petugas_2:
-      st.markdown("### 🧮 Kalkulator Simulasi Format Laporan")
-      c1, c2, c3, c4 = st.columns(4)
-      with c1:
-        p_jenis = st.selectbox(
-            "Kategori Pendanaan", ["Kartu Dana", "SWDKLLJ", "Denda", "Total"]
-        )
-      with c2:
-        p_bulan_ke = st.number_input(
-            "Bulan ke-", min_value=1, max_value=12, value=8
-        )
-      with c3:
-        p_siklikal = st.number_input(
-            "Target Siklikal (%)", value=30.0, step=0.1, key="sim_sik"
-        )
-      with c4:
-        p_unknown = st.number_input(
-            "Pengurang Cadangan (%)", value=0.0, step=0.1, key="sim_unk"
-        )
-
-      if "df_input" not in st.session_state:
-        st.session_state.df_input = pd.DataFrame({
-            "Loket SAMSAT": [
-                "KOTA",
-                "SLEMAN",
-                "BANTUL",
-                "KULON PROGO",
-                "GUNUNG KIDUL",
-            ],
-            "Target Anggaran": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "Bulan Ini (Thn Lalu)": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "Bulan Ini (Thn Berjalan)": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "Akumulasi s.d Bulan Ini (Thn Lalu)": [0.0, 0.0, 0.0, 0.0, 0.0],
-            "Akumulasi s.d Bulan Ini (Thn Berjalan)": [0.0, 0.0, 0.0, 0.0, 0.0],
-        })
-
-      edited_df = st.data_editor(
-          st.session_state.df_input, use_container_width=True, hide_index=True
+    col1, col2 = st.columns(2)
+    with col1:
+      f_tanggal = st.date_input("Tanggal Laporan", value=date.today())
+      f_loket = st.selectbox(
+          "Loket SAMSAT",
+          ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
       )
+    with col2:
+      f_jenis = st.selectbox(
+          "Jenis Dana",
+          ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
+      )
+      f_realisasi = st.number_input(
+          "Realisasi (Rp)", min_value=0.0, step=1000.0, format="%.2f"
+      )
+      f_realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
+      st.caption(f"💡 Terbaca: **{f_realisasi_str}**")
 
-      if st.button("🚀 Jalankan Simulasi"):
-        df_calc = edited_df.copy()
-        jumlah_row = pd.DataFrame({
-            "Loket SAMSAT": ["JUMLAH Keseluruhan"],
-            "Target Anggaran": [df_calc["Target Anggaran"].sum()],
-            "Bulan Ini (Thn Lalu)": [
-                df_calc["Bulan Ini (Thn Lalu)"].sum()
-            ],
-            "Bulan Ini (Thn Berjalan)": [
-                df_calc["Bulan Ini (Thn Berjalan)"].sum()
-            ],
-            "Akumulasi s.d Bulan Ini (Thn Lalu)": [
-                df_calc["Akumulasi s.d Bulan Ini (Thn Lalu)"].sum()
-            ],
-            "Akumulasi s.d Bulan Ini (Thn Berjalan)": [
-                df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"].sum()
-            ],
-        })
-        df_calc = pd.concat([df_calc, jumlah_row], ignore_index=True)
+    col3, col4 = st.columns(2)
+    with col3:
+      f_siklikal = st.number_input(
+          "Prosentase Siklikal (%)", min_value=0.0, step=0.01
+      )
+    with col4:
+      f_yty = st.number_input("Siklikal YTY (%)", min_value=0.0, step=0.01)
 
-        def safe_div(a, b):
-          return np.where(b == 0, 0, a / b)
+    st.write("")
+    submit_button = st.button("💾 Simpan Data ke Database")
 
-        df_calc["Pertumbuhan Bulanan (YoY)"] = (
-            safe_div(
-                df_calc["Bulan Ini (Thn Berjalan)"]
-                - df_calc["Bulan Ini (Thn Lalu)"],
-                df_calc["Bulan Ini (Thn Lalu)"],
-            )
-            * 100
-        )
-        df_calc["Persentase Capaian (%)"] = (
-            safe_div(
-                df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"],
-                df_calc["Target Anggaran"],
-            )
-            * 100
-        )
-        df_calc["Pertumbuhan Akumulasi (YoY)"] = (
-            safe_div(
-                df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"]
-                - df_calc["Akumulasi s.d Bulan Ini (Thn Lalu)"],
-                df_calc["Akumulasi s.d Bulan Ini (Thn Lalu)"],
-            )
-            * 100
-        )
-        df_calc["Deviasi Target (Surplus/Defisit)"] = df_calc[
-            "Akumulasi s.d Bulan Ini (Thn Berjalan)"
-        ] - (df_calc["Target Anggaran"] * p_bulan_ke / 12)
-        df_calc["Target Per Bulan"] = df_calc["Target Anggaran"] / 12
-        df_calc["Target Rata-rata Harian"] = df_calc["Target Anggaran"] / (
-            12 * 25
-        )
-        df_calc["Selisih Nominal (YoY)"] = (
-            df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"]
-            - df_calc["Akumulasi s.d Bulan Ini (Thn Lalu)"]
-        )
-        df_calc["Capaian vs Cadangan (%)"] = (
-            df_calc["Persentase Capaian (%)"] - p_unknown
-        )
-        df_calc["Capaian vs Siklikal (%)"] = (
-            df_calc["Persentase Capaian (%)"] - p_siklikal
-        )
-        df_calc["Target Berdasarkan Siklikal"] = df_calc[
-            "Target Anggaran"
-        ] * (p_siklikal / 100)
-        df_calc["Selisih vs Target Siklikal"] = (
-            df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"]
-            - df_calc["Target Berdasarkan Siklikal"]
-        )
+    if submit_button:
+      if f_realisasi <= 0:
+        st.error("❌ Field Realisasi (Rp) tidak boleh 0 atau kosong.")
+      else:
+        data_insert = {
+            "tanggal": str(f_tanggal),
+            "loket": f_loket,
+            "jenis_dana": f_jenis,
+            "realisasi": f_realisasi,
+            "prosentase_siklikal": f_siklikal,
+            "siklikal_yty": f_yty,
+        }
+        try:
+          supabase.table("penerimaan_harian").insert(data_insert).execute()
+          st.session_state.toast_count += 1
+          st.toast(
+              f"[{st.session_state.toast_count}] Data berhasil disimpan ke"
+              f" Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
+              icon="✅",
+          )
+          st.rerun()
+        except Exception as e:
+          st.error(f"❌ Gagal menyimpan data: {e}")
 
-        for col in df_calc.columns:
-          if col not in ["Loket SAMSAT"] and "(%)" not in col:
-            df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.0f}")
-          elif "(%)" in col:
-            df_calc[col] = df_calc[col].apply(lambda x: f"{x:,.2f}%")
-
-        st.success("✅ Simulasi Selesai!")
-        st.dataframe(df_calc, use_container_width=True, hide_index=True)
+    st.markdown("---")
+    st.markdown("### 👀 Verifikasi Input Terbaru Anda")
+    try:
+      res_recent = (
+          supabase.table("penerimaan_harian")
+          .select("*")
+          .order("id", desc=True)
+          .limit(5)
+          .execute()
+      )
+      df_recent = (
+          pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
+      )
+      if not df_recent.empty:
+        df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(
+            lambda x: f"Rp {x:,.0f}".replace(",", ".")
+        )
+        st.dataframe(
+            df_recent[[
+                "tanggal",
+                "loket",
+                "jenis_dana",
+                "realisasi_fmt",
+                "prosentase_siklikal",
+            ]],
+            use_container_width=True,
+            hide_index=True,
+        )
+      else:
+        st.info("Belum ada data yang diinput.")
+    except Exception:
+      st.info("Memuat riwayat input...")
 
   # ----------------------------------------
   # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
