@@ -116,12 +116,16 @@ if not st.session_state.logged_in:
   st.markdown(
       """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&display=swap');
     
     .stApp { 
         background-color: #f4f7fc; 
-        font-family: 'Inter', sans-serif;
+        font-family: 'Lora', serif;
         color: #1a1a1a;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', serif !important;
     }
     
     [data-testid="stHeader"] { display: none !important; }
@@ -134,6 +138,7 @@ if not st.session_state.logged_in:
         background-color: #005ba8 !important;
         border-color: #005ba8 !important;
         color: white !important;
+        font-family: 'Lora', serif !important;
         font-weight: 600 !important;
         border-radius: 6px !important;
         padding: 8px 24px !important;
@@ -171,7 +176,6 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 1.2, 1])
 
   with col2:
-    # Spacer atas diperkecil dari 10vh menjadi 2vh agar lebih ke atas
     st.markdown("<div style='height: 2vh;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
@@ -191,9 +195,9 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #1a1a1a; font-size: 1.3rem;"
-          " font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil"
-          " DIY</div>",
+          "<div style='text-align: center; color: #1a1a1a; font-family:\"Playfair"
+          " Display\", serif; font-size: 1.3rem; font-weight: 700; margin-bottom:"
+          " 4px;'>Portal Monitoring Kanwil DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown(
@@ -243,12 +247,16 @@ else:
   st.markdown(
       """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&display=swap');
     
     .stApp { 
         background-color: #ffffff; 
-        font-family: 'Inter', sans-serif;
+        font-family: 'Lora', serif;
         color: #1a1a1a;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', serif !important;
     }
     
     [data-testid="stHeader"] { display: none !important; }
@@ -261,6 +269,7 @@ else:
         background-color: #005ba8 !important;
         border-color: #005ba8 !important;
         color: white !important;
+        font-family: 'Lora', serif !important;
         font-weight: 600 !important;
         border-radius: 6px !important;
         padding: 8px 24px !important;
@@ -289,6 +298,7 @@ else:
         white-space: nowrap;
         background-color: transparent;
         border-radius: 0;
+        font-family: 'Playfair Display', serif !important;
         font-weight: 600;
         color: #6c757d;
         padding: 0 4px;
