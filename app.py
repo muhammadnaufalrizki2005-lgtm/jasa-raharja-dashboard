@@ -327,8 +327,9 @@ else:
     st.markdown("---")
     st.markdown("### 👀 Riwayat & Koreksi Laporan Berdasarkan Tanggal")
     st.write(
-        "Pilih rentang tanggal laporan yang ingin Anda tampilkan untuk"
-        " diperiksa, dikoreksi, atau dihapus."
+        "Pilih rentang tanggal laporan di bawah ini. Data pada tabel riwayat"
+        " serta menu Ubah/Hapus akan otomatis menyesuaikan dengan rentang"
+        " tanggal tersebut."
     )
 
     # Widget Filter Tanggal untuk Petugas
@@ -381,9 +382,12 @@ else:
             hide_index=True,
         )
 
-        # FITUR KOREKSI / EDIT / HAPUS DATA
+        # FITUR KOREKSI / EDIT / HAPUS DATA MENYESUAIKAN FILTER TANGGAL DI ATAS
         st.markdown("#### ✏️ Ubah atau Hapus Laporan Tertentu")
-        with st.expander("Klik di sini untuk Mengoreksi / Menghapus Data"):
+        with st.expander(
+            "Klik di sini untuk Mengoreksi / Menghapus Data Sesuai Pilihan"
+            " Tanggal"
+        ):
           options_record = []
           record_map = {}
           for idx, row in df_recent.iterrows():
@@ -395,7 +399,7 @@ else:
 
           if options_record:
             selected_label = st.selectbox(
-                "Pilih Laporan yang Ingin Dikoreksi / Dihapus",
+                "Pilih Laporan dari Rentang Tanggal di Atas",
                 options=options_record,
             )
             selected_row = record_map[selected_label]
