@@ -840,7 +840,7 @@ else:
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN PILIHAN JENIS GRAFIK) ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
@@ -965,9 +965,18 @@ else:
             else:
               st.success("✅ Aman")
 
-        # GRAFIK TREN
+        # GRAFIK TREN DENGAN PILIHAN BENTUK (BAR, LINE, AREA)
         st.markdown("---")
         st.markdown("### 📉 Grafik Tren Perolehan Realisasi")
+        
+        # Pilihan Model Grafik untuk Pimpinan
+        tipo_grafik = st.radio(
+            "Pilih Format Tampilan Grafik:",
+            ["Diagram Batang (Bar)", "Grafik Garis (Line)", "Grafik Area (Area)"],
+            horizontal=True,
+            key="pilih_jenis_grafik"
+        )
+
         all_lokets = sorted(df_db["loket"].unique())
         all_jenis = sorted(df_db["jenis_dana"].unique())
         gc1, gc2 = st.columns(2)
@@ -984,17 +993,37 @@ else:
             df_db["loket"].isin(sel_loket_gr)
             & df_db["jenis_dana"].isin(sel_jenis_gr)
         ].copy()
+        
         if not df_c.empty:
           df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
           df_chart_agg = (
               df_c.groupby("Periode")["realisasi"].sum().reset_index()
           )
-          fig = px.bar(
-              df_chart_agg,
-              x="Periode",
-              y="realisasi",
-              color_discrete_sequence=["#005ba8"],
-          )
+
+          # Render Grafik Berdasarkan Pilihan Pimpinan
+          if tipo_grafik == "Diagram Batang (Bar)":
+            fig = px.bar(
+                df_chart_agg,
+                x="Periode",
+                y="realisasi",
+                color_discrete_sequence=["#005ba8"],
+            )
+          elif tipo_grafik == "Grafik Garis (Line)":
+            fig = px.line(
+                df_chart_agg,
+                x="Periode",
+                y="realisasi",
+                markers=True,
+                color_discrete_sequence=["#005ba8"],
+            )
+          else:  # Area Chart
+            fig = px.area(
+                df_chart_agg,
+                x="Periode",
+                y="realisasi",
+                color_discrete_sequence=["#005ba8"],
+            )
+
           fig.update_layout(
               plot_bgcolor="rgba(0,0,0,0)",
               paper_bgcolor="rgba(0,0,0,0)",
