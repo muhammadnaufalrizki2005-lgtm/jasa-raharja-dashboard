@@ -249,7 +249,7 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (ISTILAH RAMAH PENGGUNA AWAM)
+  # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
     st.markdown("### 📥 Formulir Input Laporan Penerimaan Harian")
@@ -325,34 +325,43 @@ else:
           st.error(f"❌ Gagal menyimpan laporan: {e}")
 
     st.markdown("---")
-    st.markdown("### 👀 Riwayat Laporan yang Baru Saja Dikirim")
+    st.markdown("### 👀 Riwayat & Koreksi Laporan")
+    st.write(
+        "Jika ada data laporan yang salah atau tidak sesuai, Anda dapat"
+        " melihat daftar riwayat di bawah ini, lalu lakukan koreksi atau hapus"
+        " pada bagian menu edit."
+    )
+
     try:
       res_recent = (
           supabase.table("penerimaan_harian")
           .select("*")
           .order("id", desc=True)
-          .limit(5)
+          .limit(10)
           .execute()
       )
       df_recent = (
           pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
       )
+
       if not df_recent.empty:
-        df_recent["realisasi_fmt"] = df_recent["realisasi"].apply(
+        # Tampilkan tabel riwayat
+        df_show = df_recent.copy()
+        df_show["Jumlah Penerimaan"] = df_show["realisasi"].apply(
             lambda x: f"Rp {x:,.0f}".replace(",", ".")
         )
-        # Menyesuaikan nama kolom tabel verifikasi agar lebih ramah dibaca
-        df_recent = df_recent.rename(
+        df_show = df_show.rename(
             columns={
+                "id": "ID",
                 "tanggal": "Tanggal",
                 "loket": "Loket SAMSAT",
                 "jenis_dana": "Jenis Pembayaran",
-                "realisasi_fmt": "Jumlah Penerimaan",
                 "prosentase_siklikal": "Siklus Bulanan (%)",
             }
         )
         st.dataframe(
-            df_recent[[
+            df_show[[
+                "ID",
                 "Tanggal",
                 "Loket SAMSAT",
                 "Jenis Pembayaran",
@@ -362,10 +371,101 @@ else:
             use_container_width=True,
             hide_index=True,
         )
+
+        # FITUR KOREKSI / EDIT / HAPUS DATA
+        st.markdown("#### ✏️ Ubah atau Hapus Laporan Tertentu")
+        with st.expander("Klik di sini untuk Mengoreksi / Menghapus Data"):
+          options_record = []
+          record_map = {}
+          for idx, row in df_recent.iterrows():
+            label = f"ID #{row['id']} — Tgl: {row['tanggal']} | Loket: {row['loket']} | {row['jenis_dana']} | Rp {row['realisasi']:,.0f}".replace(
+                ",", "."
+            )
+            options_record.append(label)
+            record_map[label] = row
+
+          selected_label = st.selectbox(
+              "Pilih Laporan yang Ingin Dikoreksi / Dihapus", options_options_record if 'options_record' in locals() and options_record else []
+          ) if 'options_record' in locals() and options_record else None
+
+          # Memperbaiki variabel list opsi agar aman
+          if 'options_record' in locals() and options_record:
+            selected_label = st.selectbox(
+                "Pilih Laporan yang Ingin Dikoreksi / Dihapus", options=options_record
+            )
+            selected_row = record_map[selected_label]
+            sel_id = int(selected_row["id"])
+
+            with st.form("form_edit_data"):
+              e_tanggal = st.date_input(
+                  "Koreksi Tanggal",
+                  value=pd.to_datetime(selected_row["tanggal"]).date(),
+              )
+              e_loket = st.selectbox(
+                  "Koreksi Loket SAMSAT",
+                  ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
+                  index=["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"].index(selected_row["loket"]) if selected_row["loket"] in ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"] else 0
+              )
+              e_jenis = st.selectbox(
+                  "Koreksi Jenis Pembayaran",
+                  ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
+                  index=["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"].index(selected_row["jenis_dana"]) if selected_row["jenis_dana"] in ["Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"] else 0
+              )
+              e_realisasi = st.number_input(
+                  "Koreksi Jumlah Uang Masuk / Penerimaan (Rp)",
+                  min_value=0.0,
+                  value=float(selected_row["realisasi"]),
+                  step=1000.0,
+                  format="%.2f",
+              )
+              e_siklikal = st.number_input(
+                  "Koreksi Siklus Bulanan (%)",
+                  min_value=0.0,
+                  value=float(selected_row["prosentase_siklikal"]),
+                  step=0.01,
+              )
+              e_yty = st.number_input(
+                  "Koreksi YoY (%)",
+                  min_value=0.0,
+                  value=float(selected_row["siklikal_yty"]),
+                  step=0.01,
+              )
+
+              col_btn1, col_btn2 = st.columns(2)
+              with col_btn1:
+                update_btn = st.form_submit_button("🔄 Perbarui Data")
+              with col_btn2:
+                delete_btn = st.form_submit_button("🗑️ Hapus Laporan Ini")
+
+              if update_btn:
+                try:
+                  supabase.table("penerimaan_harian").update({
+                      "tanggal": str(e_tanggal),
+                      "loket": e_loket,
+                      "jenis_dana": e_jenis,
+                      "realisasi": e_realisasi,
+                      "prosentase_siklikal": e_siklikal,
+                      "siklikal_yty": e_yty,
+                  }).eq("id", sel_id).execute()
+                  st.success("✅ Laporan berhasil diperbarui!")
+                  st.rerun()
+                except Exception as e:
+                  st.error(f"❌ Gagal memperbarui: {e}")
+
+              if delete_btn:
+                try:
+                  supabase.table("penerimaan_harian").delete().eq(
+                      "id", sel_id
+                  ).execute()
+                  st.warning("🗑️ Laporan berhasil dihapus dari sistem!")
+                  st.rerun()
+                except Exception as e:
+                  st.error(f"❌ Gagal menghapus: {e}")
+
       else:
         st.info("Belum ada laporan penerimaan yang diinput.")
-    except Exception:
-      st.info("Memuat riwayat laporan...")
+    except Exception as err:
+      st.info(f"Memuat riwayat laporan... ({err})")
 
   # ----------------------------------------
   # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
