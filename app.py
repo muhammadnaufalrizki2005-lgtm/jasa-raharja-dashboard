@@ -110,74 +110,81 @@ if "toast_count" not in st.session_state:
   st.session_state.toast_count = 0
 
 # ==========================================
-# GAYA UI KORPORAT JASA RAHARJA
+# GAYA UI KORPORAT JASA RAHARJA (CLEAN & PROFESSIONAL)
 # ==========================================
-css_common = """
+css_base = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     .stApp { 
-        background-color: #ffffff; 
+        background-color: #f4f7fc; 
         font-family: 'Inter', sans-serif;
         color: #1a1a1a;
     }
+    
+    /* Sembunyikan elemen bawaan Streamlit */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
-    .stHeadingAnchor, [data-testid="stHeaderActionElements"], a[href^="#"] { display: none !important; }
+    .stHeadingAnchor { display: none !important; }
 
-    /* Tombol Korporat Jasa Raharja */
-    div.stButton > button:first-child {
-        background-color: #005ba8;
-        color: white;
-        width: 100%;
-        border-radius: 6px;
-        padding: 10px 16px;
-        font-weight: 600;
-        border: none;
-        box-shadow: 0 2px 4px rgba(0, 91, 168, 0.2);
-        transition: all 0.2s ease-in-out;
+    /* Kustomisasi Tombol Primary (Biru Jasa Raharja) */
+    button[kind="primary"] {
+        background-color: #005ba8 !important;
+        border-color: #005ba8 !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        padding: 8px 24px !important;
+        transition: all 0.3s ease !important;
     }
-    div.stButton > button:first-child:hover {
-        background-color: #004580;
-        box-shadow: 0 4px 8px rgba(0, 91, 168, 0.3);
+    button[kind="primary"]:hover {
+        background-color: #004580 !important;
+        border-color: #004580 !important;
+        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2) !important;
     }
 
-    /* Container Card Style */
-    div.stForm {
+    /* Container Card Style untuk Form */
+    div[data-testid="stForm"] {
         background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        border: 1px solid #eaedf2;
+        border-radius: 12px;
+        padding: 32px 24px;
+        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
     }
 
     /* Tabs Styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        border-bottom: 2px solid #f0f2f5;
+        gap: 24px;
+        border-bottom: 2px solid #eaedf2;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 44px;
+        height: 50px;
         white-space: nowrap;
         background-color: transparent;
-        border-radius: 6px 6px 0 0;
+        border-radius: 0;
         font-weight: 600;
-        color: #555555;
-        padding: 0 16px;
+        color: #6c757d;
+        padding: 0 4px;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #f0f7ff !important;
         color: #005ba8 !important;
-        border-bottom: 2px solid #005ba8;
+        border-bottom: 3px solid #005ba8 !important;
+        background-color: transparent !important;
     }
 
-    /* DataFrame & Table Polish */
+    /* DataFrame Polish */
     [data-testid="stDataFrame"] {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #eaedf2;
         border-radius: 8px;
         overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Hapus bayangan tabel standar saat di-hover agar lebih rapi */
+    [data-testid="stDataFrame"] > div:hover {
+        box-shadow: none !important;
     }
 
     #MainMenu {visibility: hidden;}
@@ -190,30 +197,30 @@ css_common = """
 # ==========================================
 if not st.session_state.logged_in:
   st.markdown(
-      css_common
+      css_base
       + """
-    <style>
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-        overflow: hidden !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-        background-color: #f4f7fc !important;
-    }
-    ::-webkit-scrollbar { display: none !important; width: 0px !important; }
-    </style>
+        <style>
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+            overflow: hidden !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            background-color: #f4f7fc;
+        }
+        ::-webkit-scrollbar { display: none !important; width: 0px !important; }
+        </style>
     """,
       unsafe_allow_html=True,
   )
 
-  col1, col2, col3 = st.columns([1, 1.3, 1])
+  col1, col2, col3 = st.columns([1, 1.2, 1])
 
   with col2:
-    st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 10vh;'></div>", unsafe_allow_html=True)
     with st.container():
       if img_base64:
         st.markdown(
             f"""
-                <div style="text-align: center; margin-bottom: 15px;">
+                <div style="text-align: center; margin-bottom: 24px;">
                     <img src="data:image/png;base64,{img_base64}" width="220" style="display: block; margin: 0 auto; height: auto;">
                 </div>
                 """,
@@ -227,26 +234,28 @@ if not st.session_state.logged_in:
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #333333; font-size: 1.25rem;"
-          " font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil"
+          "<div style='text-align: center; color: #1a1a1a; font-size: 1.4rem;"
+          " font-weight: 700; margin-bottom: 8px;'>Portal Monitoring Kanwil"
           " DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<div style='text-align: center; color: #666666; font-size: 0.9rem;"
-          " margin-bottom: 20px;'>Silakan masuk dengan akun resmi Anda</div>",
+          "<div style='text-align: center; color: #6c757d; font-size: 0.95rem;"
+          " margin-bottom: 32px;'>Silakan masuk menggunakan kredensial resmi"
+          " Anda</div>",
           unsafe_allow_html=True,
       )
 
-      with st.form("form_login_portal"):
+      with st.form("form_login_portal", clear_on_submit=False):
         username = st.text_input(
             "ID Pengguna", placeholder="Masukkan ID Pengguna"
         )
         password = st.text_input(
             "Password", type="password", placeholder="Masukkan Password"
         )
-        st.write("")
-        login_button = st.form_submit_button("Masuk Sistem")
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Menggunakan type="primary" agar tombol menjadi biru
+        login_button = st.form_submit_button("Masuk Sistem", type="primary")
 
         if login_button:
           if username.lower() == "petugas" and password == "PetugasDIY2026!":
@@ -262,12 +271,12 @@ if not st.session_state.logged_in:
             st.query_params["role"] = "Pimpinan"
             st.rerun()
           else:
-            st.error("❌ ID Pengguna atau Password salah!")
+            st.error("ID Pengguna atau Password salah. Silakan coba lagi.")
 
       st.markdown(
           "<p style='text-align: center; font-size: 12px; margin-top:"
-          " 20px; color: #888888;'>© 2026 PT Jasa Raharja Kanwil DIY — All"
-          " Rights Reserved</p>",
+          " 40px; color: #a0aabf;'>© 2026 PT Jasa Raharja Kanwil DIY — Hak Cipta"
+          " Dilindungi Undang-Undang.</p>",
           unsafe_allow_html=True,
       )
 
@@ -276,60 +285,65 @@ if not st.session_state.logged_in:
 # ==========================================
 else:
   st.markdown(
-      css_common
+      css_base
       + """
-    <style>
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
-        overflow: auto !important;
-        height: auto !important;
-    }
-    </style>
-    """,
+      <style>
+      html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+          overflow: auto !important;
+          height: auto !important;
+          background-color: #ffffff;
+      }
+      </style>
+  """,
       unsafe_allow_html=True,
   )
 
-  header_col1, header_col2 = st.columns([4, 1])
+  # HEADER NAVIGATION
+  st.markdown("<div style='padding-top: 1rem;'></div>", unsafe_allow_html=True)
+  header_col1, header_col2 = st.columns([5, 1])
   with header_col1:
     if st.session_state.role == "Petugas SAMSAT":
       st.markdown(
-          "<h2 style='color: #005ba8; margin-bottom: 0; font-weight:"
-          " 700;'>Portal Petugas SAMSAT</h2>",
+          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight:"
+          " 700; letter-spacing: -0.5px;'>Portal Petugas SAMSAT</h2>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<p style='color: #666; margin-top: 2px;'>Kanwil DIY — PT Jasa"
+          "<p style='color: #6c757d; font-size: 1rem;'>Kanwil DIY — PT Jasa"
           " Raharja</p>",
           unsafe_allow_html=True,
       )
     else:
       st.markdown(
-          "<h2 style='color: #005ba8; margin-bottom: 0; font-weight:"
-          " 700;'>Dashboard Laporan Realisasi Kinerja</h2>",
+          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight:"
+          " 700; letter-spacing: -0.5px;'>Dashboard Realisasi Kinerja</h2>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<p style='color: #666; margin-top: 2px;'>Monitoring Penerimaan Sektor"
-          " UU 34 Tahun 1964</p>",
+          "<p style='color: #6c757d; font-size: 1rem;'>Monitoring Penerimaan"
+          " Sektor UU 34 Tahun 1964</p>",
           unsafe_allow_html=True,
       )
   with header_col2:
-    st.write("")
-    if st.button("🚪 Keluar"):
+    st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+    if st.button("Keluar", type="primary", use_container_width=True):
       st.session_state.logged_in = False
       st.session_state.role = None
       st.query_params.clear()
       st.rerun()
 
-  st.markdown("<hr style='margin-top: 10px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+  st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 0px; margin-bottom: 30px;'>", unsafe_allow_html=True)
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT DENGAN FILTER TANGGAL)
+  # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
-    st.markdown("### 📥 Formulir Input Laporan Penerimaan Harian")
-    st.write(
-        "Silakan masukkan jumlah penerimaan harian berdasarkan Loket SAMSAT"
-        " dan Jenis Pembayaran yang melayani."
+    st.markdown("### Formulir Input Laporan Penerimaan Harian")
+    st.markdown(
+        "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan"
+        " data penerimaan harian berdasarkan loket SAMSAT dan jenis"
+        " pembayaran yang melayani.</p>",
+        unsafe_allow_html=True
     )
 
     col1, col2 = st.columns(2)
@@ -353,7 +367,7 @@ else:
           format="%.2f",
       )
       f_realisasi_str = f"Rp {f_realisasi:,.0f}".replace(",", ".")
-      st.caption(f"💡 Terbaca: **{f_realisasi_str}**")
+      st.caption(f"Nominal Terbaca: **{f_realisasi_str}**")
 
     col3, col4 = st.columns(2)
     with col3:
@@ -371,12 +385,12 @@ else:
           help="Perbandingan atau target pertumbuhan dibanding periode yang sama tahun lalu.",
       )
 
-    st.write("")
-    submit_button = st.button("💾 Simpan Laporan Penerimaan")
+    st.markdown("<br>", unsafe_allow_html=True)
+    submit_button = st.button("Simpan Laporan Penerimaan", type="primary")
 
     if submit_button:
       if f_realisasi <= 0:
-        st.error("❌ Jumlah Uang Masuk / Penerimaan (Rp) tidak boleh 0 atau kosong.")
+        st.error("Jumlah Uang Masuk / Penerimaan (Rp) tidak valid.")
       else:
         data_insert = {
             "tanggal": str(f_tanggal),
@@ -390,20 +404,21 @@ else:
           supabase.table("penerimaan_harian").insert(data_insert).execute()
           st.session_state.toast_count += 1
           st.toast(
-              f"[{st.session_state.toast_count}] Laporan berhasil disimpan ke"
-              f" sistem! Loket: {f_loket} | Jenis: {f_jenis}",
+              f"Laporan berhasil disimpan ke sistem! (Loket: {f_loket})",
               icon="✅",
           )
           st.rerun()
         except Exception as e:
-          st.error(f"❌ Gagal menyimpan laporan: {e}")
+          st.error(f"Terjadi kesalahan saat menyimpan laporan: {e}")
 
-    st.markdown("---")
-    st.markdown("### 👀 Riwayat & Koreksi Laporan Berdasarkan Tanggal")
-    st.write(
-        "Pilih rentang tanggal laporan di bawah ini. Data pada tabel riwayat"
-        " serta menu Ubah/Hapus akan otomatis menyesuaikan dengan rentang"
-        " tanggal tersebut."
+    st.markdown("<br><hr style='border-top: 1px solid #eaedf2;'><br>", unsafe_allow_html=True)
+    
+    st.markdown("### Riwayat & Koreksi Laporan")
+    st.markdown(
+        "<p style='color: #6c757d; margin-bottom: 24px;'>Tentukan rentang"
+        " tanggal di bawah ini untuk menampilkan, memeriksa, atau mengoreksi"
+        " data historis.</p>",
+        unsafe_allow_html=True
     )
 
     fc_tgl1, fc_tgl2 = st.columns(2)
@@ -454,10 +469,10 @@ else:
             hide_index=True,
         )
 
-        st.markdown("#### ✏️ Ubah atau Hapus Laporan Tertentu")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("#### Ubah atau Hapus Laporan")
         with st.expander(
-            "Klik di sini untuk Mengoreksi / Menghapus Data Sesuai Pilihan"
-            " Tanggal"
+            "Buka menu ini untuk melakukan koreksi data yang telah dipilih"
         ):
           options_record = []
           record_map = {}
@@ -470,13 +485,14 @@ else:
 
           if options_record:
             selected_label = st.selectbox(
-                "Pilih Laporan dari Rentang Tanggal di Atas",
+                "Pilih Laporan Target",
                 options=options_record,
             )
             selected_row = record_map[selected_label]
             sel_id = int(selected_row["id"])
 
             with st.form("form_edit_data"):
+              st.markdown("**Detail Koreksi Data**")
               e_tanggal = st.date_input(
                   "Koreksi Tanggal",
                   value=pd.to_datetime(selected_row["tanggal"]).date(),
@@ -508,7 +524,7 @@ else:
                   else 0,
               )
               e_realisasi = st.number_input(
-                  "Koreksi Jumlah Uang Masuk / Penerimaan (Rp)",
+                  "Koreksi Jumlah Penerimaan (Rp)",
                   min_value=0.0,
                   value=float(selected_row["realisasi"]),
                   step=1000.0,
@@ -527,11 +543,13 @@ else:
                   step=0.01,
               )
 
+              st.markdown("<br>", unsafe_allow_html=True)
               col_btn1, col_btn2 = st.columns(2)
               with col_btn1:
-                update_btn = st.form_submit_button("🔄 Perbarui Data")
+                update_btn = st.form_submit_button("Perbarui Data", type="primary")
               with col_btn2:
-                delete_btn = st.form_submit_button("🗑️ Hapus Laporan Ini")
+                # Tombol hapus tidak diberi warna primary agar user berhati-hati
+                delete_btn = st.form_submit_button("Hapus Laporan")
 
               if update_btn:
                 try:
@@ -543,33 +561,33 @@ else:
                       "prosentase_siklikal": e_siklikal,
                       "siklikal_yty": e_yty,
                   }).eq("id", sel_id).execute()
-                  st.success("✅ Laporan berhasil diperbarui!")
+                  st.success("Data berhasil diperbarui dalam sistem.")
                   st.rerun()
                 except Exception as e:
-                  st.error(f"❌ Gagal memperbarui: {e}")
+                  st.error(f"Terjadi kesalahan pembaruan: {e}")
 
               if delete_btn:
                 try:
                   supabase.table("penerimaan_harian").delete().eq(
                       "id", sel_id
                   ).execute()
-                  st.warning("🗑️ Laporan berhasil dihapus dari sistem!")
+                  st.warning("Data laporan berhasil dihapus dari sistem.")
                   st.rerun()
                 except Exception as e:
-                  st.error(f"❌ Gagal menghapus: {e}")
+                  st.error(f"Terjadi kesalahan penghapusan: {e}")
       else:
-        st.info("Tidak ada data laporan pada rentang tanggal tersebut.")
+        st.info("Tidak ditemukan data laporan pada rentang tanggal tersebut.")
     except Exception as err:
-      st.info(f"Memuat riwayat laporan... ({err})")
+      st.info(f"Mengambil data historis... ({err})")
 
   # ----------------------------------------
   # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
   # ----------------------------------------
   elif st.session_state.role == "Pimpinan":
     tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3 = st.tabs([
-        "📊 Laporan Eksekutif Realisasi",
-        "📈 Dashboard Rekap & Grafik Tren",
-        "📂 Viewer File Master Excel",
+        "Laporan Eksekutif Realisasi",
+        "Dashboard Rekap & Grafik Tren",
+        "Viewer File Excel (Master)",
     ])
 
     try:
@@ -587,11 +605,12 @@ else:
 
     # ---------------- TAB 1: LAPORAN FORMAT EXCEL (PIMPINAN) ----------------
     with tab_pimpinan_1:
-      st.markdown("### 📊 Laporan Eksekutif Realisasi Penerimaan SAMSAT")
-      st.write(
-          "Pilih Tahun dan Bulan laporan untuk melihat ringkasan performa"
-          " pencapaian, komparasi tahun sebelumnya, serta analisis pertumbuhan"
-          " secara otomatis."
+      st.markdown("<br>", unsafe_allow_html=True)
+      st.markdown("### Laporan Eksekutif Realisasi Penerimaan SAMSAT")
+      st.markdown(
+          "<p style='color: #6c757d; margin-bottom: 24px;'>Pilih filter di bawah"
+          " ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap tahun sebelumnya.</p>",
+          unsafe_allow_html=True
       )
 
       fc1, fc2, fc3 = st.columns(3)
@@ -925,13 +944,15 @@ else:
           )
 
       st.markdown(
-          f"**Laporan Realisasi Periode: {bulan_mapping[target_bulan_pilih]}"
-          f" {target_tahun_pilih} (Dibandingkan dengan Tahun {tahun_x1})**"
+          f"<div style='font-weight: 600; margin-top: 10px; margin-bottom: 10px;'>Ringkasan Performa: {bulan_mapping[target_bulan_pilih]}"
+          f" {target_tahun_pilih} (Komparasi {tahun_x1})</div>",
+          unsafe_allow_html=True
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN FILTER RENTANG BULAN & TAHUN) ----------------
     with tab_pimpinan_2:
+      st.markdown("<br>", unsafe_allow_html=True)
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
         df_db["Tahun_Str"] = df_db["dt_tanggal"].dt.year.astype(str)
@@ -940,7 +961,7 @@ else:
           all_years = [str(date.today().year)]
 
         mode_waktu = st.radio(
-            "Filter Periode", ["Harian", "Bulanan", "Tahunan"], horizontal=True
+            "Cakupan Periode Analisis:", ["Harian", "Bulanan", "Tahunan"], horizontal=True
         )
 
         if mode_waktu == "Harian":
@@ -959,9 +980,6 @@ else:
           ]
 
         elif mode_waktu == "Bulanan":
-          st.markdown(
-              "**Pilih Rentang Bulan (Dari Bulan ... Sampai Bulan ...)**"
-          )
           mc1, mc2 = st.columns(2)
           with mc1:
             start_m_year = st.selectbox(
@@ -1024,9 +1042,6 @@ else:
           ]
 
         else:
-          st.markdown(
-              "**Pilih Rentang Tahun (Dari Tahun ... Sampai Tahun ...)**"
-          )
           tc1, tc2 = st.columns(2)
           with tc1:
             start_thn = st.selectbox("Dari Tahun", all_years, key="p_thn_start")
@@ -1062,11 +1077,12 @@ else:
           )
           st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
         else:
-          st.info("Tidak ada data pada rentang filter tersebut.")
+          st.info("Tidak ada data laporan pada rentang filter yang dipilih.")
 
-        st.markdown("---")
+        st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>", unsafe_allow_html=True)
+        
         with st.expander(
-            "🔍 Audit & Deteksi Otomatis Validasi Data", expanded=False
+            "Audit & Deteksi Validasi Anomali Data"
         ):
           df_zero = df_db[df_db["realisasi"] <= 0]
           df_dup = df_db[
@@ -1078,7 +1094,7 @@ else:
 
           col_a1, col_a2, col_a3 = st.columns(3)
           with col_a1:
-            st.markdown("##### ⚠️ Nilai 0 / Negatif")
+            st.markdown("**Nilai 0 / Negatif**")
             if not df_zero.empty:
               st.dataframe(
                   df_zero[["tanggal", "loket", "jenis_dana", "realisasi"]],
@@ -1086,9 +1102,9 @@ else:
                   hide_index=True,
               )
             else:
-              st.success("✅ Aman")
+              st.success("Tidak ada anomali")
           with col_a2:
-            st.markdown("##### ⚠️ Duplikasi Entri")
+            st.markdown("**Duplikasi Entri**")
             if not df_dup.empty:
               st.dataframe(
                   df_dup[["tanggal", "loket", "jenis_dana", "realisasi"]],
@@ -1096,9 +1112,9 @@ else:
                   hide_index=True,
               )
             else:
-              st.success("✅ Aman")
+              st.success("Tidak ada anomali")
           with col_a3:
-            st.markdown("##### ⚠️ Potensi Salah Input (>500 Juta)")
+            st.markdown("**Potensi Salah Input (>500 Juta)**")
             if not df_outlier.empty:
               st.dataframe(
                   df_outlier[["tanggal", "loket", "jenis_dana", "realisasi"]],
@@ -1106,13 +1122,13 @@ else:
                   hide_index=True,
               )
             else:
-              st.success("✅ Aman")
+              st.success("Tidak ada anomali")
 
-        st.markdown("---")
-        st.markdown("### 📉 Grafik Tren Perolehan Realisasi")
+        st.markdown("<hr style='border-top: 1px solid #eaedf2; margin-top: 20px;'>", unsafe_allow_html=True)
+        st.markdown("### Visualisasi Tren Realisasi")
 
         tipo_grafik = st.radio(
-            "Pilih Format Tampilan Grafik:",
+            "Format Tampilan Visual:",
             ["Diagram Batang (Bar)", "Grafik Garis (Line)", "Grafik Area (Area)"],
             horizontal=True,
             key="pilih_jenis_grafik",
@@ -1123,11 +1139,11 @@ else:
         gc1, gc2 = st.columns(2)
         with gc1:
           sel_loket_gr = st.multiselect(
-              "Loket", options=all_lokets, default=all_lokets, key="g_loket"
+              "Filter Loket", options=all_lokets, default=all_lokets, key="g_loket"
           )
         with gc2:
           sel_jenis_gr = st.multiselect(
-              "Jenis Dana", options=all_jenis, default=all_jenis, key="g_jenis"
+              "Filter Kategori Dana", options=all_jenis, default=all_jenis, key="g_jenis"
           )
 
         df_c = df_filtered[
@@ -1178,17 +1194,17 @@ else:
           st.plotly_chart(fig, use_container_width=True)
         else:
           st.warning(
-              "Tidak ada data grafik yang sesuai dengan rentang filter periode"
-              " tersebut."
+              "Data tidak tersedia untuk memuat visualisasi grafik pada parameter yang dipilih."
           )
       else:
-        st.warning("Belum ada data realisasi harian di database.")
+        st.info("Database laporan realisasi harian masih kosong.")
 
     # ---------------- TAB 3: VIEWER FILE EXCEL ASLI ----------------
     with tab_pimpinan_3:
-      st.markdown("### 📂 Viewer File Master Excel")
+      st.markdown("<br>", unsafe_allow_html=True)
+      st.markdown("### Viewer Repositori Master Excel")
       selected_kategori_ex = st.selectbox(
-          "Pilih Kategori Tampilan Master",
+          "Pilih Segmentasi Tampilan Sheet Master:",
           ["Total (Overall)", "Kartu Dana (KD)", "SWDKLLJ (SW)", "Denda"],
           key="viewer_excel",
       )
@@ -1217,6 +1233,5 @@ else:
         st.dataframe(table_subset, use_container_width=True, hide_index=True)
       except Exception:
         st.info(
-            "File Excel utama 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' belum"
-            " ditemukan di direktori project."
+            "File direktori 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' tidak ditemukan dalam sistem server."
         )
