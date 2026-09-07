@@ -192,7 +192,8 @@ if not st.session_state.logged_in:
         login_button = st.form_submit_button("Login")
 
         if login_button:
-          if username.lower() == "petugas" and password == "SamsatDIY2026!":
+          # Password Petugas diperbarui menjadi PetugasDIY2026!
+          if username.lower() == "petugas" and password == "PetugasDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
             st.query_params["logged_in"] = "true"
@@ -841,7 +842,7 @@ else:
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN FILTER RENTANG WAKTU) ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN FILTER RENTANG BULAN & TAHUN) ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
