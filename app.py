@@ -48,12 +48,13 @@ ANGGARAN = {
 }
 
 # ==========================================
-# FUNGSI PEMBACAAN EXCEL HISTORIS 2025
+# FUNGSI PEMBACAAN MULTI-SHEET EXCEL HISTORIS
 # ==========================================
 @st.cache_data
-def load_historis_excel():
+def load_historis_excel(tahun):
   try:
-    df_h = pd.read_excel("Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name="Historis2025")
+    sheet_name = f"Historis{tahun}"
+    df_h = pd.read_excel("Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name)
     return df_h
   except Exception:
     return pd.DataFrame()
@@ -308,7 +309,7 @@ else:
             supabase.table("penerimaan_harian").insert(data_insert).execute()
             st.session_state.toast_count += 1
             st.toast(
-                f"[{st.session_state.toast_count}] Data berhasil disimpan! Loket: {f_loket} | Jenis: {f_jenis}",
+                f"[{st.session_state.toast_count}] Data berhasil disimpan ke Supabase! Loket: {f_loket} | Jenis: {f_jenis}",
                 icon="✅",
             )
             st.rerun()
@@ -412,16 +413,13 @@ else:
     except Exception as e:
       df_db = pd.DataFrame()
 
-    # Muat data historis dari sheet Excel Historis2025
-    df_hist = load_historis_excel()
-
     def safe_div(a, b):
         return np.where(b == 0, 0, a / b)
 
     # ---------------- TAB 1: LAPORAN FORMAT EXCEL (DYNAMIC FILTER BULAN & TAHUN) ----------------
     with tab_pimpinan_1:
       st.markdown("### 📊 Laporan Realisasi Kinerja SAMSAT")
-      st.write("Pilih Tahun dan Bulan target laporan di bawah ini. Sistem otomatis membaca data historis X-1 langsung dari sheet 'Historis2025' di file Excel Anda.")
+      st.write("Pilih Tahun dan Bulan target laporan di bawah ini. Sistem otomatis membaca data dari sheet Excel multi-tahun (Historis2024, Historis2025, Historis2026) dan melengkapinya dengan input harian Supabase.")
 
       # Widget Filter Interaktif untuk Pimpinan
       fc1, fc2, fc3 = st.columns(3)
@@ -447,6 +445,36 @@ else:
       tahun_x1 = target_tahun_pilih - 1
       loket_col_map = {"Kota": "Kota", "Sleman": "Sleman", "Bantul": "Bantul", "Kulon Progo": "Kulon_Progo", "Gunung Kidul": "Gunung_Kidul"}
 
+      # Load sheet Excel dinamis berdasarkan tahun
+      df_hist_x = load_historis_excel(target_tahun_pilih)
+      df_hist_x1 = load_historis_excel(tahun_x1)
+
+      def get_data_value(df_sheet, tahun_val, bulan_val, jenis_dana, col_name, is_cumulative=False):
+        val = 0.0
+        # 1. Cek input harian baru di Supabase
+        if not df_db.empty:
+          if is_cumulative:
+            m_db = (df_db["loket"].str.lower() == col_name.replace("_", " ").lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= bulan_val) & (df_db["Tahun"] == tahun_val)
+          else:
+            m_db = (df_db["loket"].str.lower() == col_name.replace("_", " ").lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == bulan_val) & (df_db["Tahun"] == tahun_val)
+          
+          if m_db.any():
+            val = df_db.loc[m_db, "realisasi"].sum()
+            if val > 0: return val
+
+        # 2. Ambil dari sheet Excel Historis{tahun}
+        if not df_sheet.empty:
+          excel_col = col_name if col_name in df_sheet.columns else "Kulon_Progo" if "Kulon" in col_name else "Gunung_Kidul"
+          if is_cumulative:
+            m_ex = (df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_sheet["Bulan"] <= bulan_val)
+            if m_ex.any():
+              val = float(df_sheet.loc[m_ex, excel_col].sum())
+          else:
+            m_ex = (df_sheet["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_sheet["Bulan"] == bulan_val)
+            if m_ex.any():
+              val = float(df_sheet.loc[m_ex, excel_col].values[0])
+        return val
+
       def generate_excel_table(jenis_dana):
         lokets = ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"]
         rows = []
@@ -456,28 +484,12 @@ else:
           siklikal = SIKLIKAL[jenis_dana]
           col_name = loket_col_map.get(loket, loket)
 
-          # Ambil otomatis dari sheet Excel 'Historis2025'
-          khusus_x1 = 0.0
-          jan_sd_x1 = 0.0
-          if not df_hist.empty:
-              m_k = (df_hist["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_hist["Bulan"] == target_bulan_pilih)
-              if m_k.any():
-                  khusus_x1 = float(df_hist.loc[m_k, col_name].values[0])
-              
-              m_j = (df_hist["Jenis_Dana"].str.strip() == jenis_dana.strip()) & (df_hist["Bulan"] <= target_bulan_pilih)
-              if m_j.any():
-                  jan_sd_x1 = float(df_hist.loc[m_j, col_name].sum())
+          # Ambil data X-1 dan Tahun X dari multi-sheet Excel / Supabase
+          khusus_x1 = get_data_value(df_hist_x1, tahun_x1, target_bulan_pilih, jenis_dana, col_name, is_cumulative=False)
+          jan_sd_x1 = get_data_value(df_hist_x1, tahun_x1, target_bulan_pilih, jenis_dana, col_name, is_cumulative=True)
 
-          khusus_x = 0
-          jan_sd_x = 0
-          if not df_db.empty:
-              # Khusus Bulan tsb Tahun X (dari database harian Supabase)
-              m_khusus = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == target_bulan_pilih) & (df_db["Tahun"] == target_tahun_pilih)
-              khusus_x = df_db.loc[m_khusus, "realisasi"].sum()
-              
-              # Akumulasi Jan s.d Bulan tsb Tahun X (dari database harian Supabase)
-              m_jansd = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= target_bulan_pilih) & (df_db["Tahun"] == target_tahun_pilih)
-              jan_sd_x = df_db.loc[m_jansd, "realisasi"].sum()
+          khusus_x = get_data_value(df_hist_x, target_tahun_pilih, target_bulan_pilih, jenis_dana, col_name, is_cumulative=False)
+          jan_sd_x = get_data_value(df_hist_x, target_tahun_pilih, target_bulan_pilih, jenis_dana, col_name, is_cumulative=True)
 
           rows.append({
               "Loket": f"LOKET SAMSAT {loket.upper()}",
