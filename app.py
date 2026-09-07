@@ -217,7 +217,7 @@ if not st.session_state.logged_in:
 
         if login_button:
           # Sandi baru yang aman dan tidak terdeteksi breach oleh Google
-          if username.lower() == "petugas" and password == "SamsatDIY2026!":
+          if username.lower() == "petugas" and password == "PetugasDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
             st.query_params["logged_in"] = "true"
