@@ -11,9 +11,6 @@ from supabase import create_client
 # ==========================================
 # ⚙️ KONFIGURASI DATA MASTER (EDIT VIA GITHUB)
 # ==========================================
-TARGET_TAHUN = 2026
-TARGET_BULAN = 8  # Agustus (Bulan ke-8)
-
 # 1. Prosentase Siklikal per Jenis Dana & Total (Overall) (%)
 SIKLIKAL = {
     "Total (Overall)": 66.28,
@@ -24,7 +21,7 @@ SIKLIKAL = {
 
 NILAI_UNKNOWN_VAR = 0.0 
 
-# 2. Anggaran (Tahun 2026) per Loket dan Jenis Dana
+# 2. Anggaran (Tahun X) per Loket dan Jenis Dana
 ANGGARAN = {
     "Kartu Dana / Sertifikat": {
         "Kota": 1037512719,
@@ -49,7 +46,7 @@ ANGGARAN = {
     }
 }
 
-# 3. Data Historis Khusus Bulan tsb (Tahun X-1 / 2025)
+# 3. Data Historis Khusus Bulan tsb (Tahun X-1) - Fallback jika belum diinput di harian
 KHUSUS_X1 = {
     "Kartu Dana / Sertifikat": {
         "Kota": 76875000, "Sleman": 172053000, "Bantul": 122148000, "Kulon Progo": 47520000, "Gunung Kidul": 57366000
@@ -62,7 +59,7 @@ KHUSUS_X1 = {
     }
 }
 
-# 4. Data Historis Jan s.d Bulan tsb (Tahun X-1 / 2025)
+# 4. Data Historis Jan s.d Bulan tsb (Tahun X-1) - Fallback jika belum diinput di harian
 JAN_SD_X1 = {
     "Kartu Dana / Sertifikat": {
         "Kota": 685650000, "Sleman": 1518258000, "Bantul": 1074000000, "Kulon Progo": 420102000, "Gunung Kidul": 491562000
@@ -216,8 +213,7 @@ if not st.session_state.logged_in:
         login_button = st.form_submit_button("Login")
 
         if login_button:
-          # Sandi baru yang aman dan tidak terdeteksi breach oleh Google
-          if username.lower() == "petugas" and password == "PetugasDIY2026!":
+          if username.lower() == "petugas" and password == "SamsatDIY2026!":
             st.session_state.logged_in = True
             st.session_state.role = "Petugas SAMSAT"
             st.query_params["logged_in"] = "true"
@@ -274,7 +270,7 @@ else:
   st.markdown("---")
 
   # ----------------------------------------
-  # TAMPILAN: PETUGAS SAMSAT (INPUT HARIAN + VERIFIKASI)
+  # TAMPILAN: PETUGAS SAMSAT (INPUT HARIAN)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
     tab_petugas_1, tab_petugas_2 = st.tabs([
@@ -351,8 +347,6 @@ else:
 
     with tab_petugas_2:
       st.markdown("### 🧮 Kalkulator Simulasi Format Excel")
-      st.caption("Masukkan data mentah pada tabel di bawah untuk melakukan simulasi perhitungan rumus secara mandiri.")
-      
       c1, c2, c3, c4 = st.columns(4)
       with c1:
         p_jenis = st.selectbox("Kategori Dana", ["Kartu Dana", "SWDKLLJ", "Denda", "Total"])
@@ -412,7 +406,7 @@ else:
         st.dataframe(df_calc, use_container_width=True, hide_index=True)
 
   # ----------------------------------------
-  # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP + EXCEL AUTO-CALCULATOR)
+  # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
   # ----------------------------------------
   elif st.session_state.role == "Pimpinan":
     tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3 = st.tabs([
@@ -435,15 +429,33 @@ else:
     def safe_div(a, b):
         return np.where(b == 0, 0, a / b)
 
-    # ---------------- TAB 1: LAPORAN FORMAT EXCEL (OTOMATIS MASTER + SUPABASE) ----------------
+    # ---------------- TAB 1: LAPORAN FORMAT EXCEL (DYNAMIC FILTER BULAN & TAHUN) ----------------
     with tab_pimpinan_1:
-      st.markdown(f"### 📊 Laporan Realisasi Kinerja Tahun {TARGET_TAHUN}")
-      st.write("Tabel ini menggabungkan Data Master (Anggaran & Histori X-1) dari GitHub dengan Realisasi Harian Petugas dari Supabase.")
-      
-      kat_pilihan = st.selectbox(
-          "Pilih Kategori Pendanaan",
-          ["Total (Overall)", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"]
-      )
+      st.markdown("### 📊 Laporan Realisasi Kinerja SAMSAT")
+      st.write("Pilih Bulan dan Tahun target laporan di bawah ini. Sistem akan otomatis menghitung komparasi bulan khusus dan akumulasi Jan s.d Bulan tersebut terhadap tahun sebelumnya (YoY).")
+
+      # Widget Filter Interaktif untuk Pimpinan
+      fc1, fc2, fc3 = st.columns(3)
+      with fc1:
+        target_tahun_pilih = st.selectbox("Tahun Berjalan (X)", [2026, 2025, 2024, 2027], index=0)
+      with fc2:
+        bulan_mapping = {
+            1: "Januari", 2: "Februari", 3: "Maret", 4: "April", 5: "Mei", 6: "Juni",
+            7: "Juli", 8: "Agustus", 9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+        }
+        target_bulan_pilih = st.selectbox(
+            "Bulan Target (Khusus & Jan s.d)",
+            options=list(bulan_mapping.keys()),
+            format_func=lambda x: bulan_mapping[x],
+            index=7 # Default Agustus (8)
+        )
+      with fc3:
+        kat_pilihan = st.selectbox(
+            "Kategori Pendanaan",
+            ["Total (Overall)", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"]
+        )
+
+      tahun_x1 = target_tahun_pilih - 1
 
       def generate_excel_table(jenis_dana):
         lokets = ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"]
@@ -451,18 +463,31 @@ else:
         
         for loket in lokets:
           anggaran_x = ANGGARAN[jenis_dana].get(loket, 0)
+          siklikal = SIKLIKAL[jenis_dana]
+
+          # Ambil dari Master Fallback (X-1)
           khusus_x1 = KHUSUS_X1[jenis_dana].get(loket, 0)
           jan_sd_x1 = JAN_SD_X1[jenis_dana].get(loket, 0)
-          siklikal = SIKLIKAL[jenis_dana]
 
           khusus_x = 0
           jan_sd_x = 0
           if not df_db.empty:
-              m_khusus = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == TARGET_BULAN) & (df_db["Tahun"] == TARGET_TAHUN)
+              # Khusus Bulan tsb Tahun X
+              m_khusus = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == target_bulan_pilih) & (df_db["Tahun"] == target_tahun_pilih)
               khusus_x = df_db.loc[m_khusus, "realisasi"].sum()
               
-              m_jansd = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= TARGET_BULAN) & (df_db["Tahun"] == TARGET_TAHUN)
+              # Akumulasi Jan s.d Bulan tsb Tahun X
+              m_jansd = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= target_bulan_pilih) & (df_db["Tahun"] == target_tahun_pilih)
               jan_sd_x = df_db.loc[m_jansd, "realisasi"].sum()
+
+              # Cek apakah data harian tahun X-1 juga ada di database, jika ada gunakan sebagai prioritas
+              m_khusus_x1 = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] == target_bulan_pilih) & (df_db["Tahun"] == tahun_x1)
+              val_k_x1 = df_db.loc[m_khusus_x1, "realisasi"].sum()
+              if val_k_x1 > 0: khusus_x1 = val_k_x1
+
+              m_jansd_x1 = (df_db["loket"].str.lower() == loket.lower()) & (df_db["jenis_dana"].str.contains(jenis_dana[:5], case=False, na=False)) & (df_db["Bulan"] <= target_bulan_pilih) & (df_db["Tahun"] == tahun_x1)
+              val_j_x1 = df_db.loc[m_jansd_x1, "realisasi"].sum()
+              if val_j_x1 > 0: jan_sd_x1 = val_j_x1
 
           rows.append({
               "Loket": f"LOKET SAMSAT {loket.upper()}",
@@ -491,7 +516,7 @@ else:
         df_calc["Akt Khusus (%)"] = safe_div(df_calc["Khusus Bln (X)"] - df_calc["Khusus Bln (X-1)"], df_calc["Khusus Bln (X-1)"]) * 100
         df_calc["Real (%)"] = safe_div(df_calc["Jan s.d Bln (X)"], df_calc["Anggaran (Thn X)"]) * 100
         df_calc["Aktv (%)"] = safe_div(df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"], df_calc["Jan s.d Bln (X-1)"]) * 100
-        df_calc["Kurang/Lebih Pencapaian"] = df_calc["Jan s.d Bln (X)"] - (df_calc["Anggaran (Thn X)"] * TARGET_BULAN / 12)
+        df_calc["Kurang/Lebih Pencapaian"] = df_calc["Jan s.d Bln (X)"] - (df_calc["Anggaran (Thn X)"] * target_bulan_pilih / 12)
         df_calc["Perbulan"] = df_calc["Anggaran (Thn X)"] / 12
         df_calc["Rata Perhari"] = df_calc["Anggaran (Thn X)"] / (12 * 25)
         df_calc["(+/-) Realisasi"] = df_calc["Jan s.d Bln (X)"] - df_calc["Jan s.d Bln (X-1)"]
@@ -515,7 +540,7 @@ else:
         df_total["Akt Khusus (%)"] = safe_div(df_total["Khusus Bln (X)"] - df_total["Khusus Bln (X-1)"], df_total["Khusus Bln (X-1)"]) * 100
         df_total["Real (%)"] = safe_div(df_total["Jan s.d Bln (X)"], df_total["Anggaran (Thn X)"]) * 100
         df_total["Aktv (%)"] = safe_div(df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"], df_total["Jan s.d Bln (X-1)"]) * 100
-        df_total["Kurang/Lebih Pencapaian"] = df_total["Jan s.d Bln (X)"] - (df_total["Anggaran (Thn X)"] * TARGET_BULAN / 12)
+        df_total["Kurang/Lebih Pencapaian"] = df_total["Jan s.d Bln (X)"] - (df_total["Anggaran (Thn X)"] * target_bulan_pilih / 12)
         df_total["Perbulan"] = df_total["Anggaran (Thn X)"] / 12
         df_total["Rata Perhari"] = df_total["Anggaran (Thn X)"] / (12 * 25)
         df_total["(+/-) Realisasi"] = df_total["Jan s.d Bln (X)"] - df_total["Jan s.d Bln (X-1)"]
@@ -537,9 +562,10 @@ else:
           elif "(%)" in col:
               df_display[col] = df_display[col].apply(lambda x: f"{x:,.2f}%" if pd.notnull(x) else "0.00%")
 
+      st.markdown(f"**Menampilkan Laporan Periode: {bulan_mapping[target_bulan_pilih]} {target_tahun_pilih} (Komparasi vs {tahun_x1})**")
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK LENGKAP ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK ----------------
     with tab_pimpinan_2:
       if not df_db.empty:
         df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
