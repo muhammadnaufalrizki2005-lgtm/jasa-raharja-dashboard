@@ -384,12 +384,7 @@ else:
             options_record.append(label)
             record_map[label] = row
 
-          selected_label = st.selectbox(
-              "Pilih Laporan yang Ingin Dikoreksi / Dihapus", options_options_record if 'options_record' in locals() and options_record else []
-          ) if 'options_record' in locals() and options_record else None
-
-          # Memperbaiki variabel list opsi agar aman
-          if 'options_record' in locals() and options_record:
+          if options_record:
             selected_label = st.selectbox(
                 "Pilih Laporan yang Ingin Dikoreksi / Dihapus", options=options_record
             )
