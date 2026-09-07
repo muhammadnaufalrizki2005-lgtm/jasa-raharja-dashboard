@@ -50,14 +50,14 @@ ANGGARAN = {
 # 3. Data Historis Bulanan Full (Januari s.d. Desember) Tahun Sebelumnya (Tahun X-1 / 2025)
 HISTORIS_BULANAN_X1 = {
     "Kartu Dana / Sertifikat": {
-        1:  {"Kota": 75000000,  "Sleman": 160000000, "Bantul": 110000000, "Kulon Progo": 45000000, "Gunung Kidul": 50000000},
-        2:  {"Kota": 78000000,  "Sleman": 165000000, "Bantul": 115000000, "Kulon Progo": 46000000, "Gunung Kidul": 52000000},
-        3:  {"Kota": 80000000,  "Sleman": 170000000, "Bantul": 120000000, "Kulon Progo": 48000000, "Gunung Kidul": 55000000},
-        4:  {"Kota": 82000000,  "Sleman": 175000000, "Bantul": 122000000, "Kulon Progo": 49000000, "Gunung Kidul": 56000000},
-        5:  {"Kota": 85000000,  "Sleman": 180000000, "Bantul": 125000000, "Kulon Progo": 50000000, "Gunung Kidul": 58000000},
-        6:  {"Kota": 83000000,  "Sleman": 178000000, "Bantul": 123000000, "Kulon Progo": 49000000, "Gunung Kidul": 57000000},
-        7:  {"Kota": 76000000,  "Sleman": 168000000, "Bantul": 118000000, "Kulon Progo": 46000000, "Gunung Kidul": 53000000},
-        8:  {"Kota": 76875000,  "Sleman": 172053000, "Bantul": 122148000, "Kulon Progo": 47520000, "Gunung Kidul": 57366000}, # Agustus
+        1:  {"Kota": 70000000,  "Sleman": 150000000, "Bantul": 100000000, "Kulon Progo": 40000000, "Gunung Kidul": 45000000},
+        2:  {"Kota": 72000000,  "Sleman": 155000000, "Bantul": 105000000, "Kulon Progo": 42000000, "Gunung Kidul": 48000000},
+        3:  {"Kota": 75000000,  "Sleman": 160000000, "Bantul": 110000000, "Kulon Progo": 45000000, "Gunung Kidul": 50000000},
+        4:  {"Kota": 74000000,  "Sleman": 158000000, "Bantul": 108000000, "Kulon Progo": 44000000, "Gunung Kidul": 49000000},
+        5:  {"Kota": 78000000,  "Sleman": 165000000, "Bantul": 115000000, "Kulon Progo": 46000000, "Gunung Kidul": 52000000},
+        6:  {"Kota": 77000000,  "Sleman": 163000000, "Bantul": 113000000, "Kulon Progo": 45000000, "Gunung Kidul": 51000000},
+        7:  {"Kota": 75000000,  "Sleman": 160000000, "Bantul": 110000000, "Kulon Progo": 43000000, "Gunung Kidul": 49000000},
+        8:  {"Kota": 76875000,  "Sleman": 172053000, "Bantul": 122148000, "Kulon Progo": 47520000, "Gunung Kidul": 57366000},
         9:  {"Kota": 79000000,  "Sleman": 171000000, "Bantul": 121000000, "Kulon Progo": 47000000, "Gunung Kidul": 55000000},
         10: {"Kota": 81000000,  "Sleman": 174000000, "Bantul": 123000000, "Kulon Progo": 48000000, "Gunung Kidul": 56000000},
         11: {"Kota": 84000000,  "Sleman": 179000000, "Bantul": 126000000, "Kulon Progo": 50000000, "Gunung Kidul": 59000000},
@@ -71,7 +71,7 @@ HISTORIS_BULANAN_X1 = {
         5:  {"Kota": 1350000000, "Sleman": 3100000000, "Bantul": 2050000000, "Kulon Progo": 720000000, "Gunung Kidul": 880000000},
         6:  {"Kota": 1320000000, "Sleman": 3050000000, "Bantul": 2020000000, "Kulon Progo": 710000000, "Gunung Kidul": 870000000},
         7:  {"Kota": 1270000000, "Sleman": 2980000000, "Bantul": 1990000000, "Kulon Progo": 695000000, "Gunung Kidul": 845000000},
-        8:  {"Kota": 1296735600, "Sleman": 3039293500, "Bantul": 2021767300, "Kulon Progo": 714662800, "Gunung Kidul": 894459300}, # Agustus
+        8:  {"Kota": 1296735600, "Sleman": 3039293500, "Bantul": 2021767300, "Kulon Progo": 714662800, "Gunung Kidul": 894459300},
         9:  {"Kota": 1310000000, "Sleman": 3020000000, "Bantul": 2010000000, "Kulon Progo": 705000000, "Gunung Kidul": 860000000},
         10: {"Kota": 1340000000, "Sleman": 3080000000, "Bantul": 2040000000, "Kulon Progo": 715000000, "Gunung Kidul": 875000000},
         11: {"Kota": 1380000000, "Sleman": 3150000000, "Bantul": 2090000000, "Kulon Progo": 735000000, "Gunung Kidul": 900000000},
@@ -85,7 +85,7 @@ HISTORIS_BULANAN_X1 = {
         5:  {"Kota": 165000000,  "Sleman": 360000000, "Bantul": 250000000, "Kulon Progo": 77000000,  "Gunung Kidul": 118000000},
         6:  {"Kota": 162000000,  "Sleman": 355000000, "Bantul": 245000000, "Kulon Progo": 76000000,  "Gunung Kidul": 116000000},
         7:  {"Kota": 159000000,  "Sleman": 350000000, "Bantul": 242000000, "Kulon Progo": 74000000,  "Gunung Kidul": 114000000},
-        8:  {"Kota": 167815750,  "Sleman": 368272250, "Bantul": 257461000, "Kulon Progo": 78307250,  "Gunung Kidul": 121105250}, # Agustus
+        8:  {"Kota": 167815750,  "Sleman": 368272250, "Bantul": 257461000, "Kulon Progo": 78307250,  "Gunung Kidul": 121105250},
         9:  {"Kota": 161000000,  "Sleman": 352000000, "Bantul": 243000000, "Kulon Progo": 75000000,  "Gunung Kidul": 115000000},
         10: {"Kota": 164000000,  "Sleman": 358000000, "Bantul": 247000000, "Kulon Progo": 76000000,  "Gunung Kidul": 117000000},
         11: {"Kota": 168000000,  "Sleman": 365000000, "Bantul": 252000000, "Kulon Progo": 79000000,  "Gunung Kidul": 120000000},
@@ -486,7 +486,7 @@ else:
           anggaran_x = ANGGARAN[jenis_dana].get(loket, 0)
           siklikal = SIKLIKAL[jenis_dana]
 
-          # Ambil otomatis dari kamus full historis X-1
+          # Ambil otomatis dari kamus full historis X-1 berdasarkan bulan terpilih
           khusus_x1 = HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(target_bulan_pilih, {}).get(loket, 0)
           jan_sd_x1 = sum(
               HISTORIS_BULANAN_X1.get(jenis_dana, {}).get(m, {}).get(loket, 0)
