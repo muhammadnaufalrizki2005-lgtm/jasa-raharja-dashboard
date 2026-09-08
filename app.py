@@ -1307,11 +1307,11 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### Simulasi Peramalan & Skenario Kinerja Pendapatan")
             st.markdown(
-                "<p style='color: #6c757d; margin-bottom: 24px;'>Proyeksi peramalan mencakup sisa bulan pada tahun berjalan hingga akhir tahun berikutnya, lengkap dengan skenario manajemen risiko.</p>",
+                "<p style='color: #6c757d; margin-bottom: 24px;'>Evaluasi akurasi model statistik dan proyeksi skenario manajemen risiko berbasis data historis.</p>",
                 unsafe_allow_html=True,
             )
 
-            # 1. Tarik & Gabungkan Data Historis dari Excel (2024, 2025, 2026)
+            # Tarik & Gabungkan Data Historis dari Excel
             list_history_dfs = []
             for thn in [2024, 2025, 2026]:
                 df_h = load_historis_excel(thn)
@@ -1325,7 +1325,7 @@ else:
 
             df_excel_combined = pd.concat(list_history_dfs, ignore_index=True) if list_history_dfs else pd.DataFrame(columns=["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"])
 
-            # 2. Tarik Data dari Supabase
+            # Tarik Data dari Supabase
             if not df_db.empty:
                 df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
                 df_db["Bulan_Dt"] = df_db["dt_tanggal"].dt.to_period("M").dt.to_timestamp()
@@ -1334,13 +1334,10 @@ else:
             else:
                 df_db_grouped = pd.DataFrame(columns=["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"])
 
-            # Gabungkan kedua sumber data
             df_master_fc = pd.concat([df_excel_combined, df_db_grouped], ignore_index=True)
 
             if not df_master_fc.empty:
                 df_master_fc["Jenis_Dana"] = df_master_fc["Jenis_Dana"].str.strip()
-                
-                # Sediakan opsi Total (Overall) dan kategori individual
                 kategori_options = ["Total (Overall)"] + sorted(df_master_fc["Jenis_Dana"].unique())
 
                 kategori_forecast = st.selectbox(
@@ -1363,16 +1360,15 @@ else:
 
                         ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"]
 
-                        # Hitung dynamic forecast steps: sisa bulan tahun berjalan + 1 tahun penuh berikutnya
+                        # Hitung langkah peramalan (sisa bulan tahun ini + tahun depan)
                         last_date = ts_data.index[-1]
                         next_year = last_date.year + 1
                         end_forecast_date = pd.Timestamp(year=next_year, month=12, day=1)
                         forecast_steps = (end_forecast_date.year - last_date.year) * 12 + (end_forecast_date.month - last_date.month)
-
                         if forecast_steps < 1:
                             forecast_steps = 12
 
-                        # Fitting model Holt-Winters
+                        # Fitting Model
                         model = ExponentialSmoothing(
                             ts_data,
                             trend="add",
@@ -1381,28 +1377,40 @@ else:
                         ).fit()
 
                         forecast_point = model.forecast(forecast_steps)
-
                         residuals = model.resid
-                        std_err = residuals.std() if not residuals.empty else ts_data.std() * 0.1
+
+                        # Hitung Metrik Error Statistik
+                        mae = np.mean(np.abs(residuals))
+                        rmse = np.sqrt(np.mean(residuals**2))
+                        mape = np.mean(np.abs(residuals / np.where(ts_data == 0, 1, ts_data))) * 100
+
+                        st.markdown("#### 📊 Evaluasi Akurasi Model Statistik")
+                        err_col1, err_col2, err_col3 = st.columns(3)
+                        err_col1.metric("MAE (Rata-rata Selisih)", f"Rp {mae:,.0f}".replace(",", "."))
+                        err_col2.metric("RMSE (Akurasi Volatilitas)", f"Rp {rmse:,.0f}".replace(",", "."))
+                        err_col3.metric("MAPE (Tingkat Error Relative)", f"{mape:.2f}%")
+
+                        # Skenario Berbasis Batas Aman Persentase Deviasi Error yang Dinamis
+                        deviasi_faktor = min(max(mape / 100, 0.05), 0.20) # Batasan deviasi antara 5% sampai 20%
 
                         future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
 
                         df_scenarios = pd.DataFrame({
                             "Bulan Proyeksi": future_dates.strftime("%B %Y"),
-                            "Batas Pengamanan (Pesimis)": forecast_point.values - (1.282 * std_err),
+                            "Batas Pengamanan (Pesimis)": forecast_point.values * (1 - deviasi_faktor),
                             "Target Utama (Moderat)": forecast_point.values,
-                            "Potensi Maksimal (Optimis)": forecast_point.values + (1.282 * std_err)
+                            "Potensi Maksimal (Optimis)": forecast_point.values * (1 + deviasi_faktor)
                         })
-
-                        df_scenarios["Batas Pengamanan (Pesimis)"] = df_scenarios["Batas Pengamanan (Pesimis)"].clip(lower=0)
 
                         df_scenarios_display = df_scenarios.copy()
                         for col in ["Batas Pengamanan (Pesimis)", "Target Utama (Moderat)", "Potensi Maksimal (Optimis)"]:
                             df_scenarios_display[col] = df_scenarios_display[col].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
 
-                        st.markdown(f"#### Matriks Proyeksi Skenario ({forecast_steps} Bulan ke Depan: Sisa Tahun Ini & Tahun Depan)")
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown(f"#### Matriks Proyeksi Skenario ({forecast_steps} Bulan ke Depan)")
                         st.dataframe(df_scenarios_display, use_container_width=True, hide_index=True)
 
+                        # Plot Grafik
                         fig_sc = go.Figure()
                         fig_sc.add_trace(go.Scatter(
                             x=df_scenarios["Bulan Proyeksi"], y=df_scenarios["Potensi Maksimal (Optimis)"],
@@ -1430,9 +1438,9 @@ else:
                     except Exception as ex:
                         st.error(f"Gagal memproses model peramalan: {ex}")
                 else:
-                    st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan untuk peramalan.")
+                    st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan.")
             else:
-                st.info("Belum ada data historis yang tersedia baik di Excel maupun Supabase.")
+                st.info("Belum ada data historis yang tersedia.")
 
         # ---------------- TAB 4: VIEWER FILE EXCEL ASLI ----------------
         with tab_pimpinan_4:
