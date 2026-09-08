@@ -494,7 +494,6 @@ else:
                 )
                 st.dataframe(
                     df_show[[
-                        "ID",
                         "Tanggal",
                         "Loket SAMSAT",
                         "Jenis Pembayaran",
@@ -1512,7 +1511,7 @@ else:
                             mode='lines', name='Potensi Maksimal (Optimis)', line=dict(color='green', dash='dash')
                         ))
                         fig_sc.add_trace(go.Scatter(
-                            x=df_scenarios["Bulan Proyeksi"], y=df_scenarios["Target Utama (Moderat)"],
+                            x=df_scRegisters["Bulan Proyeksi"] if 'df_scRegisters' in locals() else df_scenarios["Bulan Proyeksi"], y=df_scenarios["Target Utama (Moderat)"],
                             mode='lines+markers', name=f'Target Utama ({winning_name})', line=dict(color='#005ba8', width=3)
                         ))
                         fig_sc.add_trace(go.Scatter(
