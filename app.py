@@ -73,7 +73,7 @@ BULAN_INDO = {
 }
 
 # ==========================================
-# FUNGSI PEMBACAAN EXCEL (MULTI-SHEET)
+# FUNGSI PEMBACAAN EXCEL & UNIFIED DATA
 # ==========================================
 @st.cache_data
 def load_historis_excel(tahun):
@@ -97,6 +97,45 @@ def load_anggaran_excel(tahun):
         return df_ang
     except Exception:
         return pd.DataFrame()
+
+
+def get_full_unified_df(df_db_input):
+    dfs = []
+    for thn in [2024, 2025, 2026]:
+        df_h = load_historis_excel(thn)
+        if not df_h.empty and "Bulan" in df_h.columns and "Jenis_Dana" in df_h.columns:
+            loket_cols = [c for c in df_h.columns if c not in ["Bulan", "Jenis_Dana", "No"]]
+            df_melt = df_h.melt(id_vars=["Bulan", "Jenis_Dana"], value_vars=loket_cols, var_name="loket_raw", value_name="realisasi")
+            df_melt["loket"] = df_melt["loket_raw"].str.replace("_", " ")
+            df_melt["Tahun"] = thn
+            df_melt["tanggal"] = df_melt.apply(lambda r: f"{int(r['Tahun'])}/{str(int(r['Bulan'])).zfill(2)}/01", axis=1)
+            df_melt["dt_tanggal"] = pd.to_datetime(df_melt["tanggal"])
+            df_melt["jenis_dana"] = df_melt["Jenis_Dana"].str.strip()
+            df_melt = df_melt[["tanggal", "loket", "jenis_dana", "realisasi", "dt_tanggal", "Bulan", "Tahun"]]
+            dfs.append(df_melt)
+            
+    df_excel_unified = pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+    
+    if not df_db_input.empty:
+        df_db_clean = df_db_input.copy()
+        if "dt_tanggal" not in df_db_clean.columns:
+            df_db_clean["dt_tanggal"] = pd.to_datetime(df_db_clean["tanggal"])
+        if "Bulan" not in df_db_clean.columns:
+            df_db_clean["Bulan"] = df_db_clean["dt_tanggal"].dt.month
+        if "Tahun" not in df_db_clean.columns:
+            df_db_clean["Tahun"] = df_db_clean["dt_tanggal"].dt.year
+        cols = ["tanggal", "loket", "jenis_dana", "realisasi", "dt_tanggal", "Bulan", "Tahun"]
+        for c in cols:
+            if c not in df_db_clean.columns and c == "tanggal":
+                df_db_clean["tanggal"] = df_db_clean["dt_tanggal"].dt.strftime("%Y-%m-%d")
+        df_db_clean = df_db_clean[[c for c in cols if c in df_db_clean.columns]]
+        df_combined = pd.concat([df_excel_unified, df_db_clean], ignore_index=True)
+    else:
+        df_combined = df_excel_unified
+        
+    if not df_combined.empty:
+        df_combined["Tahun_Str"] = df_combined["Tahun"].astype(str)
+    return df_combined
 
 
 @st.cache_data
@@ -1038,10 +1077,12 @@ else:
         # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK ----------------
         with tab_pimpinan_2:
             st.markdown("<br>", unsafe_allow_html=True)
-            if not df_db.empty:
-                df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
-                df_db["Tahun_Str"] = df_db["dt_tanggal"].dt.year.astype(str)
-                all_years = sorted(df_db["Tahun_Str"].unique())
+            
+            # Menggabungkan data master Excel (2024-2026) dengan data Supabase
+            df_analysis = get_full_unified_df(df_db)
+
+            if not df_analysis.empty:
+                all_years = sorted(df_analysis["Tahun_Str"].unique())
                 if not all_years:
                     all_years = [str(date.today().year)]
 
@@ -1053,17 +1094,17 @@ else:
 
                 if mode_waktu == "Harian":
                     min_tgl, max_tgl = (
-                        df_db["dt_tanggal"].dt.date.min(),
-                        df_db["dt_tanggal"].dt.date.max(),
+                        df_analysis["dt_tanggal"].dt.date.min(),
+                        df_analysis["dt_tanggal"].dt.date.max(),
                     )
                     dc1, dc2 = st.columns(2)
                     with dc1:
                         start_tgl = st.date_input("Dari Tanggal", value=min_tgl)
                     with dc2:
                         end_tgl = st.date_input("Sampai Tanggal", value=max_tgl)
-                    df_filtered = df_db[
-                        (df_db["dt_tanggal"].dt.date >= start_tgl)
-                        & (df_db["dt_tanggal"].dt.date <= end_tgl)
+                    df_filtered = df_analysis[
+                        (df_analysis["dt_tanggal"].dt.date >= start_tgl)
+                        & (df_analysis["dt_tanggal"].dt.date <= end_tgl)
                     ]
 
                 elif mode_waktu == "Bulanan":
@@ -1123,9 +1164,9 @@ else:
                     )[1]
                     end_date_str = f"{end_m_year}-{end_m_val}-{last_day}"
 
-                    df_filtered = df_db[
-                        (df_db["dt_tanggal"] >= pd.to_datetime(start_date_str))
-                        & (df_db["dt_tanggal"] <= pd.to_datetime(end_date_str))
+                    df_filtered = df_analysis[
+                        (df_analysis["dt_tanggal"] >= pd.to_datetime(start_date_str))
+                        & (df_analysis["dt_tanggal"] <= pd.to_datetime(end_date_str))
                     ]
 
                 else:
@@ -1140,9 +1181,9 @@ else:
                             index=len(all_years) - 1,
                         )
 
-                    df_filtered = df_db[
-                        (df_db["Tahun"] >= int(start_thn))
-                        & (df_db["Tahun"] <= int(end_thn))
+                    df_filtered = df_analysis[
+                        (df_analysis["Tahun"] >= int(start_thn))
+                        & (df_analysis["Tahun"] <= int(end_thn))
                     ]
 
                 if not df_filtered.empty:
@@ -1172,13 +1213,13 @@ else:
                 )
 
                 with st.expander("Audit & Deteksi Validasi Anomali Data"):
-                    df_zero = df_db[df_db["realisasi"] <= 0]
-                    df_dup = df_db[
-                        df_db.duplicated(
+                    df_zero = df_analysis[df_analysis["realisasi"] <= 0]
+                    df_dup = df_analysis[
+                        df_analysis.duplicated(
                             subset=["tanggal", "loket", "jenis_dana"], keep=False
                         )
                     ]
-                    df_outlier = df_db[df_db["realisasi"] > 500000000]
+                    df_outlier = df_analysis[df_analysis["realisasi"] > 500000000]
 
                     col_a1, col_a2, col_a3 = st.columns(3)
                     with col_a1:
@@ -1225,8 +1266,8 @@ else:
                     key="pilih_jenis_grafik",
                 )
 
-                all_lokets = sorted(df_db["loket"].unique())
-                all_jenis = sorted(df_db["jenis_dana"].unique())
+                all_lokets = sorted(df_analysis["loket"].unique())
+                all_jenis = sorted(df_analysis["jenis_dana"].unique())
                 gc1, gc2 = st.columns(2)
                 with gc1:
                     sel_loket_gr = st.multiselect(
@@ -1249,7 +1290,7 @@ else:
                     if mode_waktu == "Tahunan":
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y")
                     elif mode_waktu == "Bulanan":
-                        df_c["Periode"] = df_c["dt_tanggal"].dt.apply(lambda x: f"{BULAN_INDO[x.month]} {x.year}")
+                        df_c["Periode"] = df_c["dt_tanggal"].apply(lambda x: f"{BULAN_INDO[x.month]} {x.year}")
                     else:
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
 
