@@ -66,6 +66,12 @@ SIKLIKAL = {
 
 NILAI_UNKNOWN_VAR = 0.0
 
+BULAN_INDO = {
+    1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+    5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+    9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+}
+
 # ==========================================
 # FUNGSI PEMBACAAN EXCEL (MULTI-SHEET)
 # ==========================================
@@ -484,7 +490,6 @@ else:
                 )
                 df_show = df_show.rename(
                     columns={
-                        "id": "ID",
                         "tanggal": "Tanggal",
                         "loket": "Loket SAMSAT",
                         "jenis_dana": "Jenis Pembayaran",
@@ -648,24 +653,10 @@ else:
                     "Tahun Laporan Utama", [2026, 2025, 2024, 2027], index=0
                 )
             with fc2:
-                bulan_mapping = {
-                    1: "Januari",
-                    2: "Februari",
-                    3: "Maret",
-                    4: "April",
-                    5: "Mei",
-                    6: "Juni",
-                    7: "Juli",
-                    8: "Agustus",
-                    9: "September",
-                    10: "Oktober",
-                    11: "November",
-                    12: "Desember",
-                }
                 target_bulan_pilih = st.selectbox(
                     "Pilih Bulan Pelaporan",
-                    options=list(bulan_mapping.keys()),
-                    format_func=lambda x: bulan_mapping[x],
+                    options=list(BULAN_INDO.keys()),
+                    format_func=lambda x: BULAN_INDO[x],
                     index=7,
                 )
             with fc3:
@@ -890,11 +881,11 @@ else:
 
                 def get_status_kinerja(val):
                     if val >= 0:
-                        return "🟢 Optimal"
+                        return "Optimal"
                     elif val >= -5:
-                        return "🟡 Waspada"
+                        return "Waspada"
                     else:
-                        return "🔴 Defisit Kritis"
+                        return "Defisit Kritis"
 
                 df_calc["Status Kinerja"] = df_calc["Capaian vs Siklikal (%)"].apply(
                     get_status_kinerja
@@ -982,11 +973,11 @@ else:
 
                 def get_status_kinerja(val):
                     if val >= 0:
-                        return "🟢 Optimal"
+                        return "Optimal"
                     elif val >= -5:
-                        return "🟡 Waspada"
+                        return "Waspada"
                     else:
-                        return "🔴 Defisit Kritis"
+                        return "Defisit Kritis"
 
                 df_total["Status Kinerja"] = df_total["Capaian vs Siklikal (%)"].apply(
                     get_status_kinerja
@@ -1007,12 +998,12 @@ else:
                 dev_label = "surplus" if tot_dev >= 0 else "defisit"
 
                 st.info(
-                    f"💡 **Ringkasan Eksekutif ({bulan_mapping[target_bulan_pilih]}"
-                    f" {target_tahun_pilih}):** Total realisasi akumulatif mencapai"
-                    f" **Rp {tot_real:,.0f}** (".replace(",", ".")
-                    + f"**{tot_cap:.2f}%** dari target anggaran tahunan). Performa"
-                    f" wilayah secara keseluruhan berada pada status **{tot_stat}**"
-                    f" dengan posisi **{dev_label} sebesar {dev_str}** terhadap"
+                    f"Ringkasan Eksekutif ({BULAN_INDO[target_bulan_pilih]}"
+                    f" {target_tahun_pilih}): Total realisasi akumulatif mencapai"
+                    f" Rp {tot_real:,.0f} (".replace(",", ".")
+                    + f"{tot_cap:.2f}% dari target anggaran tahunan). Performa"
+                    f" wilayah secara keseluruhan berada pada status {tot_stat}"
+                    f" dengan posisi {dev_label} sebesar {dev_str} terhadap"
                     " target proporsional bulanan."
                 )
 
@@ -1038,7 +1029,7 @@ else:
             st.markdown(
                 f"<div style='font-weight: 600; margin-top: 10px; margin-bottom:"
                 f" 10px;'>Tabel Detail Komparasi & Kinerja:"
-                f" {bulan_mapping[target_bulan_pilih]} {target_tahun_pilih}"
+                f" {BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}"
                 f" (Komparasi {tahun_x1})</div>",
                 unsafe_allow_html=True,
             )
@@ -1258,7 +1249,7 @@ else:
                     if mode_waktu == "Tahunan":
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y")
                     elif mode_waktu == "Bulanan":
-                        df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%B %Y")
+                        df_c["Periode"] = df_c["dt_tanggal"].dt.apply(lambda x: f"{BULAN_INDO[x.month]} {x.year}")
                     else:
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
 
@@ -1466,11 +1457,11 @@ else:
                         tingkat_keandalan = max(70.0, 100.0 - persentase_error)
 
                         st.success(
-                            f"🤖 **Auto-Model Selection:** Untuk kategori **{kategori_forecast}**, sistem otomatis memilih metode **{winning_name}** "
-                            f"karena menghasilkan error terendah dan tingkat keandalan paling optimal."
+                            f"Metode Peramalan Terpilih: Untuk kategori {kategori_forecast}, sistem menerapkan model {winning_name} "
+                            f"berdasarkan evaluasi galat terkecil dan stabilitas data historis."
                         )
 
-                        st.markdown("#### 📊 Rangkuman Performa & Keandalan Model")
+                        st.markdown("#### Rangkuman Performa & Keandalan Model")
                         err_col1, err_col2, err_col3 = st.columns(3)
                         
                         err_col1.metric("Rata-rata Meleset", f"Rp {mae:,.0f}".replace(",", "."))
@@ -1480,9 +1471,8 @@ else:
                         st.markdown("<br>", unsafe_allow_html=True)
                         mae_str = f"Rp {mae:,.0f}".replace(",", ".")
                         st.info(
-                            f"💡 **Kesimpulan untuk Manajemen:** Model terpilih memiliki tingkat keandalan **{tingkat_keandalan:.1f}%**. "
-                            f"Estimasi pergeseran target bulanan berada di kisaran **{mae_str}**. "
-                            f"Gunakan **Batas Pengamanan (Pesimis)** pada tabel di bawah sebagai acuan aman penyusunan anggaran."
+                            f"Catatan Manajemen: Model estimasi menunjukkan tingkat keandalan {tingkat_keandalan:.1f}% dengan deviasi rata-rata "
+                            f"sebesar {mae_str}. Batas pengamanan pesimis direkomendasikan sebagai acuan konservatif dalam penyusunan anggaran."
                         )
 
                         deviasi_faktor = 0.15
@@ -1490,7 +1480,7 @@ else:
                         future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
 
                         df_scenarios = pd.DataFrame({
-                            "Bulan Proyeksi": future_dates.strftime("%B %Y"),
+                            "Bulan Proyeksi": [f"{BULAN_INDO[d.month]} {d.year}" for d in future_dates],
                             "Batas Pengamanan (Pesimis)": forecast_point * (1 - deviasi_faktor),
                             "Target Utama (Moderat)": forecast_point,
                             "Potensi Maksimal (Optimis)": forecast_point * (1 + deviasi_faktor)
@@ -1511,7 +1501,7 @@ else:
                             mode='lines', name='Potensi Maksimal (Optimis)', line=dict(color='green', dash='dash')
                         ))
                         fig_sc.add_trace(go.Scatter(
-                            x=df_scRegisters["Bulan Proyeksi"] if 'df_scRegisters' in locals() else df_scenarios["Bulan Proyeksi"], y=df_scenarios["Target Utama (Moderat)"],
+                            x=df_scenarios["Bulan Proyeksi"], y=df_scenarios["Target Utama (Moderat)"],
                             mode='lines+markers', name=f'Target Utama ({winning_name})', line=dict(color='#005ba8', width=3)
                         ))
                         fig_sc.add_trace(go.Scatter(
