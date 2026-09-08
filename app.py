@@ -10,7 +10,7 @@ import streamlit as st
 from supabase import create_client
 
 # ==========================================
-# ⚙️ SISTEM LOGIN & SESI (Dinaikkan ke atas agar terbaca sebelum Page Config)
+# ⚙️ SISTEM LOGIN & SESI
 # ==========================================
 if "logged_in" not in st.session_state:
   qp_logged = st.query_params.get("logged_in")
@@ -142,7 +142,6 @@ if not st.session_state.logged_in:
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
     
-    /* Menghilangkan ikon tautan/anchor pada heading */
     .stHeadingAnchor, [data-testid="stHeadingAnchor"], h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
         display: none !important;
         visibility: hidden !important;
@@ -203,31 +202,22 @@ if not st.session_state.logged_in:
         )
       else:
         st.markdown(
-            "<h2 style='text-align: center; color: #005ba8; margin-bottom:"
-            " 0;'>PT JASA RAHARJA</h2>",
+            "<h2 style='text-align: center; color: #005ba8; margin-bottom: 0;'>PT JASA RAHARJA</h2>",
             unsafe_allow_html=True,
         )
 
       st.markdown(
-          "<div style='text-align: center; color: #1a1a1a; font-family:\"Playfair"
-          " Display\", serif; font-size: 1.3rem; font-weight: 700; margin-bottom:"
-          " 4px;'>Portal Monitoring Kanwil DIY</div>",
+          "<div style='text-align: center; color: #1a1a1a; font-family:\"Playfair Display\", serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil DIY</div>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<div style='text-align: center; color: #6c757d; font-size: 0.9rem;"
-          " margin-bottom: 20px;'>Silakan masuk menggunakan kredensial resmi"
-          " Anda</div>",
+          "<div style='text-align: center; color: #6c757d; font-size: 0.9rem; margin-bottom: 20px;'>Silakan masuk menggunakan kredensial resmi Anda</div>",
           unsafe_allow_html=True,
       )
 
       with st.form("form_login_portal", clear_on_submit=False):
-        username = st.text_input(
-            "ID Pengguna", placeholder="Masukkan ID Pengguna"
-        )
-        password = st.text_input(
-            "Password", type="password", placeholder="Masukkan Password"
-        )
+        username = st.text_input("ID Pengguna", placeholder="Masukkan ID Pengguna")
+        password = st.text_input("Password", type="password", placeholder="Masukkan Password")
         st.markdown("<br>", unsafe_allow_html=True)
         login_button = st.form_submit_button("Masuk Sistem", type="primary")
 
@@ -248,9 +238,7 @@ if not st.session_state.logged_in:
             st.error("ID Pengguna atau Password salah. Silakan coba lagi.")
 
       st.markdown(
-          "<p style='text-align: center; font-size: 11px; margin-top:"
-          " 20px; color: #a0aabf;'>© 2026 PT Jasa Raharja Kanwil DIY — Hak"
-          " Cipta Dilindungi Undang-Undang.</p>",
+          "<p style='text-align: center; font-size: 11px; margin-top: 20px; color: #a0aabf;'>© 2026 PT Jasa Raharja Kanwil DIY — Hak Cipta Dilindungi Undang-Undang.</p>",
           unsafe_allow_html=True,
       )
 
@@ -278,7 +266,6 @@ else:
     [data-testid="stDecoration"] { display: none !important; }
     [data-testid="stSidebar"] { display: none !important; }
     
-    /* Menghilangkan ikon tautan/anchor pada heading */
     .stHeadingAnchor, [data-testid="stHeadingAnchor"], h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
         display: none !important;
         visibility: hidden !important;
@@ -357,24 +344,20 @@ else:
   with header_col1:
     if st.session_state.role == "Petugas SAMSAT":
       st.markdown(
-          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight:"
-          " 700; letter-spacing: -0.5px;'>Portal Petugas SAMSAT</h2>",
+          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight: 700; letter-spacing: -0.5px;'>Portal Petugas SAMSAT</h2>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<p style='color: #6c757d; font-size: 1rem;'>Kanwil DIY — PT Jasa"
-          " Raharja</p>",
+          "<p style='color: #6c757d; font-size: 1rem;'>Kanwil DIY — PT Jasa Raharja</p>",
           unsafe_allow_html=True,
       )
     else:
       st.markdown(
-          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight:"
-          " 700; letter-spacing: -0.5px;'>Dashboard Realisasi Kinerja</h2>",
+          "<h2 style='color: #005ba8; margin-bottom: 4px; font-weight: 700; letter-spacing: -0.5px;'>Dashboard Realisasi Kinerja</h2>",
           unsafe_allow_html=True,
       )
       st.markdown(
-          "<p style='color: #6c757d; font-size: 1rem;'>Monitoring Penerimaan"
-          " Sektor UU 34 Tahun 1964</p>",
+          "<p style='color: #6c757d; font-size: 1rem;'>Monitoring Penerimaan Sektor UU 34 Tahun 1964</p>",
           unsafe_allow_html=True,
       )
   with header_col2:
@@ -386,8 +369,7 @@ else:
       st.rerun()
 
   st.markdown(
-      "<hr style='border-top: 1px solid #eaedf2; margin-top: 0px; margin-bottom:"
-      " 30px;'>",
+      "<hr style='border-top: 1px solid #eaedf2; margin-top: 0px; margin-bottom: 30px;'>",
       unsafe_allow_html=True,
   )
 
@@ -397,17 +379,13 @@ else:
   if st.session_state.role == "Petugas SAMSAT":
     st.markdown("### Formulir Input Laporan Penerimaan Harian")
     st.markdown(
-        "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan"
-        " data penerimaan harian berdasarkan loket SAMSAT dan jenis"
-        " pembayaran yang melayani.</p>",
+        "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan data penerimaan harian berdasarkan loket SAMSAT dan jenis pembayaran yang melayani.</p>",
         unsafe_allow_html=True,
     )
 
     col1, col2 = st.columns(2)
     with col1:
-      f_tanggal = st.date_input(
-          "Tanggal Transaksi / Laporan", value=date.today()
-      )
+      f_tanggal = st.date_input("Tanggal Transaksi / Laporan", value=date.today())
       f_loket = st.selectbox(
           "Loket SAMSAT",
           ["Kota", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
@@ -475,17 +453,13 @@ else:
 
     st.markdown("### Riwayat & Koreksi Laporan")
     st.markdown(
-        "<p style='color: #6c757d; margin-bottom: 24px;'>Tentukan rentang"
-        " tanggal di bawah ini untuk menampilkan, memeriksa, atau mengoreksi"
-        " data historis.</p>",
+        "<p style='color: #6c757d; margin-bottom: 24px;'>Tentukan rentang tanggal di bawah ini untuk menampilkan, memeriksa, atau mengoreksi data historis.</p>",
         unsafe_allow_html=True,
     )
 
     fc_tgl1, fc_tgl2 = st.columns(2)
     with fc_tgl1:
-      filter_dari = st.date_input(
-          "Tampilkan Dari Tanggal", value=date.today().replace(day=1)
-      )
+      filter_dari = st.date_input("Tampilkan Dari Tanggal", value=date.today().replace(day=1))
     with fc_tgl2:
       filter_sampai = st.date_input("Sampai Tanggal", value=date.today())
 
@@ -531,15 +505,11 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("#### Ubah atau Hapus Laporan")
-        with st.expander(
-            "Buka menu ini untuk melakukan koreksi data yang telah dipilih"
-        ):
+        with st.expander("Buka menu ini untuk melakukan koreksi data yang telah dipilih"):
           options_record = []
           record_map = {}
           for idx, row in df_recent.iterrows():
-            label = f"ID #{row['id']} — Tgl: {row['tanggal']} | Loket: {row['loket']} | {row['jenis_dana']} | Rp {row['realisasi']:,.0f}".replace(
-                ",", "."
-            )
+            label = f"ID #{row['id']} — Tgl: {row['tanggal']} | Loket: {row['loket']} | {row['jenis_dana']} | Rp {row['realisasi']:,.0f}".replace(",", ".")
             options_record.append(label)
             record_map[label] = row
 
@@ -606,9 +576,7 @@ else:
               st.markdown("<br>", unsafe_allow_html=True)
               col_btn1, col_btn2 = st.columns(2)
               with col_btn1:
-                update_btn = st.form_submit_button(
-                    "Perbarui Data", type="primary"
-                )
+                update_btn = st.form_submit_button("Perbarui Data", type="primary")
               with col_btn2:
                 delete_btn = st.form_submit_button("Hapus Laporan")
 
@@ -629,9 +597,7 @@ else:
 
               if delete_btn:
                 try:
-                  supabase.table("penerimaan_harian").delete().eq(
-                      "id", sel_id
-                  ).execute()
+                  supabase.table("penerimaan_harian").delete().eq("id", sel_id).execute()
                   st.warning("Data laporan berhasil dihapus dari sistem.")
                   st.rerun()
                 except Exception as e:
@@ -641,7 +607,7 @@ else:
     except Exception as err:
       st.info(f"Mengambil data historis... ({err})")
 
-  # ----------------------------------------
+# ----------------------------------------
   # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
   # ----------------------------------------
   elif st.session_state.role == "Pimpinan":
@@ -669,9 +635,7 @@ else:
       st.markdown("<br>", unsafe_allow_html=True)
       st.markdown("### Laporan Eksekutif Realisasi Penerimaan SAMSAT")
       st.markdown(
-          "<p style='color: #6c757d; margin-bottom: 24px;'>Pilih filter di bawah"
-          " ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap"
-          " tahun sebelumnya.</p>",
+          "<p style='color: #6c757d; margin-bottom: 24px;'>Pilih filter di bawah ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap tahun sebelumnya.</p>",
           unsafe_allow_html=True,
       )
 
@@ -914,7 +878,24 @@ else:
             df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"]
             - df_calc["Target Berdasarkan Siklikal"]
         )
+        df_calc["Proyeksi Akhir Tahun"] = safe_div(
+            df_calc["Akumulasi s.d Bulan Ini (Thn Berjalan)"], target_bulan_pilih
+        ) * 12
+        df_calc["Indeks Efisiensi Siklikal"] = safe_div(
+            df_calc["Persentase Capaian (%)"], df_calc["Siklikal_H"]
+        )
 
+        def get_status_kinerja(val):
+          if val >= 0:
+            return "🟢 Optimal"
+          elif val >= -5:
+            return "🟡 Waspada"
+          else:
+            return "🔴 Defisit Kritis"
+
+        df_calc["Status Kinerja"] = df_calc["Capaian vs Siklikal (%)"].apply(
+            get_status_kinerja
+        )
         df_calc = df_calc.drop(columns=["Siklikal_H"])
         return df_calc
 
@@ -989,32 +970,78 @@ else:
             df_total["Akumulasi s.d Bulan Ini (Thn Berjalan)"]
             - df_total["Target Berdasarkan Siklikal"]
         )
+        df_total["Proyeksi Akhir Tahun"] = safe_div(
+            df_total["Akumulasi s.d Bulan Ini (Thn Berjalan)"], target_bulan_pilih
+        ) * 12
+        df_total["Indeks Efisiensi Siklikal"] = safe_div(
+            df_total["Persentase Capaian (%)"], siklikal_tot
+        )
 
+        def get_status_kinerja(val):
+          if val >= 0:
+            return "🟢 Optimal"
+          elif val >= -5:
+            return "🟡 Waspada"
+          else:
+            return "🔴 Defisit Kritis"
+
+        df_total["Status Kinerja"] = df_total["Capaian vs Siklikal (%)"].apply(
+            get_status_kinerja
+        )
         df_final = df_total
       else:
         df_final = generate_excel_table(kat_pilihan)
 
+      row_summary = df_final[df_final["Loket SAMSAT"] == "JUMLAH Keseluruhan"]
+      if not row_summary.empty:
+        tot_real = row_summary[
+            "Akumulasi s.d Bulan Ini (Thn Berjalan)"
+        ].values[0]
+        tot_cap = row_summary["Persentase Capaian (%)"].values[0]
+        tot_dev = row_summary["Deviasi Target (Surplus/Defisit)"].values[0]
+        tot_stat = row_summary["Status Kinerja"].values[0]
+        dev_str = f"Rp {abs(tot_dev):,.0f}".replace(",", ".")
+        dev_label = "surplus" if tot_dev >= 0 else "defisit"
+
+        st.info(
+            f"💡 **Ringkasan Eksekutif ({bulan_mapping[target_bulan_pilih]}"
+            f" {target_tahun_pilih}):** Total realisasi akumulatif mencapai"
+            f" **Rp {tot_real:,.0f}** (".replace(",", ".")
+            + f"**{tot_cap:.2f}%** dari target anggaran tahunan). Performa"
+            f" wilayah secara keseluruhan berada pada status **{tot_stat}**"
+            f" dengan posisi **{dev_label} sebesar {dev_str}** terhadap"
+            " target proporsional bulanan."
+        )
+
       df_display = df_final.copy()
       for col in df_display.columns:
-        # Ditambahkan pengecekan "YoY" agar kolom pertumbuhan diformat sebagai persentase (%)
-        if col not in ["Loket SAMSAT"] and "(%)" not in col and "YoY" not in col:
-          df_display[col] = df_display[col].apply(
-              lambda x: f"Rp {x:,.0f}".replace(",", ".")
-          )
+        if col in ["Loket SAMSAT", "Status Kinerja"]:
+          continue
         elif "(%)" in col or "YoY" in col:
           df_display[col] = df_display[col].apply(
               lambda x: f"{x:,.2f}%" if pd.notnull(x) else "0.00%"
           )
+        elif col == "Indeks Efisiensi Siklikal":
+          df_display[col] = df_display[col].apply(
+              lambda x: f"{x:,.2f}x" if pd.notnull(x) else "0.00x"
+          )
+        else:
+          df_display[col] = df_display[col].apply(
+              lambda x: f"Rp {x:,.0f}".replace(",", ".")
+              if pd.notnull(x)
+              else "Rp 0"
+          )
 
       st.markdown(
           f"<div style='font-weight: 600; margin-top: 10px; margin-bottom:"
-          f" 10px;'>Ringkasan Performa: {bulan_mapping[target_bulan_pilih]}"
-          f" {target_tahun_pilih} (Komparasi {tahun_x1})</div>",
+          f" 10px;'>Tabel Detail Komparasi & Kinerja:"
+          f" {bulan_mapping[target_bulan_pilih]} {target_tahun_pilih}"
+          f" (Komparasi {tahun_x1})</div>",
           unsafe_allow_html=True,
       )
       st.dataframe(df_display, use_container_width=True, hide_index=True)
 
-    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK (DENGAN FILTER RENTANG BULAN & TAHUN) ----------------
+    # ---------------- TAB 2: DASHBOARD REKAP, AUDIT & GRAFIK ----------------
     with tab_pimpinan_2:
       st.markdown("<br>", unsafe_allow_html=True)
       if not df_db.empty:
