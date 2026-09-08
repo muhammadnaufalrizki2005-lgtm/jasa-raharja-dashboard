@@ -489,6 +489,7 @@ else:
                         "loket": "Loket SAMSAT",
                         "jenis_dana": "Jenis Pembayaran",
                         "prosentase_siklikal": "Siklus Bulanan (%)",
+                        "siklikal_yty": "Target YoY (%)",
                     }
                 )
                 st.dataframe(
@@ -499,6 +500,7 @@ else:
                         "Jenis Pembayaran",
                         "Jumlah Penerimaan",
                         "Siklus Bulanan (%)",
+                        "Target YoY (%)",
                     ]],
                     use_container_width=True,
                     hide_index=True,
