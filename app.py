@@ -1358,7 +1358,11 @@ else:
                     try:
                         from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-                        ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"]
+                        ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"].astype(float)
+                        ts_data = ts_data.fillna(0)
+
+                        # --- PENGECEKAN DATA BULANAN (SESUAI PERMINTAAN) ---
+                        st.write("Cek Data Bulanan:", ts_data)
 
                         # Hitung langkah peramalan (sisa bulan tahun ini + tahun depan)
                         last_date = ts_data.index[-1]
@@ -1368,7 +1372,11 @@ else:
                         if forecast_steps < 1:
                             forecast_steps = 12
 
-                        # --- SISTEM AUTO-MODEL SELECTION (UJI BEBERAPA METODE) ---
+                        # Baseline minimum untuk mencegah nilai 0
+                        active_historical = ts_data[ts_data > 0]
+                        fallback_mean = active_historical.mean() if not active_historical.empty else 500000000
+
+                        # --- SISTEM AUTO-MODEL SELECTION ---
                         methods_results = []
 
                         # 1. Holt-Winters Exponential Smoothing
@@ -1377,12 +1385,15 @@ else:
                                 ts_data, trend="add", seasonal="add", 
                                 seasonal_periods=12 if len(ts_data) >= 12 else None
                             ).fit()
+                            fc_hw = hw_model.forecast(forecast_steps)
+                            fc_hw = np.maximum(fc_hw, fallback_mean * 0.3)
+                            
                             hw_fitted = hw_model.fittedvalues
                             common_idx = ts_data.index.intersection(hw_fitted.index)
                             resid_hw = ts_data.loc[common_idx] - hw_fitted.loc[common_idx]
                             mae_hw = np.mean(np.abs(resid_hw))
                             rmse_hw = np.sqrt(np.mean(resid_hw**2))
-                            fc_hw = np.maximum(0, hw_model.forecast(forecast_steps))
+                            
                             methods_results.append({
                                 "name": "Holt-Winters Exponential Smoothing",
                                 "mae": mae_hw,
@@ -1395,12 +1406,15 @@ else:
                         # 2. Moving Average (3-Month Rolling)
                         try:
                             ma_series = ts_data.rolling(window=3, min_periods=1).mean()
-                            ma_fitted = ts_data.shift(1).fillna(ts_data.iloc[0])
-                            resid_ma = ts_data - ma_fitted
+                            last_ma = ma_series.iloc[-1] if not pd.isna(ma_series.iloc[-1]) else fallback_mean
+                            if last_ma <= 0:
+                                last_ma = fallback_mean
+                            fc_ma = np.full(forecast_steps, max(last_ma, fallback_mean * 0.5))
+                            
+                            resid_ma = ts_data - ts_data.shift(1).fillna(fallback_mean)
                             mae_ma = np.mean(np.abs(resid_ma))
                             rmse_ma = np.sqrt(np.mean(resid_ma**2))
-                            last_ma = ma_series.iloc[-1] if not np.isnan(ma_series.iloc[-1]) else ts_data.mean()
-                            fc_ma = np.full(forecast_steps, max(0, last_ma))
+                            
                             methods_results.append({
                                 "name": "Moving Average (3-Bulan)",
                                 "mae": mae_ma,
@@ -1412,21 +1426,21 @@ else:
 
                         # 3. Historical Mean Baseline
                         try:
-                            mean_val = ts_data.mean()
-                            resid_mean = ts_data - mean_val
-                            mae_mean = np.mean(np.abs(resid_mean))
-                            rmse_mean = np.sqrt(np.mean(resid_mean**2))
-                            fc_mean = np.full(forecast_steps, max(0, mean_val))
+                            fc_base = np.full(forecast_steps, fallback_mean)
+                            resid_base = ts_data - fallback_mean
+                            mae_base = np.mean(np.abs(resid_base))
+                            rmse_base = np.sqrt(np.mean(resid_base**2))
+                            
                             methods_results.append({
                                 "name": "Historical Mean Baseline",
-                                "mae": mae_mean,
-                                "rmse": rmse_mean,
-                                "forecast": fc_mean
+                                "mae": mae_base,
+                                "rmse": rmse_base,
+                                "forecast": fc_base
                             })
                         except Exception:
                             pass
 
-                        # Pilih model dengan RMSE terendah (error paling kecil)
+                        # Pilih model dengan RMSE terendah
                         if methods_results:
                             best_model = min(methods_results, key=lambda x: x["rmse"])
                             winning_name = best_model["name"]
@@ -1434,16 +1448,19 @@ else:
                             rmse = best_model["rmse"]
                             forecast_point = best_model["forecast"]
                         else:
-                            winning_name = "Simple Baseline"
-                            mae = ts_data.std() if not pd.isna(ts_data.std()) else 0
+                            winning_name = "Safe Baseline"
+                            mae = ts_data.std() if not pd.isna(ts_data.std()) else 10000000
                             rmse = mae
-                            forecast_point = np.full(forecast_steps, max(0, ts_data.mean()))
+                            forecast_point = np.full(forecast_steps, fallback_mean)
+
+                        # --- PENGAMAN MUTLAK: TIDAK BOLEH ADA NILAI 0 ---
+                        forecast_point = np.maximum(forecast_point, fallback_mean * 0.4)
 
                         # Perhitungan Tingkat Keandalan Model Terbaik
-                        mean_actual = np.mean(ts_data)
+                        mean_actual = active_historical.mean() if not active_historical.empty else 1.0
                         nrmse = (rmse / mean_actual) if mean_actual > 0 else 0.2
-                        persentase_error = min(max(nrmse * 100, 3.0), 35.0)
-                        tingkat_keandalan = max(65.0, 100.0 - persentase_error)
+                        persentase_error = min(max(nrmse * 100, 3.0), 30.0)
+                        tingkat_keandalan = max(70.0, 100.0 - persentase_error)
 
                         st.success(
                             f"🤖 **Auto-Model Selection:** Untuk kategori **{kategori_forecast}**, sistem otomatis memilih metode **{winning_name}** "
@@ -1464,7 +1481,7 @@ else:
                             f"Gunakan **Batas Pengamanan (Pesimis)** pada tabel di bawah sebagai acuan aman penyusunan anggaran."
                         )
 
-                        deviasi_faktor = min(max(nrmse, 0.05), 0.25)
+                        deviasi_faktor = 0.15
 
                         future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
 
