@@ -1376,9 +1376,10 @@ else:
                             seasonal_periods=12 if len(ts_data) >= 12 else None
                         ).fit()
 
-                        forecast_point = model.forecast(forecast_steps)
+                        # Membatasi hasil peramalan agar minimal bernilai 0 (tidak pernah minus)
+                        forecast_point = np.maximum(0, model.forecast(forecast_steps))
                         
-                        # Perhitungan Error dan Keandalan yang Ramah Eksekutif
+                        # Perhitungan Error berbasis NRMSE yang stabil secara statistik
                         fitted_vals = model.fittedvalues
                         common_idx = ts_data.index.intersection(fitted_vals.index)
                         actual_aligned = ts_data.loc[common_idx]
@@ -1387,39 +1388,35 @@ else:
 
                         mae = np.mean(np.abs(resid_clean))
                         rmse = np.sqrt(np.mean(resid_clean**2))
+                        mean_actual = np.mean(actual_aligned)
                         
-                        mape_raw = np.mean(np.abs(resid_clean / np.where(actual_aligned == 0, 1, actual_aligned))) * 100
-                        mape = mape_raw if not np.isnan(mape_raw) and mape_raw < 100 else 12.5
-                        
-                        # Ubah MAPE menjadi Tingkat Keandalan (Accuracy) agar psikologis pimpinan merasa aman
-                        tingkat_keandalan = max(0, 100 - mape)
+                        nrmse = (rmse / mean_actual) if mean_actual > 0 else 1.0
+                        persentase_error = min(max(nrmse * 100, 0.0), 100.0)
+                        tingkat_keandalan = max(0.0, 100.0 - persentase_error)
 
                         st.markdown("#### 📊 Rangkuman Performa & Keandalan Model")
                         err_col1, err_col2, err_col3 = st.columns(3)
                         
-                        # Tampilkan dalam satuan Miliar agar mudah dibaca sekilas oleh manajemen
                         err_col1.metric("Rata-rata Meleset", f"Rp {mae/1e9:.2f} Miliar")
                         err_col2.metric("Tingkat Volatilitas", f"Rp {rmse/1e9:.2f} Miliar")
                         err_col3.metric("Tingkat Keandalan Model", f"{tingkat_keandalan:.1f}%")
 
-                        # Kotak Interpretasi Bahasa Bisnis yang Lebih Lugas
                         st.markdown("<br>", unsafe_allow_html=True)
                         st.info(
                             f"💡 **Kesimpulan untuk Manajemen:** Model peramalan memiliki tingkat keandalan sebesar **{tingkat_keandalan:.1f}%**. "
-                            f"Dalam praktiknya, perolehan pendapatan bulanan dapat meleset atau bergeser sekitar **Rp {mae/1e9:.2f} Miliar** dari target sistem. "
+                            f"Dalam praktiknya, perolehan pendapatan bulanan dapat bergeser sekitar **Rp {mae/1e9:.2f} Miliar** dari target sistem. "
                             f"Gunakan **Batas Pengamanan (Pesimis)** pada tabel di bawah sebagai acuan aman dalam menyusun anggaran."
                         )
 
-                        # Skenario Berbasis Batas Aman Persentase Deviasi Error yang Dinamis
-                        deviasi_faktor = min(max(mape / 100, 0.05), 0.20)
+                        deviasi_faktor = min(max(nrmse, 0.05), 0.30)
 
                         future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
 
                         df_scenarios = pd.DataFrame({
                             "Bulan Proyeksi": future_dates.strftime("%B %Y"),
-                            "Batas Pengamanan (Pesimis)": forecast_point.values * (1 - deviasi_faktor),
-                            "Target Utama (Moderat)": forecast_point.values,
-                            "Potensi Maksimal (Optimis)": forecast_point.values * (1 + deviasi_faktor)
+                            "Batas Pengamanan (Pesimis)": forecast_point * (1 - deviasi_faktor),
+                            "Target Utama (Moderat)": forecast_point,
+                            "Potensi Maksimal (Optimis)": forecast_point * (1 + deviasi_faktor)
                         })
 
                         df_scenarios_display = df_scenarios.copy()
@@ -1477,10 +1474,8 @@ else:
                     "Penerimaan Sektor UU 34 Tahun 1964.xlsx", data_only=True
                 )
                 
-                # Cek ketersediaan sheet
                 sheet_target_name = "HARIAN BARU (2)"
                 if sheet_target_name not in wb_excel.sheetnames:
-                    # Ambil sheet pertama jika sheet target tidak ditemukan
                     sheet_target_name = wb_excel.sheetnames[0]
                     st.warning(f"Sheet 'HARIAN BARU (2)' tidak ditemukan. Menampilkan sheet alternatif: '{sheet_target_name}'")
 
@@ -1497,7 +1492,6 @@ else:
                 else:
                     start_r, end_r = 61, 69
 
-                # Validasi batas baris dataframe agar tidak Out-of-Bounds
                 if len(df_raw) > end_r:
                     table_subset = df_raw.iloc[start_r : end_r + 1, 1:21].copy()
                     table_subset.columns = table_subset.iloc[0]
