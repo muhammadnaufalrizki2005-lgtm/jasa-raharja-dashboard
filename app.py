@@ -1078,34 +1078,49 @@ else:
         with tab_pimpinan_2:
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Menggabungkan data master Excel (2024-2026) dengan data Supabase
-            df_analysis = get_full_unified_df(df_db)
+            # Pilihan Cakupan Periode Analisis
+            mode_waktu = st.radio(
+                "Cakupan Periode Analisis:",
+                ["Harian", "Bulanan", "Tahunan"],
+                horizontal=True,
+            )
+
+            # 1. LOGIKA DATA UNTUK HARIAN (Hanya dari Database Supabase)
+            if mode_waktu == "Harian":
+                df_analysis = df_db.copy()
+                if not df_analysis.empty and "dt_tanggal" not in df_analysis.columns:
+                    df_analysis["dt_tanggal"] = pd.to_datetime(df_analysis["tanggal"])
+            # 2. LOGIKA DATA UNTUK BULANAN & TAHUNAN (Menggunakan Excel Master 2024-2026 + Supabase)
+            else:
+                df_analysis = get_full_unified_df(df_db)
 
             if not df_analysis.empty:
-                all_years = sorted(df_analysis["Tahun_Str"].unique())
+                all_years = sorted(df_analysis["Tahun_Str"].unique()) if "Tahun_Str" in df_analysis.columns else [str(date.today().year)]
                 if not all_years:
                     all_years = [str(date.today().year)]
 
-                mode_waktu = st.radio(
-                    "Cakupan Periode Analisis:",
-                    ["Harian", "Bulanan", "Tahunan"],
-                    horizontal=True,
-                )
-
                 if mode_waktu == "Harian":
-                    min_tgl, max_tgl = (
-                        df_analysis["dt_tanggal"].dt.date.min(),
-                        df_analysis["dt_tanggal"].dt.date.max(),
-                    )
+                    if not df_analysis.empty and "dt_tanggal" in df_analysis.columns:
+                        min_tgl, max_tgl = (
+                            df_analysis["dt_tanggal"].dt.date.min(),
+                            df_analysis["dt_tanggal"].dt.date.max(),
+                        )
+                    else:
+                        min_tgl, max_tgl = date.today(), date.today()
+
                     dc1, dc2 = st.columns(2)
                     with dc1:
                         start_tgl = st.date_input("Dari Tanggal", value=min_tgl)
                     with dc2:
                         end_tgl = st.date_input("Sampai Tanggal", value=max_tgl)
-                    df_filtered = df_analysis[
-                        (df_analysis["dt_tanggal"].dt.date >= start_tgl)
-                        & (df_analysis["dt_tanggal"].dt.date <= end_tgl)
-                    ]
+                    
+                    if not df_analysis.empty and "dt_tanggal" in df_analysis.columns:
+                        df_filtered = df_analysis[
+                            (df_analysis["dt_tanggal"].dt.date >= start_tgl)
+                            & (df_analysis["dt_tanggal"].dt.date <= end_tgl)
+                        ]
+                    else:
+                        df_filtered = pd.DataFrame()
 
                 elif mode_waktu == "Bulanan":
                     mc1, mc2 = st.columns(2)
@@ -1218,7 +1233,7 @@ else:
                         df_analysis.duplicated(
                             subset=["tanggal", "loket", "jenis_dana"], keep=False
                         )
-                    ]
+                    ] if "tanggal" in df_analysis.columns else pd.DataFrame()
                     df_outlier = df_analysis[df_analysis["realisasi"] > 500000000]
 
                     col_a1, col_a2, col_a3 = st.columns(3)
@@ -1287,16 +1302,19 @@ else:
                 ].copy()
 
                 if not df_c.empty:
+                    # Buat kolom Periode dan pastikan pengurutan kronologis menggunakan sort_values berdasarkan dt_tanggal
                     if mode_waktu == "Tahunan":
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y")
+                        df_c = df_c.sort_values("dt_tanggal")
+                        df_chart_agg = df_c.groupby("Periode", sort=False)["realisasi"].sum().reset_index()
                     elif mode_waktu == "Bulanan":
                         df_c["Periode"] = df_c["dt_tanggal"].apply(lambda x: f"{BULAN_INDO[x.month]} {x.year}")
+                        df_c = df_c.sort_values("dt_tanggal")
+                        df_chart_agg = df_c.groupby("Periode", sort=False)["realisasi"].sum().reset_index()
                     else:
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y-%m-%d")
-
-                    df_chart_agg = (
-                        df_c.groupby("Periode")["realisasi"].sum().reset_index()
-                    )
+                        df_c = df_c.sort_values("dt_tanggal")
+                        df_chart_agg = df_c.groupby("Periode", sort=False)["realisasi"].sum().reset_index()
 
                     if tipo_grafik == "Diagram Batang (Bar)":
                         fig = px.bar(
