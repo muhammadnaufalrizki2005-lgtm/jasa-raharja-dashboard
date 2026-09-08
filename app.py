@@ -1476,7 +1476,15 @@ else:
                 wb_excel = openpyxl.load_workbook(
                     "Penerimaan Sektor UU 34 Tahun 1964.xlsx", data_only=True
                 )
-                sheet_excel = wb_excel["HARIAN BARU (2)"]
+                
+                # Cek ketersediaan sheet
+                sheet_target_name = "HARIAN BARU (2)"
+                if sheet_target_name not in wb_excel.sheetnames:
+                    # Ambil sheet pertama jika sheet target tidak ditemukan
+                    sheet_target_name = wb_excel.sheetnames[0]
+                    st.warning(f"Sheet 'HARIAN BARU (2)' tidak ditemukan. Menampilkan sheet alternatif: '{sheet_target_name}'")
+
+                sheet_excel = wb_excel[sheet_target_name]
                 raw_data = [list(r) for r in sheet_excel.iter_rows(values_only=True)]
                 df_raw = pd.DataFrame(raw_data)
 
@@ -1489,13 +1497,17 @@ else:
                 else:
                     start_r, end_r = 61, 69
 
-                table_subset = df_raw.iloc[start_r : end_r + 1, 1:21].copy()
-                table_subset.columns = table_subset.iloc[0]
-                table_subset = table_subset.iloc[1:].reset_index(drop=True)
+                # Validasi batas baris dataframe agar tidak Out-of-Bounds
+                if len(df_raw) > end_r:
+                    table_subset = df_raw.iloc[start_r : end_r + 1, 1:21].copy()
+                    table_subset.columns = table_subset.iloc[0]
+                    table_subset = table_subset.iloc[1:].reset_index(drop=True)
+                    st.dataframe(table_subset, use_container_width=True, hide_index=True)
+                else:
+                    st.warning(f"Baris dalam sheet Excel tidak mencukupi untuk rentang indeks {start_r} sampai {end_r}.")
+                    st.dataframe(df_raw, use_container_width=True, hide_index=True)
 
-                st.dataframe(table_subset, use_container_width=True, hide_index=True)
-            except Exception:
-                st.info(
-                    "File direktori 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' tidak"
-                    " ditemukan dalam sistem server."
+            except Exception as e:
+                st.error(
+                    f"Gagal memuat file Excel. Pastikan file 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' ada di direktori yang sama. Detail error: {e}"
                 )
