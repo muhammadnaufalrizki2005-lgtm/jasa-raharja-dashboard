@@ -1307,28 +1307,72 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### Simulasi Peramalan & Skenario Kinerja Pendapatan")
             st.markdown(
-                "<p style='color: #6c757d; margin-bottom: 24px;'>Proyeksi peramalan tren bulanan ke depan dengan pendekatan skenario manajemen risiko.</p>",
+                "<p style='color: #6c757d; margin-bottom: 24px;'>Proyeksi peramalan mencakup sisa bulan pada tahun berjalan hingga akhir tahun berikutnya, lengkap dengan skenario manajemen risiko.</p>",
                 unsafe_allow_html=True,
             )
 
+            # 1. Tarik & Gabungkan Data Historis dari Excel (2024, 2025, 2026)
+            list_history_dfs = []
+            for thn in [2024, 2025, 2026]:
+                df_h = load_historis_excel(thn)
+                if not df_h.empty and "Bulan" in df_h.columns and "Jenis_Dana" in df_h.columns:
+                    loket_cols = [c for c in df_h.columns if c not in ["Jenis_Dana", "Bulan", "No"]]
+                    df_h["Total_Realisasi"] = df_h[loket_cols].sum(axis=1)
+                    df_h["Tahun"] = thn
+                    df_h["Bulan_Dt"] = pd.to_datetime(df_h["Tahun"].astype(str) + "-" + df_h["Bulan"].astype(str).str.zfill(2) + "-01")
+                    df_grouped = df_h.groupby(["Jenis_Dana", "Bulan_Dt"])["Total_Realisasi"].sum().reset_index()
+                    list_history_dfs.append(df_grouped)
+
+            df_excel_combined = pd.concat(list_history_dfs, ignore_index=True) if list_history_dfs else pd.DataFrame(columns=["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"])
+
+            # 2. Tarik Data dari Supabase
             if not df_db.empty:
+                df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
+                df_db["Bulan_Dt"] = df_db["dt_tanggal"].dt.to_period("M").dt.to_timestamp()
+                df_db_grouped = df_db.groupby(["jenis_dana", "Bulan_Dt"])["realisasi"].sum().reset_index()
+                df_db_grouped.columns = ["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"]
+            else:
+                df_db_grouped = pd.DataFrame(columns=["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"])
+
+            # Gabungkan kedua sumber data
+            df_master_fc = pd.concat([df_excel_combined, df_db_grouped], ignore_index=True)
+
+            if not df_master_fc.empty:
+                df_master_fc["Jenis_Dana"] = df_master_fc["Jenis_Dana"].str.strip()
+                
+                # Sediakan opsi Total (Overall) dan kategori individual
+                kategori_options = ["Total (Overall)"] + sorted(df_master_fc["Jenis_Dana"].unique())
+
                 kategori_forecast = st.selectbox(
                     "Pilih Kategori untuk Proyeksi Peramalan:",
-                    options=df_db["jenis_dana"].unique(),
+                    options=kategori_options,
                     key="fc_kategori_pilih"
                 )
 
-                df_fc_source = df_db[df_db["jenis_dana"] == kategori_forecast].copy()
-                df_fc_source["dt_tanggal"] = pd.to_datetime(df_fc_source["tanggal"])
-                df_monthly_fc = df_fc_source.set_index("dt_tanggal").resample("ME")["realisasi"].sum().reset_index()
-                df_monthly_fc.columns = ["Bulan", "Realisasi"]
+                if kategori_forecast == "Total (Overall)":
+                    df_monthly_fc = df_master_fc.groupby("Bulan_Dt")["Total_Realisasi"].sum().reset_index()
+                else:
+                    df_fc_source = df_master_fc[df_master_fc["Jenis_Dana"] == kategori_forecast].copy()
+                    df_monthly_fc = df_fc_source.groupby("Bulan_Dt")["Total_Realisasi"].sum().reset_index()
+
+                df_monthly_fc = df_monthly_fc.sort_values("Bulan_Dt")
 
                 if len(df_monthly_fc) >= 6:
                     try:
                         from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-                        ts_data = df_monthly_fc.set_index("Bulan")["Realisasi"]
+                        ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"]
 
+                        # Hitung dynamic forecast steps: sisa bulan tahun berjalan + 1 tahun penuh berikutnya
+                        last_date = ts_data.index[-1]
+                        next_year = last_date.year + 1
+                        end_forecast_date = pd.Timestamp(year=next_year, month=12, day=1)
+                        forecast_steps = (end_forecast_date.year - last_date.year) * 12 + (end_forecast_date.month - last_date.month)
+
+                        if forecast_steps < 1:
+                            forecast_steps = 12
+
+                        # Fitting model Holt-Winters
                         model = ExponentialSmoothing(
                             ts_data,
                             trend="add",
@@ -1336,7 +1380,6 @@ else:
                             seasonal_periods=12 if len(ts_data) >= 12 else None
                         ).fit()
 
-                        forecast_steps = 12
                         forecast_point = model.forecast(forecast_steps)
 
                         residuals = model.resid
@@ -1357,7 +1400,7 @@ else:
                         for col in ["Batas Pengamanan (Pesimis)", "Target Utama (Moderat)", "Potensi Maksimal (Optimis)"]:
                             df_scenarios_display[col] = df_scenarios_display[col].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
 
-                        st.markdown("#### Matriks Proyeksi Skenario 12 Bulan ke Depan")
+                        st.markdown(f"#### Matriks Proyeksi Skenario ({forecast_steps} Bulan ke Depan: Sisa Tahun Ini & Tahun Depan)")
                         st.dataframe(df_scenarios_display, use_container_width=True, hide_index=True)
 
                         fig_sc = go.Figure()
@@ -1387,9 +1430,9 @@ else:
                     except Exception as ex:
                         st.error(f"Gagal memproses model peramalan: {ex}")
                 else:
-                    st.warning("Data historis bulanan belum mencukupi untuk melakukan peramalan (minimal 6 bulan data transaksi diperlukan).")
+                    st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan untuk peramalan.")
             else:
-                st.info("Belum ada data transaksi harian di database untuk dianalisis.")
+                st.info("Belum ada data historis yang tersedia baik di Excel maupun Supabase.")
 
         # ---------------- TAB 4: VIEWER FILE EXCEL ASLI ----------------
         with tab_pimpinan_4:
