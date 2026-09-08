@@ -1361,8 +1361,13 @@ else:
                         ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"].astype(float)
                         ts_data = ts_data.fillna(0)
 
-                        # --- PENGECEKAN DATA BULANAN (SESUAI PERMINTAAN) ---
-                        st.write("Cek Data Bulanan:", ts_data)
+                        # --- PENGAMAN: BUANG BULAN BERJALAN YANG BELUM SELESAI ---
+                        current_year_month = pd.Timestamp(date.today().year, date.today().month, 1)
+                        if current_year_month in ts_data.index:
+                            ts_data = ts_data.drop(current_year_month)
+
+                        # Cek ulang data setelah dibersihkan
+                        st.write("Cek Data Bulanan (Cleaned):", ts_data)
 
                         # Hitung langkah peramalan (sisa bulan tahun ini + tahun depan)
                         last_date = ts_data.index[-1]
