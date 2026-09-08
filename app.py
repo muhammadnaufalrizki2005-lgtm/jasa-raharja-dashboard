@@ -47,7 +47,7 @@ except Exception:
   favicon_img = "jasa raharja logo.png"
 
 st.set_page_config(
-    page_title=dynamic_title, # Menggunakan judul dinamis
+    page_title=dynamic_title,
     page_icon=favicon_img,
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -996,11 +996,12 @@ else:
 
       df_display = df_final.copy()
       for col in df_display.columns:
-        if col not in ["Loket SAMSAT"] and "(%)" not in col:
+        # Ditambahkan pengecekan "YoY" agar kolom pertumbuhan diformat sebagai persentase (%)
+        if col not in ["Loket SAMSAT"] and "(%)" not in col and "YoY" not in col:
           df_display[col] = df_display[col].apply(
               lambda x: f"Rp {x:,.0f}".replace(",", ".")
           )
-        elif "(%)" in col:
+        elif "(%)" in col or "YoY" in col:
           df_display[col] = df_display[col].apply(
               lambda x: f"{x:,.2f}%" if pd.notnull(x) else "0.00%"
           )
