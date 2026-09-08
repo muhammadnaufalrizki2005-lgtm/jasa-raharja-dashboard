@@ -1542,13 +1542,18 @@ else:
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
-            selected_kategori_ex = st.selectbox(
-                "Pilih Segmentasi Tampilan Sheet Master:",
-                ["Total (Overall)", "Kartu Dana (KD)", "SWDKLLJ (SW)", "Denda"],
-                key="viewer_excel",
-            )
+            
+            v_col1, v_col2 = st.columns(2)
+            with v_col1:
+                viewer_tahun = st.selectbox("Pilih Tahun Repositori", [2026, 2025, 2024], key="viewer_tahun")
+            with v_col2:
+                selected_kategori_ex = st.selectbox(
+                    "Pilih Segmentasi Kategori Dana:",
+                    ["Semua Kategori", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
+                    key="viewer_excel",
+                )
 
-           try:
+            try:
                 sheet_name = f"Historis{viewer_tahun}"
                 df_viewer = load_historis_excel(viewer_tahun)
 
@@ -1560,12 +1565,6 @@ else:
                     st.dataframe(df_viewer, use_container_width=True, hide_index=True)
                 else:
                     st.warning(f"Sheet '{sheet_name}' tidak ditemukan atau kosong dalam file Excel.")
-                    table_subset.columns = table_subset.iloc[0]
-                    table_subset = table_subset.iloc[1:].reset_index(drop=True)
-                    st.dataframe(table_subset, use_container_width=True, hide_index=True)
-                else:
-                    st.warning(f"Baris dalam sheet Excel tidak mencukupi untuk rentang indeks {start_r} sampai {end_r}.")
-                    st.dataframe(df_raw, use_container_width=True, hide_index=True)
 
             except Exception as e:
                 st.error(
