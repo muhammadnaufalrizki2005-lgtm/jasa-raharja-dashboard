@@ -1548,31 +1548,18 @@ else:
                 key="viewer_excel",
             )
 
-            try:
-                wb_excel = openpyxl.load_workbook(
-                    "Penerimaan Sektor UU 34 Tahun 1964.xlsx", data_only=True
-                )
-                
-                sheet_target_name = "HARIAN BARU (2)"
-                if sheet_target_name not in wb_excel.sheetnames:
-                    sheet_target_name = wb_excel.sheetnames[0]
-                    st.warning(f"Sheet 'HARIAN BARU (2)' tidak ditemukan. Menampilkan sheet alternatif: '{sheet_target_name}'")
+           try:
+                sheet_name = f"Historis{viewer_tahun}"
+                df_viewer = load_historis_excel(viewer_tahun)
 
-                sheet_excel = wb_excel[sheet_target_name]
-                raw_data = [list(r) for r in sheet_excel.iter_rows(values_only=True)]
-                df_raw = pd.DataFrame(raw_data)
-
-                if selected_kategori_ex == "Total (Overall)":
-                    start_r, end_r = 31, 39
-                elif selected_kategori_ex == "Kartu Dana (KD)":
-                    start_r, end_r = 41, 49
-                elif selected_kategori_ex == "SWDKLLJ (SW)":
-                    start_r, end_r = 51, 59
+                if not df_viewer.empty:
+                    if selected_kategori_ex != "Semua Kategori":
+                        df_viewer = df_viewer[df_viewer["Jenis_Dana"].str.strip() == selected_kategori_ex].reset_index(drop=True)
+                    
+                    st.markdown(f"**Menampilkan data dari sheet: `{sheet_name}`**")
+                    st.dataframe(df_viewer, use_container_width=True, hide_index=True)
                 else:
-                    start_r, end_r = 61, 69
-
-                if len(df_raw) > end_r:
-                    table_subset = df_raw.iloc[start_r : end_r + 1, 1:21].copy()
+                    st.warning(f"Sheet '{sheet_name}' tidak ditemukan atau kosong dalam file Excel.")
                     table_subset.columns = table_subset.iloc[0]
                     table_subset = table_subset.iloc[1:].reset_index(drop=True)
                     st.dataframe(table_subset, use_container_width=True, hide_index=True)
