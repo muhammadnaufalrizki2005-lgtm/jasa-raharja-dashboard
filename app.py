@@ -1480,9 +1480,10 @@ else:
                         err_col3.metric("Tingkat Keandalan Model", f"{tingkat_keandalan:.1f}%")
 
                         st.markdown("<br>", unsafe_allow_html=True)
+                        mae_str = f"Rp {mae:,.0f}".replace(",", ".")
                         st.info(
                             f"💡 **Kesimpulan untuk Manajemen:** Model terpilih memiliki tingkat keandalan **{tingkat_keandalan:.1f}%**. "
-                            f"Estimasi pergeseran target bulanan berada di kisaran **Rp {mae/1e9:.2f} Miliar**. "
+                            f"Estimasi pergeseran target bulanan berada di kisaran **{mae_str}**. "
                             f"Gunakan **Batas Pengamanan (Pesimis)** pada tabel di bawah sebagai acuan aman penyusunan anggaran."
                         )
 
