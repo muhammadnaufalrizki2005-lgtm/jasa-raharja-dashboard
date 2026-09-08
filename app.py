@@ -1366,9 +1366,6 @@ else:
                         if current_year_month in ts_data.index:
                             ts_data = ts_data.drop(current_year_month)
 
-                        # Cek ulang data setelah dibersihkan
-                        st.write("Cek Data Bulanan (Cleaned):", ts_data)
-
                         # Hitung langkah peramalan (sisa bulan tahun ini + tahun depan)
                         last_date = ts_data.index[-1]
                         next_year = last_date.year + 1
