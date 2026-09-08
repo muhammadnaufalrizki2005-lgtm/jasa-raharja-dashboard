@@ -1475,8 +1475,8 @@ else:
                         st.markdown("#### 📊 Rangkuman Performa & Keandalan Model")
                         err_col1, err_col2, err_col3 = st.columns(3)
                         
-                        err_col1.metric("Rata-rata Meleset", f"Rp {mae/1e9:.2f} Miliar")
-                        err_col2.metric("Tingkat Volatilitas", f"Rp {rmse/1e9:.2f} Miliar")
+                        err_col1.metric("Rata-rata Meleset", f"Rp {mae:,.0f}".replace(",", "."))
+                        err_col2.metric("Tingkat Volatilitas", f"Rp {rmse:,.0f}".replace(",", "."))
                         err_col3.metric("Tingkat Keandalan Model", f"{tingkat_keandalan:.1f}%")
 
                         st.markdown("<br>", unsafe_allow_html=True)
