@@ -377,11 +377,35 @@ else:
   # TAMPILAN: PETUGAS SAMSAT (INPUT & KOREKSI RIWAYAT)
   # ----------------------------------------
   if st.session_state.role == "Petugas SAMSAT":
-    st.markdown("### Formulir Input Laporan Penerimaan Harian")
+    st.markdown("### Formulir Input Laporan Penerimaan Harian & Pengolahan Data")
     st.markdown(
-        "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan data penerimaan harian berdasarkan loket SAMSAT dan jenis pembayaran yang melayani.</p>",
+        "<p style='color: #6c757d; margin-bottom: 24px;'>Silakan masukkan data penerimaan harian atau unggah file untuk analisis agregasi bulanan.</p>",
         unsafe_allow_html=True,
     )
+
+    # Fitur Unggah Berkas & Agregasi Bulanan Dinamis
+    with st.expander("📁 Unggah Berkas Data (Opsional / Analisis Bulanan)"):
+      uploaded_file = st.file_uploader("Unggah file data (CSV / Excel)", type=["csv", "xlsx"])
+      if uploaded_file is not None:
+        try:
+          if uploaded_file.name.endswith('.csv'):
+              df_up = pd.read_csv(uploaded_file)
+          else:
+              df_up = pd.read_excel(uploaded_file)
+          
+          df_up['tanggal'] = pd.to_datetime(df_up['tanggal'], errors='coerce')
+          df_up['nominal'] = df_up['nominal'].astype(str).str.replace(r'[^\d.]', '', regex=True).astype(float)
+          
+          kategori_pilihan_up = st.selectbox("Pilih Jenis Penerimaan Dana (File):", options=df_up['kategori'].unique())
+          df_filtered_up = df_up[df_up['kategori'] == kategori_pilihan_up]
+          
+          df_monthly = df_filtered_up.set_index('tanggal').resample('M')['nominal'].sum().reset_index()
+          df_monthly.columns = ['Bulan', 'Total_Penerimaan']
+          df_monthly['Bulan'] = df_monthly['Bulan'].dt.strftime('%Y-%m')
+          
+          st.write("Hasil Agregasi Bulanan:", df_monthly)
+        except Exception as e:
+          st.error(f"Gagal memproses file. Pastikan kolom 'tanggal', 'kategori', dan 'nominal' tersedia. Error: {e}")
 
     col1, col2 = st.columns(2)
     with col1:
