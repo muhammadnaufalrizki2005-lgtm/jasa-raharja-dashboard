@@ -153,8 +153,8 @@ img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 # ==========================================
 # KONEKSI DATABASE SUPABASE
 # ==========================================
-SUPABASE_URL = "https://puavbvbsnxbwjsgajgre.supabase.co"
-SUPABASE_KEY = "sb_publishable_MEgagKB7_FQGuDpg4ORosA_F60IfKMS"
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 
 @st.cache_resource
