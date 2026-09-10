@@ -151,7 +151,7 @@ def get_img_base64(file_path):
 img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
 # ==========================================
-# KONEKSI DATABASE SUPABASE
+# KONEKSI DATABASE SUPABASE (MENGGUNAKAN SECRETS)
 # ==========================================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -1078,19 +1078,16 @@ else:
         with tab_pimpinan_2:
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Pilihan Cakupan Periode Analisis
             mode_waktu = st.radio(
                 "Cakupan Periode Analisis:",
                 ["Harian", "Bulanan", "Tahunan"],
                 horizontal=True,
             )
 
-            # 1. LOGIKA DATA UNTUK HARIAN (Hanya dari Database Supabase)
             if mode_waktu == "Harian":
                 df_analysis = df_db.copy()
                 if not df_analysis.empty and "dt_tanggal" not in df_analysis.columns:
                     df_analysis["dt_tanggal"] = pd.to_datetime(df_analysis["tanggal"])
-            # 2. LOGIKA DATA UNTUK BULANAN & TAHUNAN (Menggunakan Excel Master 2024-2026 + Supabase)
             else:
                 df_analysis = get_full_unified_df(df_db)
 
@@ -1131,18 +1128,8 @@ else:
                         start_m_val = st.selectbox(
                             "Dari Bulan",
                             [
-                                "01",
-                                "02",
-                                "03",
-                                "04",
-                                "05",
-                                "06",
-                                "07",
-                                "08",
-                                "09",
-                                "10",
-                                "11",
-                                "12",
+                                "01", "02", "03", "04", "05", "06",
+                                "07", "08", "09", "10", "11", "12"
                             ],
                             key="p_sm_start",
                         )
@@ -1156,18 +1143,8 @@ else:
                         end_m_val = st.selectbox(
                             "Sampai Bulan",
                             [
-                                "01",
-                                "02",
-                                "03",
-                                "04",
-                                "05",
-                                "06",
-                                "07",
-                                "08",
-                                "09",
-                                "10",
-                                "11",
-                                "12",
+                                "01", "02", "03", "04", "05", "06",
+                                "07", "08", "09", "10", "11", "12"
                             ],
                             key="p_sm_end",
                             index=11,
@@ -1302,7 +1279,6 @@ else:
                 ].copy()
 
                 if not df_c.empty:
-                    # Buat kolom Periode dan pastikan pengurutan kronologis menggunakan sort_values berdasarkan dt_tanggal
                     if mode_waktu == "Tahunan":
                         df_c["Periode"] = df_c["dt_tanggal"].dt.strftime("%Y")
                         df_c = df_c.sort_values("dt_tanggal")
@@ -1347,13 +1323,12 @@ else:
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning(
-                        "Data tidak tersedia untuk memuat visualisasi grafik pada parameter"
-                        " yang dipilih."
+                        "Data tidak tersedia untuk memuat visualisasi grafik pada parameter yang dipilih."
                     )
             else:
                 st.info("Database laporan realisasi harian masih kosong.")
 
-        # ---------------- TAB 3: PROYEKSI & SKENARIO KINERJA (AUTO-MODEL SELECTION) ----------------
+        # ---------------- TAB 3: PROYEKSI & SKENARIO KINERJA ----------------
         with tab_pimpinan_3:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### Simulasi Peramalan & Skenario Kinerja Pendapatan")
@@ -1362,7 +1337,6 @@ else:
                 unsafe_allow_html=True,
             )
 
-            # Tarik & Gabungkan Data Historis dari Excel
             list_history_dfs = []
             for thn in [2024, 2025, 2026]:
                 df_h = load_historis_excel(thn)
@@ -1376,7 +1350,6 @@ else:
 
             df_excel_combined = pd.concat(list_history_dfs, ignore_index=True) if list_history_dfs else pd.DataFrame(columns=["Jenis_Dana", "Bulan_Dt", "Total_Realisasi"])
 
-            # Tarik Data dari Supabase
             if not df_db.empty:
                 df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
                 df_db["Bulan_Dt"] = df_db["dt_tanggal"].dt.to_period("M").dt.to_timestamp()
@@ -1412,12 +1385,10 @@ else:
                         ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"].astype(float)
                         ts_data = ts_data.fillna(0)
 
-                        # --- PENGAMAN: BUANG BULAN BERJALAN YANG BELUM SELESAI ---
                         current_year_month = pd.Timestamp(date.today().year, date.today().month, 1)
                         if current_year_month in ts_data.index:
                             ts_data = ts_data.drop(current_year_month)
 
-                        # Hitung langkah peramalan (sisa bulan tahun ini + tahun depan)
                         last_date = ts_data.index[-1]
                         next_year = last_date.year + 1
                         end_forecast_date = pd.Timestamp(year=next_year, month=12, day=1)
@@ -1425,14 +1396,11 @@ else:
                         if forecast_steps < 1:
                             forecast_steps = 12
 
-                        # Baseline minimum untuk mencegah nilai 0
                         active_historical = ts_data[ts_data > 0]
                         fallback_mean = active_historical.mean() if not active_historical.empty else 500000000
 
-                        # --- SISTEM AUTO-MODEL SELECTION ---
                         methods_results = []
 
-                        # 1. Holt-Winters Exponential Smoothing
                         try:
                             hw_model = ExponentialSmoothing(
                                 ts_data, trend="add", seasonal="add", 
@@ -1456,7 +1424,6 @@ else:
                         except Exception:
                             pass
 
-                        # 2. Moving Average (3-Month Rolling)
                         try:
                             ma_series = ts_data.rolling(window=3, min_periods=1).mean()
                             last_ma = ma_series.iloc[-1] if not pd.isna(ma_series.iloc[-1]) else fallback_mean
@@ -1477,7 +1444,6 @@ else:
                         except Exception:
                             pass
 
-                        # 3. Historical Mean Baseline
                         try:
                             fc_base = np.full(forecast_steps, fallback_mean)
                             resid_base = ts_data - fallback_mean
@@ -1493,7 +1459,6 @@ else:
                         except Exception:
                             pass
 
-                        # Pilih model dengan RMSE terendah
                         if methods_results:
                             best_model = min(methods_results, key=lambda x: x["rmse"])
                             winning_name = best_model["name"]
@@ -1506,10 +1471,8 @@ else:
                             rmse = mae
                             forecast_point = np.full(forecast_steps, fallback_mean)
 
-                        # --- PENGAMAN MUTLAK: TIDAK BOLEH ADA NILAI 0 ---
                         forecast_point = np.maximum(forecast_point, fallback_mean * 0.4)
 
-                        # Perhitungan Tingkat Keandalan Model Terbaik
                         mean_actual = active_historical.mean() if not active_historical.empty else 1.0
                         nrmse = (rmse / mean_actual) if mean_actual > 0 else 0.2
                         persentase_error = min(max(nrmse * 100, 3.0), 30.0)
@@ -1517,7 +1480,7 @@ else:
 
                         st.success(
                             f"Metode Peramalan Terpilih: Untuk kategori {kategori_forecast}, sistem menerapkan model {winning_name} "
-                            f"berdasarkan evaluasi galat terkecil dan stabilitas data historis."
+                            "berdasarkan evaluasi galat terkecil dan stabilitas data historis."
                         )
 
                         st.markdown("#### Rangkuman Performa & Keandalan Model")
@@ -1535,7 +1498,6 @@ else:
                         )
 
                         deviasi_faktor = 0.15
-
                         future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
 
                         df_scenarios = pd.DataFrame({
@@ -1553,7 +1515,6 @@ else:
                         st.markdown(f"#### Matriks Proyeksi Skenario ({forecast_steps} Bulan ke Depan)")
                         st.dataframe(df_scenarios_display, use_container_width=True, hide_index=True)
 
-                        # Plot Grafik Skenario
                         fig_sc = go.Figure()
                         fig_sc.add_trace(go.Scatter(
                             x=df_scenarios["Bulan Proyeksi"], y=df_scenarios["Potensi Maksimal (Optimis)"],
