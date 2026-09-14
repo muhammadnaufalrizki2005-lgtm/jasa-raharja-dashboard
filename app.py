@@ -171,16 +171,18 @@ if not st.session_state.logged_in:
     st.markdown(
         """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     .stApp { 
-        background-color: #f4f7fc; 
-        font-family: 'Lora', serif;
-        color: #1a1a1a;
+        background-color: #f8f9fa; 
+        font-family: 'Inter', sans-serif;
+        color: #333333;
     }
     
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Playfair Display', serif !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        color: #2c3e50;
     }
     
     [data-testid="stHeader"] { display: none !important; }
@@ -193,20 +195,22 @@ if not st.session_state.logged_in:
         visibility: hidden !important;
     }
 
+    /* Tombol Login ala Jasa Raharja */
     button[kind="primary"] {
         background-color: #005ba8 !important;
         border-color: #005ba8 !important;
         color: white !important;
-        font-family: 'Lora', serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 600 !important;
-        border-radius: 6px !important;
+        border-radius: 20px !important;
         padding: 8px 24px !important;
         transition: all 0.3s ease !important;
     }
     button[kind="primary"]:hover {
-        background-color: #004580 !important;
-        border-color: #004580 !important;
-        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2) !important;
+        background-color: #ffffff !important;
+        color: #005ba8 !important;
+        border: 1px solid #005ba8 !important;
+        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.1) !important;
     }
 
     div[data-testid="stForm"] {
@@ -221,7 +225,7 @@ if not st.session_state.logged_in:
         overflow: hidden !important;
         height: 100vh !important;
         max-height: 100vh !important;
-        background-color: #f4f7fc;
+        background-color: #f8f9fa;
     }
     ::-webkit-scrollbar { display: none !important; width: 0px !important; }
 
@@ -253,7 +257,7 @@ if not st.session_state.logged_in:
                 )
 
             st.markdown(
-                "<div style='text-align: center; color: #1a1a1a; font-family:\"Playfair Display\", serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil DIY</div>",
+                "<div style='text-align: center; color: #1a1a1a; font-family:\"Inter\", sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 4px;'>Portal Monitoring Kanwil DIY</div>",
                 unsafe_allow_html=True,
             )
             st.markdown(
@@ -295,16 +299,18 @@ else:
     st.markdown(
         """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     .stApp { 
         background-color: #ffffff; 
-        font-family: 'Lora', serif;
-        color: #1a1a1a;
+        font-family: 'Inter', sans-serif;
+        color: #333333;
     }
     
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Playfair Display', serif !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        color: #2c3e50;
     }
     
     [data-testid="stHeader"] { display: none !important; }
@@ -321,16 +327,17 @@ else:
         background-color: #005ba8 !important;
         border-color: #005ba8 !important;
         color: white !important;
-        font-family: 'Lora', serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 600 !important;
-        border-radius: 6px !important;
+        border-radius: 20px !important;
         padding: 8px 24px !important;
         transition: all 0.3s ease !important;
     }
     button[kind="primary"]:hover {
-        background-color: #004580 !important;
-        border-color: #004580 !important;
-        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2) !important;
+        background-color: #ffffff !important;
+        color: #005ba8 !important;
+        border: 1px solid #005ba8 !important;
+        box-shadow: 0 4px 12px rgba(0, 91, 168, 0.1) !important;
     }
 
     div[data-testid="stForm"] {
@@ -338,7 +345,7 @@ else:
         border: 1px solid #eaedf2;
         border-radius: 12px;
         padding: 32px 24px;
-        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.1);
+        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.05);
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -350,7 +357,7 @@ else:
         white-space: nowrap;
         background-color: transparent;
         border-radius: 0;
-        font-family: 'Playfair Display', serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 600;
         color: #6c757d;
         padding: 0 4px;
@@ -536,6 +543,15 @@ else:
                         "siklikal_yty": "Target YoY (%)",
                     }
                 )
+                
+                # Tambahan Search Bar ala UI Jasa Raharja
+                search_col1, search_col2 = st.columns([3, 1])
+                with search_col2:
+                    search_query = st.text_input("Search:", placeholder="Cari loket/jenis...", key="search_petugas")
+                
+                if search_query:
+                    df_show = df_show[df_show.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)]
+
                 st.dataframe(
                     df_show[[
                         "Tanggal",
@@ -1034,17 +1050,26 @@ else:
                 tot_dev = row_summary["Deviasi Target (Surplus/Defisit)"].values[0]
                 tot_stat = row_summary["Status Kinerja"].values[0]
                 dev_str = f"Rp {abs(tot_dev):,.0f}".replace(",", ".")
-                dev_label = "surplus" if tot_dev >= 0 else "defisit"
+                dev_label = "Surplus" if tot_dev >= 0 else "Defisit"
 
-                st.info(
-                    f"Ringkasan Eksekutif ({BULAN_INDO[target_bulan_pilih]}"
-                    f" {target_tahun_pilih}): Total realisasi akumulatif mencapai"
-                    f" Rp {tot_real:,.0f} (".replace(",", ".")
-                    + f"{tot_cap:.2f}% dari target anggaran tahunan). Performa"
-                    f" wilayah secara keseluruhan berada pada status {tot_stat}"
-                    f" dengan posisi {dev_label} sebesar {dev_str} terhadap"
-                    " target proporsional bulanan."
-                )
+                # Tambahan Kartu Performa ala UI Jasa Raharja
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #005ba8, #007bff); padding: 24px; border-radius: 12px; color: white; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,91,168,0.2);">
+                    <h4 style="color: white; margin-top: 0; font-weight: 600; font-size: 18px;">Performance KANTOR WILAYAH D.I. YOGYAKARTA {target_tahun_pilih} (s.d {BULAN_INDO[target_bulan_pilih]})</h4>
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                        <div>
+                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">Total Realisasi Pendapatan</p>
+                            <h2 style="color: white; margin: 0; font-size: 32px; font-weight: 700;">Rp {tot_real:,.0f}</h2>
+                            <p style="margin: 0; font-size: 14px; opacity: 0.8;">{tot_cap:.2f}% dari target tahunan</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">Status Kinerja Keseluruhan</p>
+                            <h2 style="color: white; margin: 0; font-size: 32px; font-weight: 700;">{tot_stat}</h2>
+                            <p style="margin: 0; font-size: 14px; opacity: 0.8;">{dev_label} {dev_str}</p>
+                        </div>
+                    </div>
+                </div>
+                """.replace(",", "."), unsafe_allow_html=True)
 
             df_display = df_final.copy()
             for col in df_display.columns:
@@ -1195,6 +1220,15 @@ else:
                     df_tampilan["realisasi"] = df_tampilan["realisasi"].apply(
                         lambda x: f"Rp {x:,.0f}".replace(",", ".")
                     )
+                    
+                    # Tambahan Search Bar ala UI Jasa Raharja untuk Master Data
+                    s_col1, s_col2 = st.columns([3, 1])
+                    with s_col2:
+                        search_q = st.text_input("Search:", placeholder="Cari data...", key="search_pimpinan")
+                    
+                    if search_q:
+                        df_tampilan = df_tampilan[df_tampilan.astype(str).apply(lambda x: x.str.contains(search_q, case=False)).any(axis=1)]
+
                     st.dataframe(df_tampilan, use_container_width=True, hide_index=True)
                 else:
                     st.info("Tidak ada data laporan pada rentang filter yang dipilih.")
