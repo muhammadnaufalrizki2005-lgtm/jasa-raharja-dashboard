@@ -1720,9 +1720,8 @@ else:
                 
                 @media print {
                     @page { size: A4 landscape; margin: 10mm; }
-                    body { background: white; }
-                    .print-banner { display: none !important; }
-                    .slide-card { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; }
+                    body { background: white; -webkit-print-color-adjust: exact; }
+                    .slide-card { border: none !important; box-shadow: none !important; padding: 20px !important; margin: 0 !important; page-break-after: always; }
                 }
             </style>
             """
@@ -1792,16 +1791,38 @@ else:
             slides_list = [slide_1_html, slide_2_html, slide_3_html]
             all_slides_html = "".join(slides_list)
 
-            # KOMPONEN HTML MENAMPILKAN BANNER CETAK DAN SELURUH SLIDE SEKALIGUS
+            # SKrip JS untuk membuka jendela cetak khusus slide murni (tanpa UI dashboard)
+            print_script = """
+            <script>
+                function printSlides() {
+                    var printWindow = window.open('', '_blank', 'height=700,width=1000');
+                    printWindow.document.write('<html><head><title>Laporan Eksekutif Jasa Raharja</title>');
+                    printWindow.document.write('<style>' + document.querySelector('style').innerHTML + '</style>');
+                    printWindow.document.write('</head><body style="background: white; padding: 20px;">');
+                    printWindow.document.write('<div class="slide-deck">');
+                    printWindow.document.write(%s);
+                    printWindow.document.write('</div>');
+                    printWindow.document.write('</body></html>');
+                    printWindow.document.close();
+                    printWindow.focus();
+                    setTimeout(function() {
+                        printWindow.print();
+                        printWindow.close();
+                    }, 500);
+                }
+            </script>
+            """ % repr(all_slides_html)
+
             full_presentation_component = f"""
             {slide_css}
+            {print_script}
             <div class="slide-deck">
                 <div class="print-banner">
                     <div>
                         <strong style="color: #005ba8; font-size: 14px;">Cetak Dokumen Presentasi</strong><br>
-                        <span style="font-size: 13px; color: #4a5568;">Klik tombol di samping untuk mencetak atau menyimpan seluruh slide sebagai PDF lengkap.</span>
+                        <span style="font-size: 13px; color: #4a5568;">Klik tombol di samping untuk langsung mencetak atau menyimpan seluruh slide sebagai PDF bersih.</span>
                     </div>
-                    <button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+                    <button class="print-btn" onclick="printSlides()">🖨️ Cetak / Simpan PDF</button>
                 </div>
                 {all_slides_html}
             </div>
