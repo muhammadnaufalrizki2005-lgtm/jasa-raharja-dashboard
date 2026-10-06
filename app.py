@@ -28,6 +28,9 @@ if "logged_in" not in st.session_state:
 if "toast_count" not in st.session_state:
     st.session_state.toast_count = 0
 
+if "slide_idx" not in st.session_state:
+    st.session_state.slide_idx = 0
+
 # ==========================================
 # ⚙️ LOGIKA PENENTUAN JUDUL TAB BROWSER (DYNAMIC)
 # ==========================================
@@ -1548,11 +1551,11 @@ else:
             else:
                 st.info("Belum ada data historis yang tersedia.")
 
-        # ---------------- TAB 4: SLIDE PRESENTASI & VIEWER EXCEL ----------------
+        # ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 🖥️ Pratinjau Slide Presentasi Eksekutif")
-            st.markdown("Desain slide kini dipercantik dengan tata letak modern berformat kartu (*card layout*), metrik utama yang mencolok, serta tabel ringkasan terfokus agar siap dipresentasikan atau dicetak menjadi PDF.")
+            st.markdown("### 🖥️️ Viewer Slide Presentasi Interaktif")
+            st.markdown("Gunakan tombol navigasi di bawah untuk memindahkan halaman slide satu persatu secara interaktif.")
 
             # Menyiapkan data string ringkasan
             try:
@@ -1594,182 +1597,190 @@ else:
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
-            # Merakit HTML Slide Deck Lengkap dengan Tombol Cetak window.parent.print()
-            presentation_html = f"""
+            # Tombol Navigasi Slide & Cetak PDF
+            nav_col1, nav_col2, nav_col3, nav_col4 = st.columns([1.2, 1, 1.2, 1.5])
+            
+            total_slides = 3
+            with nav_col1:
+                if st.button("⬅️ Slide Sebelumnya", use_container_width=True):
+                    if st.session_state.slide_idx > 0:
+                        st.session_state.slide_idx -= 1
+                        st.rerun()
+            with nav_col2:
+                st.markdown(f"<div style='text-align: center; font-weight: 700; padding-top: 8px; color: #005ba8;'>Slide {st.session_state.slide_idx + 1} / {total_slides}</div>", unsafe_allow_html=True)
+            with nav_col3:
+                if st.button("Slide Selanjutnya ➡️️", use_container_width=True):
+                    if st.session_state.slide_idx < total_slides - 1:
+                        st.session_state.slide_idx += 1
+                        st.rerun()
+            with nav_col4:
+                print_mode = st.checkbox("🖨️ Mode Cetak Semua Slide (PDF)", value=False, help="Centang opsi ini untuk menampilkan seluruh slide secara berdampingan agar dapat langsung dicetak atau disimpan sebagai PDF lengkap.")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Merakit HTML Slide Deck
+            slide_css = """
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
                 
-                .slide-deck {{
+                .slide-deck {
                     font-family: 'Inter', sans-serif;
                     color: #1a1a1a;
-                    padding: 10px;
-                }}
-                .print-btn {{
-                    background-color: #005ba8;
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    font-weight: 600;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: 0 4px 12px rgba(0, 91, 168, 0.25);
-                    margin-bottom: 25px;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                }}
-                .print-btn:hover {{
-                    background-color: #00427a;
-                }}
-                .slide-card {{
+                }
+                .slide-card {
                     background: #ffffff;
                     border: 1px solid #e2e8f0;
                     border-radius: 12px;
                     padding: 40px;
                     margin-bottom: 35px;
                     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-                }}
-                .slide-header {{
+                }
+                .slide-header {
                     border-bottom: 3px solid #005ba8;
                     padding-bottom: 15px;
                     margin-bottom: 25px;
-                }}
-                .slide-title {{
+                }
+                .slide-title {
                     font-size: 22px;
                     font-weight: 700;
                     color: #005ba8;
                     margin: 0;
-                }}
-                .slide-subtitle {{
+                }
+                .slide-subtitle {
                     font-size: 13px;
                     color: #64748b;
                     margin-top: 4px;
-                }}
-                .metrics-grid {{
+                }
+                .metrics-grid {
                     display: grid;
                     grid-template-columns: repeat(3, 1fr);
                     gap: 15px;
                     margin-bottom: 25px;
-                }}
-                .metric-box {{
+                }
+                .metric-box {
                     background: #f8fafc;
                     border: 1px solid #e2e8f0;
                     border-left: 4px solid #005ba8;
                     border-radius: 8px;
                     padding: 15px;
-                }}
-                .metric-title {{
+                }
+                .metric-title {
                     font-size: 11px;
                     color: #64748b;
                     text-transform: uppercase;
                     font-weight: 600;
-                }}
-                .metric-value {{
+                }
+                .metric-value {
                     font-size: 18px;
                     font-weight: 700;
                     color: #0f172a;
                     margin-top: 5px;
-                }}
-                .table-clean {{
+                }
+                .table-clean {
                     width: 100%;
                     border-collapse: collapse;
                     margin-top: 15px;
                     font-size: 12px;
-                }}
-                .table-clean th {{
+                }
+                .table-clean th {
                     background-color: #005ba8;
                     color: white;
                     text-align: left;
                     padding: 10px 12px;
                     font-weight: 600;
-                }}
-                .table-clean td {{
+                }
+                .table-clean td {
                     border-bottom: 1px solid #e2e8f0;
                     padding: 10px 12px;
                     color: #334155;
-                }}
-                .table-clean tr:hover {{
+                }
+                .table-clean tr:hover {
                     background-color: #f1f5f9;
-                }}
-                .badge-optimal {{ background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
-                .badge-waspada {{ background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
-                .badge-kritis {{ background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
+                }
+                .badge-optimal { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+                .badge-waspada { background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+                .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 
-                @media print {{
-                    @page {{ size: A4 landscape; margin: 10mm; }}
-                    body {{ background: white; }}
-                    .print-btn {{ display: none !important; }}
-                    .slide-card {{ border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; }}
-                }}
+                @media print {
+                    @page { size: A4 landscape; margin: 10mm; }
+                    body { background: white; }
+                    .slide-card { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; }
+                }
             </style>
+            """
 
-            <div class="slide-deck">
-                <button class="print-btn" onclick="window.parent.print()">🖨️ Cetak / Simpan sebagai PDF Presentasi</button>
-
-                <!-- SLIDE 1: COVER -->
-                <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
-                    <h1 style="font-size: 32px; color: #005ba8; font-weight: 700; margin-bottom: 10px;">Laporan Eksekutif Kinerja Pendapatan</h1>
-                    <h3 style="font-size: 18px; color: #334155; font-weight: 600; margin-bottom: 25px;">PT Jasa Raharja Kanwil DIY</h3>
-                    <p style="font-size: 15px; color: #64748b;">Periode Pelaporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
-                    <div style="margin-top: 40px; font-size: 11px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Dihasilkan Secara Otomatis oleh Portal Monitoring Eksekutif</div>
-                </div>
-
-                <!-- SLIDE 2: RINGKASAN & REALISASI KINERJA WILAYAH -->
-                <div class="slide-card">
-                    <div class="slide-header">
-                        <h2 class="slide-title">Ringkasan & Realisasi Kinerja Wilayah</h2>
-                        <div class="slide-subtitle">Evaluasi Capaian Pendapatan Sektor UU 34 Tahun 1964</div>
-                    </div>
-                    <div class="metrics-grid">
-                        <div class="metric-box">
-                            <div class="metric-title">Total Akumulasi Realisasi</div>
-                            <div class="metric-value">Rp {tot_real:,.0f}</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-title">Persentase Capaian Target</div>
-                            <div class="metric-value" style="color: #005ba8;">{tot_cap:.2f}%</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-title">Status Kinerja Wilayah</div>
-                            <div class="metric-value" style="color: #dc3545;">{tot_stat}</div>
-                        </div>
-                    </div>
-                    <div style="background-color: #f1f5f9; border-left: 4px solid #005ba8; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #334155;">
-                        💡 <strong>Insight Pimpinan:</strong> {r_text}
-                    </div>
-                    <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Rekapitulasi Kinerja per Loket SAMSAT</h4>
-                    {table_clean_html}
-                </div>
-
-                <!-- SLIDE 3: PROYEKSI & SKENARIO KINERJA -->
-                <div class="slide-card">
-                    <div class="slide-header">
-                        <h2 class="slide-title">Proyeksi & Skenario Kinerja Pendapatan</h2>
-                        <div class="slide-subtitle">Analisis Peramalan Statistik & Manajemen Risiko Berbasis Data Historis</div>
-                    </div>
-                    <div class="metrics-grid">
-                        <div class="metric-box">
-                            <div class="metric-title">Model Peramalan Terbaik</div>
-                            <div class="metric-value" style="font-size: 14px; margin-top: 6px;">{win_name}</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-title">Tingkat Keandalan Model</div>
-                            <div class="metric-value" style="color: #16a34a;">{t_keandalan}</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-title">Rata-rata Galat (MAE)</div>
-                            <div class="metric-value" style="color: #dc2626; font-size: 15px; margin-top: 6px;">Rp {m_val}</div>
-                        </div>
-                    </div>
-                    <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
-                    {table_sc_html}
-                </div>
+            slide_1_html = f"""
+            <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                <h1 style="font-size: 32px; color: #005ba8; font-weight: 700; margin-bottom: 10px;">Laporan Eksekutif Kinerja Pendapatan</h1>
+                <h3 style="font-size: 18px; color: #334155; font-weight: 600; margin-bottom: 25px;">PT Jasa Raharja Kanwil DIY</h3>
+                <p style="font-size: 15px; color: #64748b;">Periode Pelaporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
+                <div style="margin-top: 40px; font-size: 11px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Dihasilkan Secara Otomatis oleh Portal Monitoring Eksekutif</div>
             </div>
             """
 
-            # Render menggunakan components.html agar HTML ter-render sempurna & tombol cetak berfungsi
-            components.html(presentation_html, height=1600, scrolling=True)
+            slide_2_html = f"""
+            <div class="slide-card">
+                <div class="slide-header">
+                    <h2 class="slide-title">Ringkasan & Realisasi Kinerja Wilayah</h2>
+                    <div class="slide-subtitle">Evaluasi Capaian Pendapatan Sektor UU 34 Tahun 1964</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-title">Total Akumulasi Realisasi</div>
+                        <div class="metric-value">Rp {tot_real:,.0f}</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Persentase Capaian Target</div>
+                        <div class="metric-value" style="color: #005ba8;">{tot_cap:.2f}%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Status Kinerja Wilayah</div>
+                        <div class="metric-value" style="color: #dc3545;">{tot_stat}</div>
+                    </div>
+                </div>
+                <div style="background-color: #f1f5f9; border-left: 4px solid #005ba8; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #334155;">
+                    💡 <strong>Insight Pimpinan:</strong> {r_text}
+                </div>
+                <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Rekapitulasi Kinerja per Loket SAMSAT</h4>
+                {table_clean_html}
+            </div>
+            """
+
+            slide_3_html = f"""
+            <div class="slide-card">
+                <div class="slide-header">
+                    <h2 class="slide-title">Proyeksi & Skenario Kinerja Pendapatan</h2>
+                    <div class="slide-subtitle">Analisis Peramalan Statistik & Manajemen Risiko Berbasis Data Historis</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-title">Model Peramalan Terbaik</div>
+                        <div class="metric-value" style="font-size: 14px; margin-top: 6px;">{win_name}</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Tingkat Keandalan Model</div>
+                        <div class="metric-value" style="color: #16a34a;">{t_keandalan}</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Rata-rata Galat (MAE)</div>
+                        <div class="metric-value" style="color: #dc2626; font-size: 15px; margin-top: 6px;">Rp {m_val}</div>
+                    </div>
+                </div>
+                <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
+                {table_sc_html}
+            </div>
+            """
+
+            slides_list = [slide_1_html, slide_2_html, slide_3_html]
+
+            if print_mode:
+                # Render semua slide sekaligus agar rapi saat dicetak PDF
+                full_presentation = slide_css + "<div class='slide-deck'>" + "".join(slides_list) + "</div>"
+                components.html(full_presentation, height=1800, scrolling=True)
+            else:
+                # Render satu slide aktif sesuai pilihan navigasi
+                current_slide_html = slide_css + "<div class='slide-deck'>" + slides_list[st.session_state.slide_idx] + "</div>"
+                components.html(current_slide_html, height=650, scrolling=False)
 
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
