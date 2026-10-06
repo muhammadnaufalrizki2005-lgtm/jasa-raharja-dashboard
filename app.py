@@ -1594,25 +1594,37 @@ else:
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
-            nav_col1, nav_col2, nav_col3, nav_col4 = st.columns([1.2, 1, 1.2, 1.5])
+            # TATA LETAK TOMBOL NAVIGASI & CETAK YANG JELAS
+            col_nav1, col_nav2, col_nav3, col_print = st.columns([1.2, 1, 1.2, 1.5])
             
             total_slides = 3
-            with nav_col1:
-                if st.button("⬅️ Slide Sebelumnya", use_container_width=True):
+            with col_nav1:
+                if st.button("⬅️ Slide Sebelumnya", use_container_width=True, key="btn_prev_s"):
                     if st.session_state.slide_idx > 0:
                         st.session_state.slide_idx -= 1
                         st.rerun()
-            with nav_col2:
-                st.markdown(f"<div style='text-align: center; font-weight: 700; padding-top: 8px; color: #005ba8;'>Slide {st.session_state.slide_idx + 1} / {total_slides}</div>", unsafe_allow_html=True)
-            with nav_col3:
-                if st.button("Slide Selanjutnya ➡", use_container_width=True):
+            with col_nav2:
+                st.markdown(f"<div style='text-align: center; font-weight: 700; padding-top: 10px; color: #005ba8;'>Slide {st.session_state.slide_idx + 1} / {total_slides}</div>", unsafe_allow_html=True)
+            with col_nav3:
+                if st.button("Slide Selanjutnya ➡", use_container_width=True, key="btn_next_s"):
                     if st.session_state.slide_idx < total_slides - 1:
                         st.session_state.slide_idx += 1
                         st.rerun()
-            with nav_col4:
+            with col_print:
                 print_mode = st.checkbox("🖨️ Mode Cetak Semua Slide (PDF)", value=False, help="Centang opsi ini untuk menampilkan seluruh slide secara berdampingan agar dapat langsung dicetak atau disimpan sebagai PDF lengkap.")
 
-            st.markdown("<br>", unsafe_allow_html=True)
+            # TOMBOL CETAK INSTAN BERBASIS SYNTAX HTML/JS
+            st.markdown("""
+                <div style="margin-top: 15px; margin-bottom: 20px; background-color: #f0f7ff; padding: 12px 16px; border-radius: 8px; border: 1px solid #bde0fe; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <strong style="color: #005ba8;">Butuh cetak laporan cepat?</strong><br>
+                        <span style="font-size: 13px; color: #4a5568;">Aktifkan centang "Mode Cetak" di atas, lalu klik tombol di samping untuk langsung mencetak dokumen.</span>
+                    </div>
+                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        🖨️ Cetak / Simpan PDF
+                    </button>
+                </div>
+            """, unsafe_allow_html=True)
 
             slide_css = """
             <style>
