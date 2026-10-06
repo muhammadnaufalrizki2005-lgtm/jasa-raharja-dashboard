@@ -1551,7 +1551,7 @@ else:
             else:
                 st.info("Belum ada data historis yang tersedia.")
 
-        # ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
+# ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### 🖥 Viewer Slide Presentasi Interaktif")
@@ -1613,16 +1613,16 @@ else:
             with col_print:
                 print_mode = st.checkbox("🖨️ Mode Cetak Semua Slide (PDF)", value=False, help="Centang opsi ini untuk menampilkan seluruh slide secara berdampingan agar dapat langsung dicetak atau disimpan sebagai PDF lengkap.")
 
-            # TOMBOL CETAK INSTAN BERBASIS SYNTAX HTML/JS
+            # TOMBOL CETAK INSTAN BERBASIS TAUTAN HTML/JS YANG BISA DIKLIK
             st.markdown("""
                 <div style="margin-top: 15px; margin-bottom: 20px; background-color: #f0f7ff; padding: 12px 16px; border-radius: 8px; border: 1px solid #bde0fe; display: flex; align-items: center; justify-content: space-between;">
                     <div>
                         <strong style="color: #005ba8;">Butuh cetak laporan cepat?</strong><br>
                         <span style="font-size: 13px; color: #4a5568;">Aktifkan centang "Mode Cetak" di atas, lalu klik tombol di samping untuk langsung mencetak dokumen.</span>
                     </div>
-                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <a href="#" onclick="window.print(); return false;" style="background-color: #005ba8; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; display: inline-block; font-family: 'Inter', sans-serif; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         🖨️ Cetak / Simpan PDF
-                    </button>
+                    </a>
                 </div>
             """, unsafe_allow_html=True)
 
