@@ -1719,8 +1719,11 @@ else:
                 .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 
                 @media print {
-                    @page { size: A4 landscape; margin: 10mm; }
-                    body { background: white; -webkit-print-color-adjust: exact; }
+                    /* Menyembunyikan Header & Footer Bawaan Browser (Tgl, about:blank, dll) */
+                    @page { size: A4 landscape; margin: 0; }
+                    /* Mengganti area aman agar konten tidak menempel ke tepi pinggir kertas */
+                    body { background: white; -webkit-print-color-adjust: exact; padding: 15mm; }
+                    .print-banner { display: none !important; }
                     .slide-card { border: none !important; box-shadow: none !important; padding: 20px !important; margin: 0 !important; page-break-after: always; }
                 }
             </style>
@@ -1798,7 +1801,7 @@ else:
                     var printWindow = window.open('', '_blank', 'height=700,width=1000');
                     printWindow.document.write('<html><head><title>Laporan Eksekutif Jasa Raharja</title>');
                     printWindow.document.write('<style>' + document.querySelector('style').innerHTML + '</style>');
-                    printWindow.document.write('</head><body style="background: white; padding: 20px;">');
+                    printWindow.document.write('</head><body style="background: white; padding: 20px; margin: 0;">');
                     printWindow.document.write('<div class="slide-deck">');
                     printWindow.document.write(%s);
                     printWindow.document.write('</div>');
