@@ -1551,31 +1551,34 @@ else:
         # ---------------- TAB 4: SLIDE PRESENTASI & VIEWER EXCEL ----------------
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 🖥️ Review Slide Presentasi Eksekutif")
-            st.markdown("Berikut adalah pratinjau slide presentasi real-time yang siap dicetak atau disimpan sebagai PDF Presentasi berkualitas tinggi.")
+            st.markdown("### 🖥️ Pratinjau Slide Presentasi Eksekutif")
+            st.markdown("Desain slide kini dipercantik dengan tata letak modern berformat kartu (*card layout*), metrik utama yang mencolok, serta tabel ringkasan terfokus agar siap dipresentasikan atau dicetak menjadi PDF.")
 
-            # Tombol Cetak / PDF
+            # Tombol Cetak / PDF Interaktif
             st.markdown("""
                 <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 12px 24px; font-weight: 600; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2);">
+                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 12px 24px; font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 91, 168, 0.25);">
                         🖨️ Cetak / Simpan sebagai PDF Presentasi
                     </button>
                 </div>
             """, unsafe_allow_html=True)
 
-            # Styling khusus Slide Deck & Print PDF Landscape
+            # Styling Slide Deck Modern & Profesional
             slide_html_style = """
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
                 
-                .slide-container {
+                .slide-deck {
                     font-family: 'Inter', sans-serif;
+                    color: #1a1a1a;
+                }
+                .slide-card {
                     background: #ffffff;
-                    border: 1px solid #eaedf2;
+                    border: 1px solid #e2e8f0;
                     border-radius: 12px;
                     padding: 40px;
-                    margin-bottom: 30px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+                    margin-bottom: 35px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
                     page-break-after: always;
                 }
                 .slide-header {
@@ -1584,126 +1587,182 @@ else:
                     margin-bottom: 25px;
                 }
                 .slide-title {
-                    font-size: 24px;
+                    font-size: 22px;
                     font-weight: 700;
                     color: #005ba8;
                     margin: 0;
                 }
                 .slide-subtitle {
-                    font-size: 14px;
-                    color: #6c757d;
+                    font-size: 13px;
+                    color: #64748b;
+                    margin-top: 4px;
+                }
+                .metrics-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 15px;
+                    margin-bottom: 25px;
+                }
+                .metric-box {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-left: 4px solid #005ba8;
+                    border-radius: 8px;
+                    padding: 15px;
+                }
+                .metric-title {
+                    font-size: 11px;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                }
+                .metric-value {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0f172a;
                     margin-top: 5px;
                 }
-                .slide-content {
-                    font-size: 15px;
-                    color: #2c3e50;
-                    line-height: 1.6;
-                }
-                .table-slide {
+                .table-clean {
                     width: 100%;
                     border-collapse: collapse;
                     margin-top: 15px;
-                    font-size: 13px;
+                    font-size: 12px;
                 }
-                .table-slide th {
+                .table-clean th {
                     background-color: #005ba8;
                     color: white;
                     text-align: left;
-                    padding: 10px;
+                    padding: 10px 12px;
+                    font-weight: 600;
                 }
-                .table-slide td {
-                    border: 1px solid #eaedf2;
-                    padding: 10px;
+                .table-clean td {
+                    border-bottom: 1px solid #e2e8f0;
+                    padding: 10px 12px;
+                    color: #334155;
                 }
-                .table-slide tr:nth-child(even) {
-                    background-color: #f8fafc;
+                .table-clean tr:hover {
+                    background-color: #f1f5f9;
                 }
+                .badge-optimal { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+                .badge-waspada { background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+                .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+                
                 @media print {
-                    @page { size: A4 landscape; margin: 15mm; }
+                    @page { size: A4 landscape; margin: 10mm; }
                     body { background: white; }
-                    .slide-container { border: none; box-shadow: none; padding: 0; margin: 0; }
+                    .slide-card { border: none; box-shadow: none; padding: 0; margin: 0; }
                     button { display: none; }
                 }
             </style>
             """
 
-            # Menyiapkan Variabel Ringkasan (jika tersedia)
+            # Menyiapkan data string ringkasan
             try:
-                r_text = f"Total realisasi akumulatif mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Performa wilayah secara keseluruhan berada pada status {tot_stat} dengan posisi {dev_label} sebesar {dev_str}."
+                r_text = f"Total realisasi akumulatif wilayah mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Posisi kinerja wilayah berada pada status **{tot_stat}** dengan deviasi {dev_label} sebesar {dev_str}."
             except Exception:
-                r_text = "Data ringkasan eksekutif belum terinisialisasi."
+                r_text = "Data ringkasan eksekutif belum tersedia."
 
+            # Membuat tabel ringkasan yang bersih (hanya 5 kolom inti agar tidak kaku/kepanjangan)
             try:
-                table_html = df_display.head(7).to_html(classes='table-slide', index=False)
+                cols_slide_clean = ["Loket SAMSAT", "Target Anggaran", "Akumulasi s.d Bulan Ini (Thn Berjalan)", "Persentase Capaian (%)", "Status Kinerja"]
+                df_slide_sub = df_final[cols_slide_clean].copy()
+                
+                # Format angka dan badge HTML untuk tabel
+                df_slide_sub["Target Anggaran"] = df_slide_sub["Target Anggaran"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+                df_slide_sub["Akumulasi s.d Bulan Ini (Thn Berjalan)"] = df_slide_sub["Akumulasi s.d Bulan Ini (Thn Berjalan)"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+                df_slide_sub["Persentase Capaian (%)"] = df_slide_sub["Persentase Capaian (%)"].apply(lambda x: f"{x:.2f}%")
+                
+                def html_badge(val):
+                    if val == "Optimal":
+                        return '<span class="badge-optimal">Optimal</span>'
+                    elif val == "Waspada":
+                        return '<span class="badge-waspada">Waspada</span>'
+                    else:
+                        return f'<span class="badge-kritis">{val}</span>'
+                
+                df_slide_sub["Status Kinerja"] = df_slide_sub["Status Kinerja"].apply(html_badge)
+                table_clean_html = df_slide_sub.to_html(classes='table-clean', index=False, escape=False)
             except Exception:
-                table_html = "<p>Data tabel belum tersedia.</p>"
+                table_clean_html = "<p>Data tabel belum tersedia.</p>"
 
+            # Data Skenario Proyeksi
             try:
                 win_name = winning_name if 'winning_name' in locals() else "Standard Model"
                 t_keandalan = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
                 m_val = f"Rp {mae:,.0f}".replace(",", ".") if 'mae' in locals() else "N/A"
-                table_sc_html = df_scenarios_display.head(6).to_html(classes='table-slide', index=False) if 'df_scenarios_display' in locals() else "<p>Data skenario belum tersedia.</p>"
+                table_sc_html = df_scenarios_display.head(6).to_html(classes='table-clean', index=False) if 'df_scenarios_display' in locals() else "<p>Data skenario belum tersedia.</p>"
             except Exception:
                 win_name = "Standard Model"
                 t_keandalan = "N/A"
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
-            # Rendering Slide Deck di Web
+            # Merakit HTML Slide Deck
             presentation_html = f"""
             {slide_html_style}
-            
-            <!-- SLIDE 1: COVER -->
-            <div class="slide-container" style="text-align: center; padding: 80px 40px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
-                <h1 style="font-size: 36px; color: #005ba8; font-weight: 700; margin-bottom: 15px;">Laporan Eksekutif Kinerja Pendapatan</h1>
-                <h3 style="font-size: 20px; color: #2c3e50; font-weight: 600; margin-bottom: 30px;">PT Jasa Raharja Kanwil DIY</h3>
-                <p style="font-size: 16px; color: #6c757d;">Periode Laporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
-                <div style="margin-top: 50px; font-size: 12px; color: #a0aabf;">Dihasilkan secara otomatis oleh Portal Monitoring Resmi</div>
-            </div>
-
-            <!-- SLIDE 2: RINGKASAN & REALISASI SAMSAT -->
-            <div class="slide-container">
-                <div class="slide-header">
-                    <h2 class="slide-title">Ringkasan Eksekutif & Realisasi SAMSAT</h2>
-                    <div class="slide-subtitle">Evaluasi Capaian Target Wilayah Kanwil DIY</div>
+            <div class="slide-deck">
+                <!-- SLIDE 1: COVER -->
+                <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                    <h1 style="font-size: 32px; color: #005ba8; font-weight: 700; margin-bottom: 10px;">Laporan Eksekutif Kinerja Pendapatan</h1>
+                    <h3 style="font-size: 18px; color: #334155; font-weight: 600; margin-bottom: 25px;">PT Jasa Raharja Kanwil DIY</h3>
+                    <p style="font-size: 15px; color: #64748b;">Periode Pelaporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
+                    <div style="margin-top: 40px; font-size: 11px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Dihasilkan Secara Otomatis oleh Portal Monitoring Eksekutif</div>
                 </div>
-                <div class="slide-content">
-                    <div style="background-color: #f0f7ff; border-left: 4px solid #005ba8; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                        <strong>Catatan Utama:</strong> {r_text}
+
+                <!-- SLIDE 2: RINGKASAN & REALISASI KINERJA WILAYAH -->
+                <div class="slide-card">
+                    <div class="slide-header">
+                        <h2 class="slide-title">Ringkasan & Realisasi Kinerja Wilayah</h2>
+                        <div class="slide-subtitle">Evaluasi Capaian Pendapatan Sektor UU 34 Tahun 1964</div>
                     </div>
-                    <h4>Tabel Kinerja per Loket SAMSAT</h4>
-                    {table_html}
-                </div>
-            </div>
-
-            <!-- SLIDE 3: PROYEKSI & SKENARIO KINERJA -->
-            <div class="slide-container">
-                <div class="slide-header">
-                    <h2 class="slide-title">Proyeksi & Skenario Kinerja Pendapatan</h2>
-                    <div class="slide-subtitle">Peramalan Statistik & Manajemen Risiko Berbasis Data</div>
-                </div>
-                <div class="slide-content">
-                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
-                            <div style="font-size: 12px; color: #6c757d;">Model Peramalan</div>
-                            <div style="font-size: 16px; font-weight: 700; color: #005ba8;">{win_name}</div>
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <div class="metric-title">Total Akumulasi Realisasi</div>
+                            <div class="metric-value">Rp {tot_real:,.0f}</div>
                         </div>
-                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
-                            <div style="font-size: 12px; color: #6c757d;">Tingkat Keandalan</div>
-                            <div style="font-size: 16px; font-weight: 700; color: #28a745;">{t_keandalan}</div>
+                        <div class="metric-box">
+                            <div class="metric-title">Persentase Capaian Target</div>
+                            <div class="metric-value" style="color: #005ba8;">{tot_cap:.2f}%</div>
                         </div>
-                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
-                            <div style="font-size: 12px; color: #6c757d;">Rata-rata Meleset (MAE)</div>
-                            <div style="font-size: 16px; font-weight: 700; color: #dc3545;">Rp {m_val}</div>
+                        <div class="metric-box">
+                            <div class="metric-title">Status Kinerja Wilayah</div>
+                            <div class="metric-value" style="color: #dc3545;">{tot_stat}</div>
                         </div>
                     </div>
-                    <h4>Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
+                    <div style="background-color: #f1f5f9; border-left: 4px solid #005ba8; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #334155;">
+                        💡 <strong>Insight Pimpinan:</strong> {r_text}
+                    </div>
+                    <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Rekapitulasi Kinerja per Loket SAMSAT</h4>
+                    {table_clean_html}
+                </div>
+
+                <!-- SLIDE 3: PROYEKSI & SKENARIO KINERJA -->
+                <div class="slide-card">
+                    <div class="slide-header">
+                        <h2 class="slide-title">Proyeksi & Skenario Kinerja Pendapatan</h2>
+                        <div class="slide-subtitle">Analisis Peramalan Statistik & Manajemen Risiko Berbasis Data Historis</div>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <div class="metric-title">Model Peramalan Terbaik</div>
+                            <div class="metric-value" style="font-size: 14px; margin-top: 6px;">{win_name}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Tingkat Keandalan Model</div>
+                            <div class="metric-value" style="color: #16a34a;">{t_keandalan}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Rata-rata Galat (MAE)</div>
+                            <div class="metric-value" style="color: #dc2626; font-size: 15px; margin-top: 6px;">Rp {m_val}</div>
+                        </div>
+                    </div>
+                    <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
                     {table_sc_html}
                 </div>
             </div>
             """
 
-            components.html(presentation_html, height=1400, scrolling=True)
+            components.html(presentation_html, height=1500, scrolling=True)
 
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
