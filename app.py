@@ -1719,9 +1719,7 @@ else:
                 .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 
                 @media print {
-                    /* Menyembunyikan Header & Footer Bawaan Browser (Tgl, about:blank, dll) */
                     @page { size: A4 landscape; margin: 0; }
-                    /* Mengganti area aman agar konten tidak menempel ke tepi pinggir kertas */
                     body { background: white; -webkit-print-color-adjust: exact; padding: 15mm; }
                     .print-banner { display: none !important; }
                     .slide-card { border: none !important; box-shadow: none !important; padding: 20px !important; margin: 0 !important; page-break-after: always; }
@@ -1792,9 +1790,14 @@ else:
             """
 
             slides_list = [slide_1_html, slide_2_html, slide_3_html]
+            
+            # Gabungkan semua slide HANYA untuk kebutuhan cetak PDF
             all_slides_html = "".join(slides_list)
+            
+            # Tampilan di layar HANYA memuat slide yang sedang aktif sesuai nomor halaman
+            current_slide_html = slides_list[st.session_state.slide_idx]
 
-            # SKrip JS untuk membuka jendela cetak khusus slide murni (tanpa UI dashboard)
+            # Skrip JS untuk membuka jendela cetak khusus yang memuat SEMUA slide
             print_script = """
             <script>
                 function printSlides() {
@@ -1816,6 +1819,7 @@ else:
             </script>
             """ % repr(all_slides_html)
 
+            # Komponen visual di Streamlit (Hanya menampilkan slide aktif)
             full_presentation_component = f"""
             {slide_css}
             {print_script}
@@ -1827,11 +1831,12 @@ else:
                     </div>
                     <button class="print-btn" onclick="printSlides()">🖨️ Cetak / Simpan PDF</button>
                 </div>
-                {all_slides_html}
+                {current_slide_html}
             </div>
             """
 
-            components.html(full_presentation_component, height=1400, scrolling=True)
+            # Ubah height menjadi 750 agar pas untuk 1 slide, dan matikan scrolling
+            components.html(full_presentation_component, height=750, scrolling=False)
 
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
