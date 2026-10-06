@@ -9,9 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import io
-from pptx import Presentation
-from pptx.util import Inches, Pt
-from pptx.dml.color import RGBColor
+import streamlit.components.v1 as components
 from supabase import create_client
 
 # ==========================================
@@ -665,7 +663,7 @@ else:
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
             "Proyeksi & Skenario Kinerja",
-            "Viewer File Excel (Master)",
+            "Slide Presentasi & Viewer Excel",
         ])
 
         try:
@@ -1549,139 +1547,165 @@ else:
                     st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan.")
             else:
                 st.info("Belum ada data historis yang tersedia.")
-# ---------------- TAB 4: VIEWER FILE EXCEL ASLI & EXPORT ----------------
+
+        # ---------------- TAB 4: SLIDE PRESENTASI & VIEWER EXCEL ----------------
         with tab_pimpinan_4:
-            # ==========================================
-            # 🚀 FITUR EKSPOR MULTI-SLIDE PPTX
-            # ==========================================
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 📥 Ekspor Laporan Otomatis (PowerPoint)")
-            st.markdown("Fitur ini akan merangkum seluruh analisis dari tab di atas menjadi slide presentasi eksekutif.")
+            st.markdown("### 🖥️ Review Slide Presentasi Eksekutif")
+            st.markdown("Berikut adalah pratinjau slide presentasi real-time yang siap dicetak atau disimpan sebagai PDF Presentasi berkualitas tinggi.")
 
-            def buat_ppt_otomatis():
-                prs = Presentation()
+            # Tombol Cetak / PDF
+            st.markdown("""
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 12px 24px; font-weight: 600; border-radius: 6px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 91, 168, 0.2);">
+                        🖨️ Cetak / Simpan sebagai PDF Presentasi
+                    </button>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # Styling khusus Slide Deck & Print PDF Landscape
+            slide_html_style = """
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
                 
-                # ---------------------------------------------------------
-                # SLIDE 1: COVER
-                # ---------------------------------------------------------
-                slide1 = prs.slides.add_slide(prs.slide_layouts[0])
-                slide1.shapes.title.text = "Laporan Eksekutif Kinerja Pendapatan"
-                slide1.placeholders[1].text = f"PT Jasa Raharja Kanwil DIY\nBulan Pelaporan: {BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}\n(Dihasilkan Otomatis oleh Sistem)"
+                .slide-container {
+                    font-family: 'Inter', sans-serif;
+                    background: #ffffff;
+                    border: 1px solid #eaedf2;
+                    border-radius: 12px;
+                    padding: 40px;
+                    margin-bottom: 30px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+                    page-break-after: always;
+                }
+                .slide-header {
+                    border-bottom: 3px solid #005ba8;
+                    padding-bottom: 15px;
+                    margin-bottom: 25px;
+                }
+                .slide-title {
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #005ba8;
+                    margin: 0;
+                }
+                .slide-subtitle {
+                    font-size: 14px;
+                    color: #6c757d;
+                    margin-top: 5px;
+                }
+                .slide-content {
+                    font-size: 15px;
+                    color: #2c3e50;
+                    line-height: 1.6;
+                }
+                .table-slide {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                    font-size: 13px;
+                }
+                .table-slide th {
+                    background-color: #005ba8;
+                    color: white;
+                    text-align: left;
+                    padding: 10px;
+                }
+                .table-slide td {
+                    border: 1px solid #eaedf2;
+                    padding: 10px;
+                }
+                .table-slide tr:nth-child(even) {
+                    background-color: #f8fafc;
+                }
+                @media print {
+                    @page { size: A4 landscape; margin: 15mm; }
+                    body { background: white; }
+                    .slide-container { border: none; box-shadow: none; padding: 0; margin: 0; }
+                    button { display: none; }
+                }
+            </style>
+            """
 
-                # ---------------------------------------------------------
-                # SLIDE 2: RINGKASAN EKSEKUTIF (Dari Tab 1)
-                # ---------------------------------------------------------
-                slide2 = prs.slides.add_slide(prs.slide_layouts[5])
-                slide2.shapes.title.text = "Ringkasan Eksekutif & Realisasi SAMSAT"
-                
-                # Kotak Teks untuk Ringkasan
-                txBox = slide2.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
-                tf = txBox.text_frame
-                tf.word_wrap = True
-                p = tf.add_paragraph()
-                # Menyusun teks ringkasan berdasarkan data Tab 1
-                teks_ringkasan = (
-                    f"Total realisasi akumulatif mencapai Rp {tot_real:,.0f} "
-                    f"({tot_cap:.2f}% dari target anggaran tahunan). Performa "
-                    f"wilayah secara keseluruhan berada pada status {tot_stat} "
-                    f"dengan posisi {dev_label} sebesar {dev_str}."
-                ).replace(",", ".")
-                p.text = teks_ringkasan
-                p.font.size = Pt(14)
-
-                # Tabel Kinerja (Pilih kolom penting saja agar muat di slide)
-                cols_to_ppt = [
-                    "Loket SAMSAT", 
-                    "Target Anggaran", 
-                    "Akumulasi s.d Bulan Ini (Thn Berjalan)", 
-                    "Persentase Capaian (%)", 
-                    "Status Kinerja"
-                ]
-                df_k = df_display[cols_to_ppt].head(7) # Ambil maks 7 baris
-                
-                rows = df_k.shape[0] + 1
-                cols = df_k.shape[1]
-                tabel_kinerja = slide2.shapes.add_table(rows, cols, Inches(0.5), Inches(2.7), Inches(9), Inches(3)).table
-                
-                # Header Tabel
-                for col_idx, col_name in enumerate(cols_to_ppt):
-                    tabel_kinerja.cell(0, col_idx).text = str(col_name)
-                    tabel_kinerja.cell(0, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
-                    tabel_kinerja.cell(0, col_idx).text_frame.paragraphs[0].font.bold = True
-
-                # Isi Tabel
-                for row_idx in range(df_k.shape[0]):
-                    for col_idx in range(cols):
-                        val = str(df_k.iloc[row_idx, col_idx])
-                        tabel_kinerja.cell(row_idx + 1, col_idx).text = val
-                        tabel_kinerja.cell(row_idx + 1, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
-
-                # ---------------------------------------------------------
-                # SLIDE 3: SKENARIO & PROYEKSI (Dari Tab 3)
-                # ---------------------------------------------------------
-                # Pastikan data peramalan sudah terhitung di Tab 3
-                if 'winning_name' in locals() and 'df_scenarios_display' in locals():
-                    slide3 = prs.slides.add_slide(prs.slide_layouts[5])
-                    slide3.shapes.title.text = "Proyeksi & Skenario Kinerja Pendapatan"
-                    
-                    # Kotak Teks Metrik Model
-                    txBox3 = slide3.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
-                    tf3 = txBox3.text_frame
-                    tf3.word_wrap = True
-                    p3 = tf3.add_paragraph()
-                    p3.text = f"Metode: {winning_name} | Tingkat Keandalan: {tingkat_keandalan:.1f}% | Rata-rata Meleset: Rp {mae:,.0f}".replace(",", ".")
-                    p3.font.size = Pt(14)
-
-                    # Tabel Skenario
-                    df_s = df_scenarios_display.head(6) # Ambil 6 bulan ke depan
-                    rows_s = df_s.shape[0] + 1
-                    cols_s = df_s.shape[1]
-                    tabel_skenario = slide3.shapes.add_table(rows_s, cols_s, Inches(0.5), Inches(2.5), Inches(9), Inches(3)).table
-                    
-                    # Header
-                    for col_idx, col_name in enumerate(df_s.columns):
-                        tabel_skenario.cell(0, col_idx).text = str(col_name)
-                        tabel_skenario.cell(0, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
-                        tabel_skenario.cell(0, col_idx).text_frame.paragraphs[0].font.bold = True
-
-                    # Isi Tabel
-                    for row_idx in range(df_s.shape[0]):
-                        for col_idx in range(cols_s):
-                            val = str(df_s.iloc[row_idx, col_idx])
-                            tabel_skenario.cell(row_idx + 1, col_idx).text = val
-                            tabel_skenario.cell(row_idx + 1, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
-
-                # Simpan ke dalam BytesIO (Memory)
-                ppt_stream = io.BytesIO()
-                prs.save(ppt_stream)
-                ppt_stream.seek(0)
-                return ppt_stream
-
-            # ---------------------------------------------------------
-            # TOMBOL DOWNLOAD
-            # ---------------------------------------------------------
-            # Menggunakan try-except untuk berjaga-jaga jika ada data yang belum ter-load sempurna
+            # Menyiapkan Variabel Ringkasan (jika tersedia)
             try:
-                file_ppt_bytes = buat_ppt_otomatis()
-                nama_file_ekspor = f"Laporan_Eksekutif_JR_DIY_{BULAN_INDO[target_bulan_pilih]}_{target_tahun_pilih}.pptx"
-                
-                st.download_button(
-                    label="📥 Unduh Laporan PowerPoint (PPTX)",
-                    data=file_ppt_bytes,
-                    file_name=nama_file_ekspor,
-                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    type="primary",
-                    use_container_width=True
-                )
-                
-                st.caption("💡 **Tips untuk PDF:** Setelah file PPTX terunduh, buka file tersebut di aplikasi Microsoft PowerPoint, lalu klik **File > Save As > Pilih format PDF**. Ini adalah cara terbaik agar format slide, font, dan tabel tetap rapi 100% saat dikonversi menjadi PDF.")
-                
-            except Exception as e:
-                st.warning("Silakan tunggu hingga seluruh tab data termuat sempurna sebelum mengunduh laporan.")
-                # Hapus komentar di bawah ini jika ingin melihat detail error saat proses pembuatannya
-                # st.error(f"Error detail: {e}")    
+                r_text = f"Total realisasi akumulatif mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Performa wilayah secara keseluruhan berada pada status {tot_stat} dengan posisi {dev_label} sebesar {dev_str}."
+            except Exception:
+                r_text = "Data ringkasan eksekutif belum terinisialisasi."
+
+            try:
+                table_html = df_display.head(7).to_html(classes='table-slide', index=False)
+            except Exception:
+                table_html = "<p>Data tabel belum tersedia.</p>"
+
+            try:
+                win_name = winning_name if 'winning_name' in locals() else "Standard Model"
+                t_keandalan = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
+                m_val = f"Rp {mae:,.0f}".replace(",", ".") if 'mae' in locals() else "N/A"
+                table_sc_html = df_scenarios_display.head(6).to_html(classes='table-slide', index=False) if 'df_scenarios_display' in locals() else "<p>Data skenario belum tersedia.</p>"
+            except Exception:
+                win_name = "Standard Model"
+                t_keandalan = "N/A"
+                m_val = "N/A"
+                table_sc_html = "<p>Data skenario belum tersedia.</p>"
+
+            # Rendering Slide Deck di Web
+            presentation_html = f"""
+            {slide_html_style}
             
-            st.markdown("<hr style='border-top: 2px solid #eaedf2;'><br>", unsafe_allow_html=True)
+            <!-- SLIDE 1: COVER -->
+            <div class="slide-container" style="text-align: center; padding: 80px 40px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
+                <h1 style="font-size: 36px; color: #005ba8; font-weight: 700; margin-bottom: 15px;">Laporan Eksekutif Kinerja Pendapatan</h1>
+                <h3 style="font-size: 20px; color: #2c3e50; font-weight: 600; margin-bottom: 30px;">PT Jasa Raharja Kanwil DIY</h3>
+                <p style="font-size: 16px; color: #6c757d;">Periode Laporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
+                <div style="margin-top: 50px; font-size: 12px; color: #a0aabf;">Dihasilkan secara otomatis oleh Portal Monitoring Resmi</div>
+            </div>
+
+            <!-- SLIDE 2: RINGKASAN & REALISASI SAMSAT -->
+            <div class="slide-container">
+                <div class="slide-header">
+                    <h2 class="slide-title">Ringkasan Eksekutif & Realisasi SAMSAT</h2>
+                    <div class="slide-subtitle">Evaluasi Capaian Target Wilayah Kanwil DIY</div>
+                </div>
+                <div class="slide-content">
+                    <div style="background-color: #f0f7ff; border-left: 4px solid #005ba8; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                        <strong>Catatan Utama:</strong> {r_text}
+                    </div>
+                    <h4>Tabel Kinerja per Loket SAMSAT</h4>
+                    {table_html}
+                </div>
+            </div>
+
+            <!-- SLIDE 3: PROYEKSI & SKENARIO KINERJA -->
+            <div class="slide-container">
+                <div class="slide-header">
+                    <h2 class="slide-title">Proyeksi & Skenario Kinerja Pendapatan</h2>
+                    <div class="slide-subtitle">Peramalan Statistik & Manajemen Risiko Berbasis Data</div>
+                </div>
+                <div class="slide-content">
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
+                            <div style="font-size: 12px; color: #6c757d;">Model Peramalan</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #005ba8;">{win_name}</div>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
+                            <div style="font-size: 12px; color: #6c757d;">Tingkat Keandalan</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #28a745;">{t_keandalan}</div>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #eaedf2;">
+                            <div style="font-size: 12px; color: #6c757d;">Rata-rata Meleset (MAE)</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #dc3545;">Rp {m_val}</div>
+                        </div>
+                    </div>
+                    <h4>Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
+                    {table_sc_html}
+                </div>
+            </div>
+            """
+
+            components.html(presentation_html, height=1400, scrolling=True)
+
+            st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
             
             v_col1, v_col2 = st.columns(2)
