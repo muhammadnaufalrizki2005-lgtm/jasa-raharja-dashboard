@@ -8,6 +8,10 @@ import openpyxl
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import io
+from pptx import Presentation
+from pptx.util import Inches, Pt
+from pptx.dml.color import RGBColor
 from supabase import create_client
 
 # ==========================================
@@ -1545,10 +1549,139 @@ else:
                     st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan.")
             else:
                 st.info("Belum ada data historis yang tersedia.")
-
-        # ---------------- TAB 4: VIEWER FILE EXCEL ASLI ----------------
+# ---------------- TAB 4: VIEWER FILE EXCEL ASLI & EXPORT ----------------
         with tab_pimpinan_4:
+            # ==========================================
+            # 🚀 FITUR EKSPOR MULTI-SLIDE PPTX
+            # ==========================================
             st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 📥 Ekspor Laporan Otomatis (PowerPoint)")
+            st.markdown("Fitur ini akan merangkum seluruh analisis dari tab di atas menjadi slide presentasi eksekutif.")
+
+            def buat_ppt_otomatis():
+                prs = Presentation()
+                
+                # ---------------------------------------------------------
+                # SLIDE 1: COVER
+                # ---------------------------------------------------------
+                slide1 = prs.slides.add_slide(prs.slide_layouts[0])
+                slide1.shapes.title.text = "Laporan Eksekutif Kinerja Pendapatan"
+                slide1.placeholders[1].text = f"PT Jasa Raharja Kanwil DIY\nBulan Pelaporan: {BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}\n(Dihasilkan Otomatis oleh Sistem)"
+
+                # ---------------------------------------------------------
+                # SLIDE 2: RINGKASAN EKSEKUTIF (Dari Tab 1)
+                # ---------------------------------------------------------
+                slide2 = prs.slides.add_slide(prs.slide_layouts[5])
+                slide2.shapes.title.text = "Ringkasan Eksekutif & Realisasi SAMSAT"
+                
+                # Kotak Teks untuk Ringkasan
+                txBox = slide2.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
+                tf = txBox.text_frame
+                tf.word_wrap = True
+                p = tf.add_paragraph()
+                # Menyusun teks ringkasan berdasarkan data Tab 1
+                teks_ringkasan = (
+                    f"Total realisasi akumulatif mencapai Rp {tot_real:,.0f} "
+                    f"({tot_cap:.2f}% dari target anggaran tahunan). Performa "
+                    f"wilayah secara keseluruhan berada pada status {tot_stat} "
+                    f"dengan posisi {dev_label} sebesar {dev_str}."
+                ).replace(",", ".")
+                p.text = teks_ringkasan
+                p.font.size = Pt(14)
+
+                # Tabel Kinerja (Pilih kolom penting saja agar muat di slide)
+                cols_to_ppt = [
+                    "Loket SAMSAT", 
+                    "Target Anggaran", 
+                    "Akumulasi s.d Bulan Ini (Thn Berjalan)", 
+                    "Persentase Capaian (%)", 
+                    "Status Kinerja"
+                ]
+                df_k = df_display[cols_to_ppt].head(7) # Ambil maks 7 baris
+                
+                rows = df_k.shape[0] + 1
+                cols = df_k.shape[1]
+                tabel_kinerja = slide2.shapes.add_table(rows, cols, Inches(0.5), Inches(2.7), Inches(9), Inches(3)).table
+                
+                # Header Tabel
+                for col_idx, col_name in enumerate(cols_to_ppt):
+                    tabel_kinerja.cell(0, col_idx).text = str(col_name)
+                    tabel_kinerja.cell(0, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
+                    tabel_kinerja.cell(0, col_idx).text_frame.paragraphs[0].font.bold = True
+
+                # Isi Tabel
+                for row_idx in range(df_k.shape[0]):
+                    for col_idx in range(cols):
+                        val = str(df_k.iloc[row_idx, col_idx])
+                        tabel_kinerja.cell(row_idx + 1, col_idx).text = val
+                        tabel_kinerja.cell(row_idx + 1, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
+
+                # ---------------------------------------------------------
+                # SLIDE 3: SKENARIO & PROYEKSI (Dari Tab 3)
+                # ---------------------------------------------------------
+                # Pastikan data peramalan sudah terhitung di Tab 3
+                if 'winning_name' in locals() and 'df_scenarios_display' in locals():
+                    slide3 = prs.slides.add_slide(prs.slide_layouts[5])
+                    slide3.shapes.title.text = "Proyeksi & Skenario Kinerja Pendapatan"
+                    
+                    # Kotak Teks Metrik Model
+                    txBox3 = slide3.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(1))
+                    tf3 = txBox3.text_frame
+                    tf3.word_wrap = True
+                    p3 = tf3.add_paragraph()
+                    p3.text = f"Metode: {winning_name} | Tingkat Keandalan: {tingkat_keandalan:.1f}% | Rata-rata Meleset: Rp {mae:,.0f}".replace(",", ".")
+                    p3.font.size = Pt(14)
+
+                    # Tabel Skenario
+                    df_s = df_scenarios_display.head(6) # Ambil 6 bulan ke depan
+                    rows_s = df_s.shape[0] + 1
+                    cols_s = df_s.shape[1]
+                    tabel_skenario = slide3.shapes.add_table(rows_s, cols_s, Inches(0.5), Inches(2.5), Inches(9), Inches(3)).table
+                    
+                    # Header
+                    for col_idx, col_name in enumerate(df_s.columns):
+                        tabel_skenario.cell(0, col_idx).text = str(col_name)
+                        tabel_skenario.cell(0, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
+                        tabel_skenario.cell(0, col_idx).text_frame.paragraphs[0].font.bold = True
+
+                    # Isi Tabel
+                    for row_idx in range(df_s.shape[0]):
+                        for col_idx in range(cols_s):
+                            val = str(df_s.iloc[row_idx, col_idx])
+                            tabel_skenario.cell(row_idx + 1, col_idx).text = val
+                            tabel_skenario.cell(row_idx + 1, col_idx).text_frame.paragraphs[0].font.size = Pt(11)
+
+                # Simpan ke dalam BytesIO (Memory)
+                ppt_stream = io.BytesIO()
+                prs.save(ppt_stream)
+                ppt_stream.seek(0)
+                return ppt_stream
+
+            # ---------------------------------------------------------
+            # TOMBOL DOWNLOAD
+            # ---------------------------------------------------------
+            # Menggunakan try-except untuk berjaga-jaga jika ada data yang belum ter-load sempurna
+            try:
+                file_ppt_bytes = buat_ppt_otomatis()
+                nama_file_ekspor = f"Laporan_Eksekutif_JR_DIY_{BULAN_INDO[target_bulan_pilih]}_{target_tahun_pilih}.pptx"
+                
+                st.download_button(
+                    label="📥 Unduh Laporan PowerPoint (PPTX)",
+                    data=file_ppt_bytes,
+                    file_name=nama_file_ekspor,
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    type="primary",
+                    use_container_width=True
+                )
+                
+                st.caption("💡 **Tips untuk PDF:** Setelah file PPTX terunduh, buka file tersebut di aplikasi Microsoft PowerPoint, lalu klik **File > Save As > Pilih format PDF**. Ini adalah cara terbaik agar format slide, font, dan tabel tetap rapi 100% saat dikonversi menjadi PDF.")
+                
+            except Exception as e:
+                st.warning("Silakan tunggu hingga seluruh tab data termuat sempurna sebelum mengunduh laporan.")
+                # Hapus komentar di bawah ini jika ingin melihat detail error saat proses pembuatannya
+                # st.error(f"Error detail: {e}")    
+            
+            st.markdown("<hr style='border-top: 2px solid #eaedf2;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
             
             v_col1, v_col2 = st.columns(2)
