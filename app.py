@@ -1554,16 +1554,14 @@ else:
         # ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("### 🖥️️ Viewer Slide Presentasi Interaktif")
+            st.markdown("### 🖥 Viewer Slide Presentasi Interaktif")
             st.markdown("Gunakan tombol navigasi di bawah untuk memindahkan halaman slide satu persatu secara interaktif.")
 
-            # Menyiapkan data string ringkasan
             try:
                 r_text = f"Total realisasi akumulatif wilayah mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Posisi kinerja wilayah berada pada status **{tot_stat}** dengan deviasi {dev_label} sebesar {dev_str}."
             except Exception:
                 r_text = "Data ringkasan eksekutif belum tersedia."
 
-            # Membuat tabel ringkasan bersih (5 kolom inti)
             try:
                 cols_slide_clean = ["Loket SAMSAT", "Target Anggaran", "Akumulasi s.d Bulan Ini (Thn Berjalan)", "Persentase Capaian (%)", "Status Kinerja"]
                 df_slide_sub = df_final[cols_slide_clean].copy()
@@ -1585,7 +1583,6 @@ else:
             except Exception:
                 table_clean_html = "<p>Data tabel belum tersedia.</p>"
 
-            # Data Skenario Proyeksi
             try:
                 win_name = winning_name if 'winning_name' in locals() else "Standard Model"
                 t_keandalan = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
@@ -1597,7 +1594,6 @@ else:
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
-            # Tombol Navigasi Slide & Cetak PDF
             nav_col1, nav_col2, nav_col3, nav_col4 = st.columns([1.2, 1, 1.2, 1.5])
             
             total_slides = 3
@@ -1609,7 +1605,7 @@ else:
             with nav_col2:
                 st.markdown(f"<div style='text-align: center; font-weight: 700; padding-top: 8px; color: #005ba8;'>Slide {st.session_state.slide_idx + 1} / {total_slides}</div>", unsafe_allow_html=True)
             with nav_col3:
-                if st.button("Slide Selanjutnya ➡️️", use_container_width=True):
+                if st.button("Slide Selanjutnya ➡", use_container_width=True):
                     if st.session_state.slide_idx < total_slides - 1:
                         st.session_state.slide_idx += 1
                         st.rerun()
@@ -1618,7 +1614,6 @@ else:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # Merakit HTML Slide Deck
             slide_css = """
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -1774,11 +1769,9 @@ else:
             slides_list = [slide_1_html, slide_2_html, slide_3_html]
 
             if print_mode:
-                # Render semua slide sekaligus agar rapi saat dicetak PDF
                 full_presentation = slide_css + "<div class='slide-deck'>" + "".join(slides_list) + "</div>"
                 components.html(full_presentation, height=1800, scrolling=True)
             else:
-                # Render satu slide aktif sesuai pilihan navigasi
                 current_slide_html = slide_css + "<div class='slide-deck'>" + slides_list[st.session_state.slide_idx] + "</div>"
                 components.html(current_slide_html, height=650, scrolling=False)
 
