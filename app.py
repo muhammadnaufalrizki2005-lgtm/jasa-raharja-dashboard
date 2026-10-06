@@ -9,7 +9,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import io
-import streamlit.components.v1 as components
 from supabase import create_client
 
 # ==========================================
@@ -1554,7 +1553,7 @@ else:
             st.markdown("### 🖥️ Pratinjau Slide Presentasi Eksekutif")
             st.markdown("Desain slide kini dipercantik dengan tata letak modern berformat kartu (*card layout*), metrik utama yang mencolok, serta tabel ringkasan terfokus agar siap dipresentasikan atau dicetak menjadi PDF.")
 
-            # Tombol Cetak / PDF Interaktif
+            # Tombol Cetak / PDF Interaktif yang terhubung langsung ke jendela utama browser
             st.markdown("""
                 <div style="display: flex; gap: 15px; margin-bottom: 25px;">
                     <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 12px 24px; font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 91, 168, 0.25);">
@@ -1563,7 +1562,7 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-            # Styling Slide Deck Modern & Profesional
+            # Styling Slide Deck Modern & Aturan Print Media CSS
             slide_html_style = """
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -1579,7 +1578,6 @@ else:
                     padding: 40px;
                     margin-bottom: 35px;
                     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-                    page-break-after: always;
                 }
                 .slide-header {
                     border-bottom: 3px solid #005ba8;
@@ -1629,8 +1627,8 @@ else:
                     font-size: 12px;
                 }
                 .table-clean th {
-                    background-color: #005ba8;
-                    color: white;
+                    background-color: #005ba8 !important;
+                    color: white !important;
                     text-align: left;
                     padding: 10px 12px;
                     font-weight: 600;
@@ -1648,10 +1646,20 @@ else:
                 .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 
                 @media print {
-                    @page { size: A4 landscape; margin: 10mm; }
-                    body { background: white; }
-                    .slide-card { border: none; box-shadow: none; padding: 0; margin: 0; }
-                    button { display: none; }
+                    /* Menyembunyikan navigasi, sidebar, header, tombol, dan tab saat dicetak */
+                    [data-testid="stSidebar"], header, footer, .stTabs, button, .stSelectbox {
+                        display: none !important;
+                    }
+                    body, .stApp {
+                        background: white !important;
+                    }
+                    .slide-card {
+                        border: none !important;
+                        box-shadow: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        page-break-after: always;
+                    }
                 }
             </style>
             """
@@ -1662,12 +1670,11 @@ else:
             except Exception:
                 r_text = "Data ringkasan eksekutif belum tersedia."
 
-            # Membuat tabel ringkasan yang bersih (hanya 5 kolom inti agar tidak kaku/kepanjangan)
+            # Membuat tabel ringkasan bersih (5 kolom inti)
             try:
                 cols_slide_clean = ["Loket SAMSAT", "Target Anggaran", "Akumulasi s.d Bulan Ini (Thn Berjalan)", "Persentase Capaian (%)", "Status Kinerja"]
                 df_slide_sub = df_final[cols_slide_clean].copy()
                 
-                # Format angka dan badge HTML untuk tabel
                 df_slide_sub["Target Anggaran"] = df_slide_sub["Target Anggaran"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
                 df_slide_sub["Akumulasi s.d Bulan Ini (Thn Berjalan)"] = df_slide_sub["Akumulasi s.d Bulan Ini (Thn Berjalan)"].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
                 df_slide_sub["Persentase Capaian (%)"] = df_slide_sub["Persentase Capaian (%)"].apply(lambda x: f"{x:.2f}%")
@@ -1699,7 +1706,6 @@ else:
 
             # Merakit HTML Slide Deck
             presentation_html = f"""
-            {slide_html_style}
             <div class="slide-deck">
                 <!-- SLIDE 1: COVER -->
                 <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
@@ -1762,7 +1768,8 @@ else:
             </div>
             """
 
-            components.html(presentation_html, height=1500, scrolling=True)
+            # Render langsung ke halaman utama Streamlit
+            st.markdown(slide_html_style + presentation_html, unsafe_allow_html=True)
 
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
