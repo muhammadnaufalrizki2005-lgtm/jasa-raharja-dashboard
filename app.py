@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import io
+import streamlit.components.v1 as components
 from supabase import create_client
 
 # ==========================================
@@ -1553,117 +1554,6 @@ else:
             st.markdown("### 🖥️ Pratinjau Slide Presentasi Eksekutif")
             st.markdown("Desain slide kini dipercantik dengan tata letak modern berformat kartu (*card layout*), metrik utama yang mencolok, serta tabel ringkasan terfokus agar siap dipresentasikan atau dicetak menjadi PDF.")
 
-            # Tombol Cetak / PDF Interaktif yang terhubung langsung ke jendela utama browser
-            st.markdown("""
-                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <button onclick="window.print()" style="background-color: #005ba8; color: white; border: none; padding: 12px 24px; font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0, 91, 168, 0.25);">
-                        🖨️ Cetak / Simpan sebagai PDF Presentasi
-                    </button>
-                </div>
-            """, unsafe_allow_html=True)
-
-            # Styling Slide Deck Modern & Aturan Print Media CSS
-            slide_html_style = """
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-                
-                .slide-deck {
-                    font-family: 'Inter', sans-serif;
-                    color: #1a1a1a;
-                }
-                .slide-card {
-                    background: #ffffff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 40px;
-                    margin-bottom: 35px;
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-                }
-                .slide-header {
-                    border-bottom: 3px solid #005ba8;
-                    padding-bottom: 15px;
-                    margin-bottom: 25px;
-                }
-                .slide-title {
-                    font-size: 22px;
-                    font-weight: 700;
-                    color: #005ba8;
-                    margin: 0;
-                }
-                .slide-subtitle {
-                    font-size: 13px;
-                    color: #64748b;
-                    margin-top: 4px;
-                }
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 15px;
-                    margin-bottom: 25px;
-                }
-                .metric-box {
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-left: 4px solid #005ba8;
-                    border-radius: 8px;
-                    padding: 15px;
-                }
-                .metric-title {
-                    font-size: 11px;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    font-weight: 600;
-                }
-                .metric-value {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: #0f172a;
-                    margin-top: 5px;
-                }
-                .table-clean {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 15px;
-                    font-size: 12px;
-                }
-                .table-clean th {
-                    background-color: #005ba8 !important;
-                    color: white !important;
-                    text-align: left;
-                    padding: 10px 12px;
-                    font-weight: 600;
-                }
-                .table-clean td {
-                    border-bottom: 1px solid #e2e8f0;
-                    padding: 10px 12px;
-                    color: #334155;
-                }
-                .table-clean tr:hover {
-                    background-color: #f1f5f9;
-                }
-                .badge-optimal { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
-                .badge-waspada { background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
-                .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
-                
-                @media print {
-                    /* Menyembunyikan navigasi, sidebar, header, tombol, dan tab saat dicetak */
-                    [data-testid="stSidebar"], header, footer, .stTabs, button, .stSelectbox {
-                        display: none !important;
-                    }
-                    body, .stApp {
-                        background: white !important;
-                    }
-                    .slide-card {
-                        border: none !important;
-                        box-shadow: none !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        page-break-after: always;
-                    }
-                }
-            </style>
-            """
-
             # Menyiapkan data string ringkasan
             try:
                 r_text = f"Total realisasi akumulatif wilayah mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Posisi kinerja wilayah berada pada status **{tot_stat}** dengan deviasi {dev_label} sebesar {dev_str}."
@@ -1704,9 +1594,119 @@ else:
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
-            # Merakit HTML Slide Deck
+            # Merakit HTML Slide Deck Lengkap dengan Tombol Cetak window.parent.print()
             presentation_html = f"""
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                
+                .slide-deck {{
+                    font-family: 'Inter', sans-serif;
+                    color: #1a1a1a;
+                    padding: 10px;
+                }}
+                .print-btn {{
+                    background-color: #005ba8;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    font-weight: 600;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: 0 4px 12px rgba(0, 91, 168, 0.25);
+                    margin-bottom: 25px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }}
+                .print-btn:hover {{
+                    background-color: #00427a;
+                }}
+                .slide-card {{
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 40px;
+                    margin-bottom: 35px;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+                }}
+                .slide-header {{
+                    border-bottom: 3px solid #005ba8;
+                    padding-bottom: 15px;
+                    margin-bottom: 25px;
+                }}
+                .slide-title {{
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: #005ba8;
+                    margin: 0;
+                }}
+                .slide-subtitle {{
+                    font-size: 13px;
+                    color: #64748b;
+                    margin-top: 4px;
+                }}
+                .metrics-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 15px;
+                    margin-bottom: 25px;
+                }}
+                .metric-box {{
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-left: 4px solid #005ba8;
+                    border-radius: 8px;
+                    padding: 15px;
+                }}
+                .metric-title {{
+                    font-size: 11px;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                }}
+                .metric-value {{
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin-top: 5px;
+                }}
+                .table-clean {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                    font-size: 12px;
+                }}
+                .table-clean th {{
+                    background-color: #005ba8;
+                    color: white;
+                    text-align: left;
+                    padding: 10px 12px;
+                    font-weight: 600;
+                }}
+                .table-clean td {{
+                    border-bottom: 1px solid #e2e8f0;
+                    padding: 10px 12px;
+                    color: #334155;
+                }}
+                .table-clean tr:hover {{
+                    background-color: #f1f5f9;
+                }}
+                .badge-optimal {{ background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
+                .badge-waspada {{ background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
+                .badge-kritis {{ background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }}
+                
+                @media print {{
+                    @page {{ size: A4 landscape; margin: 10mm; }}
+                    body {{ background: white; }}
+                    .print-btn {{ display: none !important; }}
+                    .slide-card {{ border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; }}
+                }}
+            </style>
+
             <div class="slide-deck">
+                <button class="print-btn" onclick="window.parent.print()">🖨️ Cetak / Simpan sebagai PDF Presentasi</button>
+
                 <!-- SLIDE 1: COVER -->
                 <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
                     <h1 style="font-size: 32px; color: #005ba8; font-weight: 700; margin-bottom: 10px;">Laporan Eksekutif Kinerja Pendapatan</h1>
@@ -1768,8 +1768,8 @@ else:
             </div>
             """
 
-            # Render langsung ke halaman utama Streamlit
-            st.markdown(slide_html_style + presentation_html, unsafe_allow_html=True)
+            # Render menggunakan components.html agar HTML ter-render sempurna & tombol cetak berfungsi
+            components.html(presentation_html, height=1600, scrolling=True)
 
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
