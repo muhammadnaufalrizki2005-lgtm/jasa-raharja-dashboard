@@ -1613,18 +1613,18 @@ else:
             with col_print:
                 print_mode = st.checkbox("🖨️ Mode Cetak Semua Slide (PDF)", value=False, help="Centang opsi ini untuk menampilkan seluruh slide secara berdampingan agar dapat langsung dicetak atau disimpan sebagai PDF lengkap.")
 
-            # TOMBOL CETAK INSTAN BERBASIS TAUTAN HTML/JS YANG BISA DIKLIK
-            st.markdown("""
-                <div style="margin-top: 15px; margin-bottom: 20px; background-color: #f0f7ff; padding: 12px 16px; border-radius: 8px; border: 1px solid #bde0fe; display: flex; align-items: center; justify-content: space-between;">
+            # TOMBOL CETAK INSTAN MENGGUNAKAN STREAMLIT COMPONENTS (DIJAMIN BISA DIKLIK)
+            components.html("""
+                <div style="font-family: 'Inter', sans-serif; background-color: #f0f7ff; padding: 14px 18px; border-radius: 8px; border: 1px solid #bde0fe; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; width: 100%;">
                     <div>
-                        <strong style="color: #005ba8;">Butuh cetak laporan cepat?</strong><br>
+                        <strong style="color: #005ba8; font-size: 14px;">Butuh cetak laporan cepat?</strong><br>
                         <span style="font-size: 13px; color: #4a5568;">Aktifkan centang "Mode Cetak" di atas, lalu klik tombol di samping untuk langsung mencetak dokumen.</span>
                     </div>
-                    <a href="#" onclick="window.print(); return false;" style="background-color: #005ba8; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; display: inline-block; font-family: 'Inter', sans-serif; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <button onclick="window.parent.print();" style="background-color: #005ba8; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         🖨️ Cetak / Simpan PDF
-                    </a>
+                    </button>
                 </div>
-            """, unsafe_allow_html=True)
+            """, height=75)
 
             slide_css = """
             <style>
@@ -1790,6 +1790,33 @@ else:
             st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
             st.markdown("### Viewer Repositori Master Excel")
             
+            v_col1, v_col2 = st.columns(2)
+            with v_col1:
+                viewer_tahun = st.selectbox("Pilih Tahun Repositori", [2026, 2025, 2024], key="viewer_tahun")
+            with v_col2:
+                selected_kategori_ex = st.selectbox(
+                    "Pilih Segmentasi Kategori Dana:",
+                    ["Semua Kategori", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
+                    key="viewer_excel",
+                )
+
+            try:
+                sheet_name = f"Historis{viewer_tahun}"
+                df_viewer = load_historis_excel(viewer_tahun)
+
+                if not df_viewer.empty:
+                    if selected_kategori_ex != "Semua Kategori":
+                        df_viewer = df_viewer[df_viewer["Jenis_Dana"].str.strip() == selected_kategori_ex].reset_index(drop=True)
+                    
+                    st.markdown(f"**Menampilkan data dari sheet: `{sheet_name}`**")
+                    st.dataframe(df_viewer, use_container_width=True, hide_index=True)
+                else:
+                    st.warning(f"Sheet '{sheet_name}' tidak ditemukan atau kosong dalam file Excel.")
+
+            except Exception as e:
+                st.error(
+                    f"Gagal memuat file Excel. Pastikan file 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' ada di direktori yang sama. Detail error: {e}"
+                )
             v_col1, v_col2 = st.columns(2)
             with v_col1:
                 viewer_tahun = st.selectbox("Pilih Tahun Repositori", [2026, 2025, 2024], key="viewer_tahun")
