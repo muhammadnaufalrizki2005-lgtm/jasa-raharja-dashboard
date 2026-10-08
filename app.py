@@ -156,18 +156,139 @@ def get_img_base64(file_path):
 img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
 # ==========================================
-# KONEKSI DATABASE SUPABASE (MENGGUNAKAN SECRETS)
+# KONEKSI DATABASE SUPABASE
 # ==========================================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-
 
 @st.cache_resource
 def init_connection():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
 supabase = init_connection()
+
+# PERBAIKAN: Cache Penarikan Database agar perpindahan slide instan
+@st.cache_data(ttl=600)
+def fetch_all_supabase_data():
+    try:
+        response = supabase.table("penerimaan_harian").select("*").execute()
+        return pd.DataFrame(response.data) if response.data else pd.DataFrame()
+    except Exception:
+        return pd.DataFrame()
+
+# PERBAIKAN: Cache Komputasi Model agar Tab 3 tidak dihitung ulang setiap slide bergeser
+@st.cache_data(show_spinner=False)
+def run_forecast_models(df_monthly_fc):
+    from statsmodels.tsa.holtwinters import ExponentialSmoothing
+    
+    ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"].astype(float)
+    ts_data = ts_data.fillna(0)
+
+    current_year_month = pd.Timestamp(date.today().year, date.today().month, 1)
+    if current_year_month in ts_data.index:
+        ts_data = ts_data.drop(current_year_month)
+
+    last_date = ts_data.index[-1]
+    next_year = last_date.year + 1
+    end_forecast_date = pd.Timestamp(year=next_year, month=12, day=1)
+    forecast_steps = (end_forecast_date.year - last_date.year) * 12 + (end_forecast_date.month - last_date.month)
+    if forecast_steps < 1:
+        forecast_steps = 12
+
+    active_historical = ts_data[ts_data > 0]
+    fallback_mean = active_historical.mean() if not active_historical.empty else 500000000
+
+    methods_results = []
+
+    try:
+        hw_model = ExponentialSmoothing(
+            ts_data, trend="add", seasonal="add", 
+            seasonal_periods=12 if len(ts_data) >= 12 else None
+        ).fit()
+        fc_hw = hw_model.forecast(forecast_steps)
+        fc_hw = np.maximum(fc_hw, fallback_mean * 0.3)
+        
+        hw_fitted = hw_model.fittedvalues
+        common_idx = ts_data.index.intersection(hw_fitted.index)
+        resid_hw = ts_data.loc[common_idx] - hw_fitted.loc[common_idx]
+        mae_hw = np.mean(np.abs(resid_hw))
+        rmse_hw = np.sqrt(np.mean(resid_hw**2))
+        
+        methods_results.append({
+            "name": "Holt-Winters Exponential Smoothing",
+            "mae": mae_hw,
+            "rmse": rmse_hw,
+            "forecast": fc_hw
+        })
+    except Exception:
+        pass
+
+    try:
+        ma_series = ts_data.rolling(window=3, min_periods=1).mean()
+        last_ma = ma_series.iloc[-1] if not pd.isna(ma_series.iloc[-1]) else fallback_mean
+        if last_ma <= 0:
+            last_ma = fallback_mean
+        fc_ma = np.full(forecast_steps, max(last_ma, fallback_mean * 0.5))
+        
+        resid_ma = ts_data - ts_data.shift(1).fillna(fallback_mean)
+        mae_ma = np.mean(np.abs(resid_ma))
+        rmse_ma = np.sqrt(np.mean(resid_ma**2))
+        
+        methods_results.append({
+            "name": "Moving Average (3-Bulan)",
+            "mae": mae_ma,
+            "rmse": rmse_ma,
+            "forecast": fc_ma
+        })
+    except Exception:
+        pass
+
+    try:
+        fc_base = np.full(forecast_steps, fallback_mean)
+        resid_base = ts_data - fallback_mean
+        mae_base = np.mean(np.abs(resid_base))
+        rmse_base = np.sqrt(np.mean(resid_base**2))
+        
+        methods_results.append({
+            "name": "Historical Mean Baseline",
+            "mae": mae_base,
+            "rmse": rmse_base,
+            "forecast": fc_base
+        })
+    except Exception:
+        pass
+
+    if methods_results:
+        best_model = min(methods_results, key=lambda x: x["rmse"])
+        winning_name = best_model["name"]
+        mae = best_model["mae"]
+        rmse = best_model["rmse"]
+        forecast_point = best_model["forecast"]
+    else:
+        winning_name = "Safe Baseline"
+        mae = ts_data.std() if not pd.isna(ts_data.std()) else 10000000
+        rmse = mae
+        forecast_point = np.full(forecast_steps, fallback_mean)
+
+    forecast_point = np.maximum(forecast_point, fallback_mean * 0.4)
+
+    mean_actual = active_historical.mean() if not active_historical.empty else 1.0
+    nrmse = (rmse / mean_actual) if mean_actual > 0 else 0.2
+    persentase_error = min(max(nrmse * 100, 3.0), 30.0)
+    tingkat_keandalan = max(70.0, 100.0 - persentase_error)
+
+    deviasi_faktor = 0.15
+    future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
+
+    df_scenarios = pd.DataFrame({
+        "Bulan Proyeksi": [f"{BULAN_INDO[d.month]} {d.year}" for d in future_dates],
+        "Batas Pengamanan (Pesimis)": forecast_point * (1 - deviasi_faktor),
+        "Target Utama (Moderat)": forecast_point,
+        "Potensi Maksimal (Optimis)": forecast_point * (1 + deviasi_faktor)
+    })
+    
+    return winning_name, tingkat_keandalan, mae, rmse, df_scenarios, forecast_steps
+
 
 # ==========================================
 # TAMPILAN HALAMAN LOGIN
@@ -488,6 +609,7 @@ else:
                 }
                 try:
                     supabase.table("penerimaan_harian").insert(data_insert).execute()
+                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache agar data baru terbaca
                     st.session_state.toast_count += 1
                     st.toast(
                         f"Laporan berhasil disimpan ke sistem! (Loket: {f_loket})",
@@ -515,17 +637,16 @@ else:
             filter_sampai = st.date_input("Sampai Tanggal", value=date.today())
 
         try:
-            res_recent = (
-                supabase.table("penerimaan_harian")
-                .select("*")
-                .gte("tanggal", str(filter_dari))
-                .lte("tanggal", str(filter_sampai))
-                .order("tanggal", desc=True)
-                .execute()
-            )
-            df_recent = (
-                pd.DataFrame(res_recent.data) if res_recent.data else pd.DataFrame()
-            )
+            # PERBAIKAN: Manfaatkan cache fetch_all_supabase_data
+            df_all_db = fetch_all_supabase_data()
+            if not df_all_db.empty:
+                df_all_db['dt_tanggal'] = pd.to_datetime(df_all_db['tanggal']).dt.date
+                df_recent = df_all_db[
+                    (df_all_db['dt_tanggal'] >= filter_dari) & 
+                    (df_all_db['dt_tanggal'] <= filter_sampai)
+                ].sort_values("tanggal", ascending=False).copy()
+            else:
+                df_recent = pd.DataFrame()
 
             if not df_recent.empty:
                 df_show = df_recent.copy()
@@ -641,6 +762,7 @@ else:
                                         "prosentase_siklikal": e_siklikal,
                                         "siklikal_yty": e_yty,
                                     }).eq("id", sel_id).execute()
+                                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache
                                     st.success("Data berhasil diperbarui dalam sistem.")
                                     st.rerun()
                                 except Exception as e:
@@ -649,6 +771,7 @@ else:
                             if delete_btn:
                                 try:
                                     supabase.table("penerimaan_harian").delete().eq("id", sel_id).execute()
+                                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache
                                     st.warning("Data laporan berhasil dihapus dari sistem.")
                                     st.rerun()
                                 except Exception as e:
@@ -662,7 +785,6 @@ else:
     # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
     # ----------------------------------------
     elif st.session_state.role == "Pimpinan":
-        # PERBAIKAN 1: Tambahkan tab_pimpinan_5 dalam array definisi agar tidak NameError
         tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5 = st.tabs([
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
@@ -671,15 +793,12 @@ else:
             "Viewer Excel",
         ])
 
-        try:
-            response = supabase.table("penerimaan_harian").select("*").execute()
-            df_db = pd.DataFrame(response.data) if response.data else pd.DataFrame()
-            if not df_db.empty:
-                df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
-                df_db["Bulan"] = df_db["dt_tanggal"].dt.month
-                df_db["Tahun"] = df_db["dt_tanggal"].dt.year
-        except Exception as e:
-            df_db = pd.DataFrame()
+        # PERBAIKAN: Memanggil database dari fungsi ber-cache
+        df_db = fetch_all_supabase_data()
+        if not df_db.empty:
+            df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
+            df_db["Bulan"] = df_db["dt_tanggal"].dt.month
+            df_db["Tahun"] = df_db["dt_tanggal"].dt.year
 
         def safe_div(a, b):
             return np.where(b == 0, 0, a / b)
@@ -693,7 +812,6 @@ else:
                 unsafe_allow_html=True,
             )
 
-            # PERBAIKAN 2: Penyiapan Default Variable agar tidak Error di Tab 4 jika Empty
             tot_real, tot_cap, tot_stat, dev_label, dev_str = 0, 0, "N/A", "N/A", "Rp 0"
 
             fc1, fc2, fc3 = st.columns(3)
@@ -1347,7 +1465,6 @@ else:
                 unsafe_allow_html=True,
             )
             
-            # PERBAIKAN 3: Siapkan default variabel peramalan (Mencegah NameError di Tab 4 jika gagal meramal)
             winning_name, tingkat_keandalan, mae, rmse = "Model Standar", 0.0, 0.0, 0.0
             df_scenarios_display = pd.DataFrame()
 
@@ -1394,103 +1511,8 @@ else:
 
                 if len(df_monthly_fc) >= 6:
                     try:
-                        from statsmodels.tsa.holtwinters import ExponentialSmoothing
-
-                        ts_data = df_monthly_fc.set_index("Bulan_Dt")["Total_Realisasi"].astype(float)
-                        ts_data = ts_data.fillna(0)
-
-                        current_year_month = pd.Timestamp(date.today().year, date.today().month, 1)
-                        if current_year_month in ts_data.index:
-                            ts_data = ts_data.drop(current_year_month)
-
-                        last_date = ts_data.index[-1]
-                        next_year = last_date.year + 1
-                        end_forecast_date = pd.Timestamp(year=next_year, month=12, day=1)
-                        forecast_steps = (end_forecast_date.year - last_date.year) * 12 + (end_forecast_date.month - last_date.month)
-                        if forecast_steps < 1:
-                            forecast_steps = 12
-
-                        active_historical = ts_data[ts_data > 0]
-                        fallback_mean = active_historical.mean() if not active_historical.empty else 500000000
-
-                        methods_results = []
-
-                        try:
-                            hw_model = ExponentialSmoothing(
-                                ts_data, trend="add", seasonal="add", 
-                                seasonal_periods=12 if len(ts_data) >= 12 else None
-                            ).fit()
-                            fc_hw = hw_model.forecast(forecast_steps)
-                            fc_hw = np.maximum(fc_hw, fallback_mean * 0.3)
-                            
-                            hw_fitted = hw_model.fittedvalues
-                            common_idx = ts_data.index.intersection(hw_fitted.index)
-                            resid_hw = ts_data.loc[common_idx] - hw_fitted.loc[common_idx]
-                            mae_hw = np.mean(np.abs(resid_hw))
-                            rmse_hw = np.sqrt(np.mean(resid_hw**2))
-                            
-                            methods_results.append({
-                                "name": "Holt-Winters Exponential Smoothing",
-                                "mae": mae_hw,
-                                "rmse": rmse_hw,
-                                "forecast": fc_hw
-                            })
-                        except Exception:
-                            pass
-
-                        try:
-                            ma_series = ts_data.rolling(window=3, min_periods=1).mean()
-                            last_ma = ma_series.iloc[-1] if not pd.isna(ma_series.iloc[-1]) else fallback_mean
-                            if last_ma <= 0:
-                                last_ma = fallback_mean
-                            fc_ma = np.full(forecast_steps, max(last_ma, fallback_mean * 0.5))
-                            
-                            resid_ma = ts_data - ts_data.shift(1).fillna(fallback_mean)
-                            mae_ma = np.mean(np.abs(resid_ma))
-                            rmse_ma = np.sqrt(np.mean(resid_ma**2))
-                            
-                            methods_results.append({
-                                "name": "Moving Average (3-Bulan)",
-                                "mae": mae_ma,
-                                "rmse": rmse_ma,
-                                "forecast": fc_ma
-                            })
-                        except Exception:
-                            pass
-
-                        try:
-                            fc_base = np.full(forecast_steps, fallback_mean)
-                            resid_base = ts_data - fallback_mean
-                            mae_base = np.mean(np.abs(resid_base))
-                            rmse_base = np.sqrt(np.mean(resid_base**2))
-                            
-                            methods_results.append({
-                                "name": "Historical Mean Baseline",
-                                "mae": mae_base,
-                                "rmse": rmse_base,
-                                "forecast": fc_base
-                            })
-                        except Exception:
-                            pass
-
-                        if methods_results:
-                            best_model = min(methods_results, key=lambda x: x["rmse"])
-                            winning_name = best_model["name"]
-                            mae = best_model["mae"]
-                            rmse = best_model["rmse"]
-                            forecast_point = best_model["forecast"]
-                        else:
-                            winning_name = "Safe Baseline"
-                            mae = ts_data.std() if not pd.isna(ts_data.std()) else 10000000
-                            rmse = mae
-                            forecast_point = np.full(forecast_steps, fallback_mean)
-
-                        forecast_point = np.maximum(forecast_point, fallback_mean * 0.4)
-
-                        mean_actual = active_historical.mean() if not active_historical.empty else 1.0
-                        nrmse = (rmse / mean_actual) if mean_actual > 0 else 0.2
-                        persentase_error = min(max(nrmse * 100, 3.0), 30.0)
-                        tingkat_keandalan = max(70.0, 100.0 - persentase_error)
+                        # PERBAIKAN: Memanggil dari fungsi model ber-cache
+                        winning_name, tingkat_keandalan, mae, rmse, df_scenarios, forecast_steps = run_forecast_models(df_monthly_fc)
 
                         st.success(
                             f"Metode Peramalan Terpilih: Untuk kategori {kategori_forecast}, sistem menerapkan model {winning_name} "
@@ -1510,16 +1532,6 @@ else:
                             f"Catatan Manajemen: Model estimasi menunjukkan tingkat keandalan {tingkat_keandalan:.1f}% dengan deviasi rata-rata "
                             f"sebesar {mae_str}. Batas pengamanan pesimis direkomendasikan sebagai acuan konservatif dalam penyusunan anggaran."
                         )
-
-                        deviasi_faktor = 0.15
-                        future_dates = pd.date_range(start=ts_data.index[-1] + pd.DateOffset(months=1), periods=forecast_steps, freq="ME")
-
-                        df_scenarios = pd.DataFrame({
-                            "Bulan Proyeksi": [f"{BULAN_INDO[d.month]} {d.year}" for d in future_dates],
-                            "Batas Pengamanan (Pesimis)": forecast_point * (1 - deviasi_faktor),
-                            "Target Utama (Moderat)": forecast_point,
-                            "Potensi Maksimal (Optimis)": forecast_point * (1 + deviasi_faktor)
-                        })
 
                         df_scenarios_display = df_scenarios.copy()
                         for col in ["Batas Pengamanan (Pesimis)", "Target Utama (Moderat)", "Potensi Maksimal (Optimis)"]:
@@ -1850,7 +1862,6 @@ else:
             st.markdown("### 🗄️ Viewer Repositori Master Excel")
             st.markdown("Menampilkan basis data mentah dari sistem untuk keperluan audit dan peninjauan manual.")
             
-            # PERBAIKAN 4: Variabel df diganti dengan fungsi pemanggil data asli
             try:
                 st.dataframe(get_full_unified_df(df_db), use_container_width=True, hide_index=True)
             except Exception as e:
