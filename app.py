@@ -1556,11 +1556,13 @@ else:
             st.markdown("### 🖥 Viewer Slide Presentasi Interaktif")
             st.markdown("Gunakan tombol navigasi di bawah untuk memindahkan halaman slide satu persatu secara interaktif.")
 
+            # Penyiapan Data Teks Ringkasan
             try:
                 r_text = f"Total realisasi akumulatif wilayah mencapai Rp {tot_real:,.0f} ({tot_cap:.2f}% dari target anggaran tahunan). Posisi kinerja wilayah berada pada status **{tot_stat}** dengan deviasi {dev_label} sebesar {dev_str}."
             except Exception:
                 r_text = "Data ringkasan eksekutif belum tersedia."
 
+            # Penyiapan Data Tabel Kinerja
             try:
                 cols_slide_clean = ["Loket SAMSAT", "Target Anggaran", "Akumulasi s.d Bulan Ini (Thn Berjalan)", "Persentase Capaian (%)", "Status Kinerja"]
                 df_slide_sub = df_final[cols_slide_clean].copy()
@@ -1582,6 +1584,7 @@ else:
             except Exception:
                 table_clean_html = "<p>Data tabel belum tersedia.</p>"
 
+            # Penyiapan Data Skenario Proyeksi
             try:
                 win_name = winning_name if 'winning_name' in locals() else "Standard Model"
                 t_keandalan = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
@@ -1596,6 +1599,7 @@ else:
             # TATA LETAK TOMBOL NAVIGASI
             col_nav1, col_nav2, col_nav3 = st.columns([1.5, 1, 1.5])
             total_slides = 3
+            
             with col_nav1:
                 if st.button("⬅️ Slide Sebelumnya", use_container_width=True, key="btn_prev_s"):
                     if st.session_state.slide_idx > 0:
@@ -1611,14 +1615,20 @@ else:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
+            # CSS & HTML SLIDE
             slide_css = """
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
                 
+                body { margin: 0; padding: 0; background: #ffffff; }
+                
                 .slide-deck {
                     font-family: 'Inter', sans-serif;
                     color: #1a1a1a;
+                    max-width: 1000px;
+                    margin: 0 auto;
                 }
+                
                 .print-banner {
                     background-color: #f0f7ff;
                     padding: 12px 18px;
@@ -1629,6 +1639,7 @@ else:
                     justify-content: space-between;
                     margin-bottom: 25px;
                 }
+                
                 .print-btn {
                     background-color: #005ba8;
                     color: white;
@@ -1641,98 +1652,87 @@ else:
                     white-space: nowrap;
                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 }
-                .print-btn:hover {
-                    background-color: #004580;
-                }
+                
+                .print-btn:hover { background-color: #004580; }
+                
                 .slide-card {
                     background: #ffffff;
                     border: 1px solid #e2e8f0;
                     border-radius: 12px;
-                    padding: 40px;
-                    margin-bottom: 35px;
+                    padding: 40px 50px;
                     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+                    aspect-ratio: 16 / 9;
+                    display: flex;
+                    flex-direction: column;
+                    box-sizing: border-box;
+                    position: relative;
                 }
-                .slide-header {
-                    border-bottom: 3px solid #005ba8;
-                    padding-bottom: 15px;
-                    margin-bottom: 25px;
+                
+                .slide-title-page {
+                    justify-content: center; 
+                    align-items: center;    
+                    text-align: center;
+                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                    border: 2px solid #cbd5e1;
                 }
-                .slide-title {
-                    font-size: 22px;
-                    font-weight: 700;
-                    color: #005ba8;
-                    margin: 0;
-                }
-                .slide-subtitle {
-                    font-size: 13px;
-                    color: #64748b;
-                    margin-top: 4px;
-                }
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 15px;
-                    margin-bottom: 25px;
-                }
-                .metric-box {
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-left: 4px solid #005ba8;
-                    border-radius: 8px;
-                    padding: 15px;
-                }
-                .metric-title {
-                    font-size: 11px;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    font-weight: 600;
-                }
-                .metric-value {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: #0f172a;
-                    margin-top: 5px;
-                }
-                .table-clean {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 15px;
-                    font-size: 12px;
-                }
-                .table-clean th {
-                    background-color: #005ba8;
-                    color: white;
-                    text-align: left;
-                    padding: 10px 12px;
-                    font-weight: 600;
-                }
-                .table-clean td {
-                    border-bottom: 1px solid #e2e8f0;
-                    padding: 10px 12px;
-                    color: #334155;
-                }
-                .table-clean tr:hover {
-                    background-color: #f1f5f9;
-                }
+                .slide-title-page h1 { font-size: 38px; color: #005ba8; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+                .slide-title-page h3 { font-size: 22px; color: #334155; font-weight: 600; margin-bottom: 30px; }
+                .slide-title-page .report-period { font-size: 15px; color: #475569; background: #ffffff; padding: 8px 24px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-weight: 500; }
+                .slide-title-page .footer-note { position: absolute; bottom: 30px; font-size: 11px; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
+
+                .slide-header { border-bottom: 3px solid #005ba8; padding-bottom: 12px; margin-bottom: 20px; }
+                .slide-title { font-size: 22px; font-weight: 700; color: #005ba8; margin: 0; }
+                .slide-subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+                
+                .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+                .metric-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #005ba8; border-radius: 8px; padding: 15px; }
+                .metric-title { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+                .metric-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 5px; }
+                
+                .insight-box { background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 16px; border-radius: 6px; margin-bottom: 15px; font-size: 12.5px; color: #166534; line-height: 1.5; }
+                
+                .table-clean { width: 100%; border-collapse: collapse; font-size: 12px; }
+                .table-clean th { background-color: #005ba8; color: white; text-align: left; padding: 8px 12px; font-weight: 600; }
+                .table-clean td { border-bottom: 1px solid #e2e8f0; padding: 8px 12px; color: #334155; }
+                .table-clean tr:hover { background-color: #f1f5f9; }
+                
                 .badge-optimal { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 .badge-waspada { background: #fef9c3; color: #854d0e; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 .badge-kritis { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
                 
                 @media print {
                     @page { size: A4 landscape; margin: 0; }
-                    body { background: white; -webkit-print-color-adjust: exact; padding: 15mm; }
+                    body { background: white; -webkit-print-color-adjust: exact; margin: 0; padding: 0; }
                     .print-banner { display: none !important; }
-                    .slide-card { border: none !important; box-shadow: none !important; padding: 20px !important; margin: 0 !important; page-break-after: always; }
+                    .slide-deck { max-width: 100% !important; }
+                    .slide-card { 
+                        border: none !important; 
+                        box-shadow: none !important; 
+                        margin: 0 !important; 
+                        width: 297mm !important; 
+                        height: 210mm !important; 
+                        page-break-after: always !important; 
+                        page-break-inside: avoid !important;
+                        border-radius: 0 !important;
+                        padding: 15mm 20mm !important;
+                        aspect-ratio: auto !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                    }
+                    .slide-title-page {
+                        justify-content: center !important;
+                        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+                    }
                 }
             </style>
             """
 
             slide_1_html = f"""
-            <div class="slide-card" style="text-align: center; padding: 70px 30px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);">
-                <h1 style="font-size: 32px; color: #005ba8; font-weight: 700; margin-bottom: 10px;">Laporan Eksekutif Kinerja Pendapatan</h1>
-                <h3 style="font-size: 18px; color: #334155; font-weight: 600; margin-bottom: 25px;">PT Jasa Raharja Kanwil DIY</h3>
-                <p style="font-size: 15px; color: #64748b;">Periode Pelaporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></p>
-                <div style="margin-top: 40px; font-size: 11px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">Dihasilkan Secara Otomatis oleh Portal Monitoring Eksekutif</div>
+            <div class="slide-card slide-title-page">
+                <h1>Laporan Eksekutif Kinerja Pendapatan</h1>
+                <h3>PT Jasa Raharja Kanwil DIY</h3>
+                <div class="report-period">Periode Pelaporan: <strong>{BULAN_INDO[target_bulan_pilih]} {target_tahun_pilih}</strong></div>
+                <div class="footer-note">Dihasilkan Secara Otomatis oleh Portal Monitoring Eksekutif</div>
             </div>
             """
 
@@ -1756,10 +1756,10 @@ else:
                         <div class="metric-value" style="color: #dc3545;">{tot_stat}</div>
                     </div>
                 </div>
-                <div style="background-color: #f1f5f9; border-left: 4px solid #005ba8; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #334155;">
+                <div class="insight-box">
                     💡 <strong>Insight Pimpinan:</strong> {r_text}
                 </div>
-                <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Rekapitulasi Kinerja per Loket SAMSAT</h4>
+                <h4 style="font-size: 14px; color: #0f172a; margin-top: 5px; margin-bottom: 8px;">Rekapitulasi Kinerja per Loket SAMSAT</h4>
                 {table_clean_html}
             </div>
             """
@@ -1773,7 +1773,7 @@ else:
                 <div class="metrics-grid">
                     <div class="metric-box">
                         <div class="metric-title">Model Peramalan Terbaik</div>
-                        <div class="metric-value" style="font-size: 14px; margin-top: 6px;">{win_name}</div>
+                        <div class="metric-value" style="font-size: 15px; margin-top: 6px;">{win_name}</div>
                     </div>
                     <div class="metric-box">
                         <div class="metric-title">Tingkat Keandalan Model</div>
@@ -1784,27 +1784,22 @@ else:
                         <div class="metric-value" style="color: #dc2626; font-size: 15px; margin-top: 6px;">Rp {m_val}</div>
                     </div>
                 </div>
-                <h4 style="font-size: 14px; color: #0f172a; margin-top: 15px; margin-bottom: 5px;">Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
+                <h4 style="font-size: 14px; color: #0f172a; margin-top: 5px; margin-bottom: 8px;">Matriks Proyeksi Skenario 6 Bulan ke Depan</h4>
                 {table_sc_html}
             </div>
             """
 
             slides_list = [slide_1_html, slide_2_html, slide_3_html]
-            
-            # Gabungkan semua slide HANYA untuk kebutuhan cetak PDF
             all_slides_html = "".join(slides_list)
-            
-            # Tampilan di layar HANYA memuat slide yang sedang aktif sesuai nomor halaman
             current_slide_html = slides_list[st.session_state.slide_idx]
 
-            # Skrip JS untuk membuka jendela cetak khusus yang memuat SEMUA slide
             print_script = """
             <script>
                 function printSlides() {
-                    var printWindow = window.open('', '_blank', 'height=700,width=1000');
+                    var printWindow = window.open('', '_blank');
                     printWindow.document.write('<html><head><title>Laporan Eksekutif Jasa Raharja</title>');
                     printWindow.document.write('<style>' + document.querySelector('style').innerHTML + '</style>');
-                    printWindow.document.write('</head><body style="background: white; padding: 20px; margin: 0;">');
+                    printWindow.document.write('</head><body style="background: white; padding: 0; margin: 0;">');
                     printWindow.document.write('<div class="slide-deck">');
                     printWindow.document.write(%s);
                     printWindow.document.write('</div>');
@@ -1819,7 +1814,6 @@ else:
             </script>
             """ % repr(all_slides_html)
 
-            # Komponen visual di Streamlit (Hanya menampilkan slide aktif)
             full_presentation_component = f"""
             {slide_css}
             {print_script}
@@ -1835,36 +1829,30 @@ else:
             </div>
             """
 
-            # Ubah height menjadi 750 agar pas untuk 1 slide, dan matikan scrolling
             components.html(full_presentation_component, height=750, scrolling=False)
 
-            st.markdown("<hr style='border-top: 2px solid #eaedf2; margin-top: 30px;'><br>", unsafe_allow_html=True)
-            st.markdown("### Viewer Repositori Master Excel")
+
+        # ---------------- TAB 5: VIEWER REPOSITORI MASTER EXCEL ----------------
+        with tab_pimpinan_5:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 🗄️ Viewer Repositori Master Excel")
+            st.markdown("Menampilkan basis data mentah dari sistem untuk keperluan audit dan peninjauan manual.")
             
-            v_col1, v_col2 = st.columns(2)
-            with v_col1:
-                viewer_tahun = st.selectbox("Pilih Tahun Repositori", [2026, 2025, 2024], key="viewer_tahun")
-            with v_col2:
-                selected_kategori_ex = st.selectbox(
-                    "Pilih Segmentasi Kategori Dana:",
-                    ["Semua Kategori", "Kartu Dana / Sertifikat", "SWDKLLJ", "Denda"],
-                    key="viewer_excel",
-                )
-
+            # Memastikan tabel mentah dimuat (asumsi nama variabel tabelmu adalah 'df')
             try:
-                sheet_name = f"Historis{viewer_tahun}"
-                df_viewer = load_historis_excel(viewer_tahun)
+                st.dataframe(df, use_container_width=True)
+            except NameError:
+                st.info("💡 Data repositori master belum dimuat atau tidak tersedia dalam memori aplikasi.")
 
-                if not df_viewer.empty:
-                    if selected_kategori_ex != "Semua Kategori":
-                        df_viewer = df_viewer[df_viewer["Jenis_Dana"].str.strip() == selected_kategori_ex].reset_index(drop=True)
-                    
-                    st.markdown(f"**Menampilkan data dari sheet: `{sheet_name}`**")
-                    st.dataframe(df_viewer, use_container_width=True, hide_index=True)
-                else:
-                    st.warning(f"Sheet '{sheet_name}' tidak ditemukan atau kosong dalam file Excel.")
-
-            except Exception as e:
-                st.error(
-                    f"Gagal memuat file Excel. Pastikan file 'Penerimaan Sektor UU 34 Tahun 1964.xlsx' ada di direktori yang sama. Detail error: {e}"
-                )
+        # ---------------- BAGIAN FOOTER / PENUTUP APLIKASI ----------------
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown(
+            """
+            <div style='text-align: center; color: #64748b; font-size: 12px;'>
+                <strong>Hak Cipta © 2026 PT Jasa Raharja Cabang D.I. Yogyakarta</strong><br>
+                <em>Dokumen dan dashboard ini bersifat rahasia (Strictly Confidential) dan diperuntukkan khusus bagi Pimpinan Cabang.</em>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
