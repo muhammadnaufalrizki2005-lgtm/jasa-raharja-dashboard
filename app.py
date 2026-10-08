@@ -662,11 +662,13 @@ else:
     # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
     # ----------------------------------------
     elif st.session_state.role == "Pimpinan":
-        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4 = st.tabs([
+        # PERBAIKAN 1: Tambahkan tab_pimpinan_5 dalam array definisi agar tidak NameError
+        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5 = st.tabs([
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
             "Proyeksi & Skenario Kinerja",
-            "Slide Presentasi & Viewer Excel",
+            "Slide Presentasi",
+            "Viewer Excel",
         ])
 
         try:
@@ -690,6 +692,9 @@ else:
                 "<p style='color: #6c757d; margin-bottom: 24px;'>Pilih filter di bawah ini untuk menghasilkan komparasi kinerja tahun berjalan terhadap tahun sebelumnya.</p>",
                 unsafe_allow_html=True,
             )
+
+            # PERBAIKAN 2: Penyiapan Default Variable agar tidak Error di Tab 4 jika Empty
+            tot_real, tot_cap, tot_stat, dev_label, dev_str = 0, 0, "N/A", "N/A", "Rp 0"
 
             fc1, fc2, fc3 = st.columns(3)
             with fc1:
@@ -1341,6 +1346,10 @@ else:
                 "<p style='color: #6c757d; margin-bottom: 24px;'>Evaluasi akurasi model statistik dan proyeksi skenario manajemen risiko berbasis data historis.</p>",
                 unsafe_allow_html=True,
             )
+            
+            # PERBAIKAN 3: Siapkan default variabel peramalan (Mencegah NameError di Tab 4 jika gagal meramal)
+            winning_name, tingkat_keandalan, mae, rmse = "Model Standar", 0.0, 0.0, 0.0
+            df_scenarios_display = pd.DataFrame()
 
             list_history_dfs = []
             for thn in [2024, 2025, 2026]:
@@ -1550,7 +1559,8 @@ else:
                     st.warning(f"Data historis bulanan untuk kategori ini hanya tersedia {len(df_monthly_fc)} bulan. Minimal 6 bulan diperlukan.")
             else:
                 st.info("Belum ada data historis yang tersedia.")
-# ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
+
+        # ---------------- TAB 4: SLIDE PRESENTASI BERFORMAT SLIDE INTERAKTIF ----------------
         with tab_pimpinan_4:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### 🖥 Viewer Slide Presentasi Interaktif")
@@ -1587,12 +1597,15 @@ else:
             # Penyiapan Data Skenario Proyeksi
             try:
                 win_name = winning_name if 'winning_name' in locals() else "Standard Model"
-                t_keandalan = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
+                t_keandalan_val = f"{tingkat_keandalan:.1f}%" if 'tingkat_keandalan' in locals() else "N/A"
                 m_val = f"Rp {mae:,.0f}".replace(",", ".") if 'mae' in locals() else "N/A"
-                table_sc_html = df_scenarios_display.head(6).to_html(classes='table-clean', index=False) if 'df_scenarios_display' in locals() else "<p>Data skenario belum tersedia.</p>"
+                if 'df_scenarios_display' in locals() and not df_scenarios_display.empty:
+                    table_sc_html = df_scenarios_display.head(6).to_html(classes='table-clean', index=False)
+                else:
+                    table_sc_html = "<p>Data skenario belum tersedia atau kurang.</p>"
             except Exception:
                 win_name = "Standard Model"
-                t_keandalan = "N/A"
+                t_keandalan_val = "N/A"
                 m_val = "N/A"
                 table_sc_html = "<p>Data skenario belum tersedia.</p>"
 
@@ -1777,7 +1790,7 @@ else:
                     </div>
                     <div class="metric-box">
                         <div class="metric-title">Tingkat Keandalan Model</div>
-                        <div class="metric-value" style="color: #16a34a;">{t_keandalan}</div>
+                        <div class="metric-value" style="color: #16a34a;">{t_keandalan_val}</div>
                     </div>
                     <div class="metric-box">
                         <div class="metric-title">Rata-rata Galat (MAE)</div>
@@ -1831,18 +1844,17 @@ else:
 
             components.html(full_presentation_component, height=750, scrolling=False)
 
-
         # ---------------- TAB 5: VIEWER REPOSITORI MASTER EXCEL ----------------
         with tab_pimpinan_5:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### 🗄️ Viewer Repositori Master Excel")
             st.markdown("Menampilkan basis data mentah dari sistem untuk keperluan audit dan peninjauan manual.")
             
-            # Memastikan tabel mentah dimuat (asumsi nama variabel tabelmu adalah 'df')
+            # PERBAIKAN 4: Variabel df diganti dengan fungsi pemanggil data asli
             try:
-                st.dataframe(df, use_container_width=True)
-            except NameError:
-                st.info("💡 Data repositori master belum dimuat atau tidak tersedia dalam memori aplikasi.")
+                st.dataframe(get_full_unified_df(df_db), use_container_width=True, hide_index=True)
+            except Exception as e:
+                st.info(f"💡 Data repositori master belum dimuat atau tidak tersedia: {e}")
 
         # ---------------- BAGIAN FOOTER / PENUTUP APLIKASI ----------------
         st.markdown("<br>", unsafe_allow_html=True)
