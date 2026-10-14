@@ -192,8 +192,9 @@ BULAN_INDO = {
 # ==========================================
 # FUNGSI PEMBACAAN EXCEL DARI UPLOADER
 # ==========================================
-@st.cache_data
+# HAPUS @st.cache_data di sini
 def load_excel_file(uploaded_file):
+    """Membaca file uploader sekali ke dalam memori untuk performa"""
     if uploaded_file is not None:
         try:
             return pd.ExcelFile(uploaded_file)
