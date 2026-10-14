@@ -791,7 +791,7 @@ else:
         # 📂 Fitur Upload File Excel Dinamis
         st.markdown("### 📂 Unggah Data Master Excel")
         uploaded_file = st.file_uploader(
-            "Unggah file Excel (misal: data_kendaraan_targeted_2026-10-12T07_25_47.273389344+07_00_2.xlsx) untuk diproses ke dalam laporan di bawah ini:", 
+            "Unggah file Excel:", 
             type=["xlsx", "xls"]
         )
         xls_master = load_excel_file(uploaded_file)
