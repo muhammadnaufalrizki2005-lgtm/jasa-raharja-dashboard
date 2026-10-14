@@ -791,8 +791,8 @@ else:
         # 📂 Fitur Upload File Excel Dinamis
         st.markdown("### 📂 Unggah Data Master Excel")
         uploaded_file = st.file_uploader(
-            "Unggah file Excel:", 
-            type=["xlsx", "xls"]
+            "Unggah file Excel Laporan Realisasi:", 
+            type=["xlsx", "xls"], key="uploader_master"
         )
         xls_master = load_excel_file(uploaded_file)
         
@@ -801,12 +801,13 @@ else:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5 = st.tabs([
+        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5, tab_pimpinan_6 = st.tabs([
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
             "Proyeksi & Skenario Kinerja",
             "Slide Presentasi",
             "Viewer Excel",
+            "Monitoring Kepatuhan Kendaraan"
         ])
 
         df_db = fetch_all_supabase_data()
@@ -1880,6 +1881,109 @@ else:
                 st.dataframe(get_full_unified_df(df_db, xls_master), use_container_width=True, hide_index=True)
             except Exception as e:
                 st.info(f"💡 Data repositori master belum dimuat atau tidak tersedia: {e}")
+
+        # ---------------- TAB 6: MONITORING KEPATUHAN KENDARAAN ----------------
+        with tab_pimpinan_6:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 📊 Dashboard Monitoring Kepatuhan Pembayaran Kendaraan")
+            st.markdown("Unggah file Excel data SAMSAT Anda di bawah ini untuk memvisualisasikan tingkat kepatuhan. Anda dapat menghapus atau mengganti file kapan saja dengan menekan tanda silang ('X') pada kotak unggah.")
+            
+            # File uploader mandiri khusus untuk data kendaraan
+            uploaded_kendaraan = st.file_uploader("Unggah File Data Kendaraan (.xlsx/.xls)", type=["xlsx", "xls"], key="uploader_kendaraan")
+            
+            if uploaded_kendaraan is not None:
+                try:
+                    df_kendaraan = pd.read_excel(uploaded_kendaraan, sheet_name="Query result")
+                    
+                    if 'last_referesh_date' in df_kendaraan.columns:
+                        df_kendaraan['last_referesh_date'] = pd.to_datetime(df_kendaraan['last_referesh_date'])
+                    if 'tgl_mati_yad' in df_kendaraan.columns:
+                        df_kendaraan['tgl_mati_yad'] = pd.to_datetime(df_kendaraan['tgl_mati_yad'])
+
+                    # 1. Filter Interaktif
+                    st.markdown("#### 🔍 Filter Interaktif")
+                    f_col1, f_col2, f_col3 = st.columns(3)
+                    with f_col1:
+                        samsat_filter = st.multiselect(
+                            "Pilih Samsat Asal", 
+                            options=df_kendaraan["samsat_asal_nama"].dropna().unique(), 
+                            default=df_kendaraan["samsat_asal_nama"].dropna().unique()
+                        )
+                    with f_col2:
+                        kota_filter = st.multiselect(
+                            "Pilih Kota/Kabupaten", 
+                            options=df_kendaraan["alamat_kotakab"].dropna().unique(), 
+                            default=df_kendaraan["alamat_kotakab"].dropna().unique()
+                        )
+                    with f_col3:
+                        status_bayar_filter = st.multiselect(
+                            "Status Pembayaran", 
+                            options=df_kendaraan["status_bayar"].dropna().unique(), 
+                            default=df_kendaraan["status_bayar"].dropna().unique()
+                        )
+
+                    # Terapkan filter
+                    df_k_filtered = df_kendaraan[
+                        (df_kendaraan["samsat_asal_nama"].isin(samsat_filter)) &
+                        (df_kendaraan["alamat_kotakab"].isin(kota_filter)) &
+                        (df_kendaraan["status_bayar"].isin(status_bayar_filter))
+                    ]
+
+                    # 2. Metrik KPI
+                    st.markdown("<hr style='border-top: 1px dashed #eaedf2; margin: 15px 0;'>", unsafe_allow_html=True)
+                    st.markdown("#### 📈 Ringkasan Kepatuhan")
+                    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+                    total_kendaraan = len(df_k_filtered)
+                    lunas = len(df_k_filtered[df_k_filtered["status_bayar"] == "SUDAH LUNAS"])
+                    belum_lunas = len(df_k_filtered[df_k_filtered["status_bayar"] == "BELUM LUNAS"])
+                    persentase = (lunas / total_kendaraan) * 100 if total_kendaraan > 0 else 0
+
+                    kpi1.metric("Total Kendaraan Target", f"{total_kendaraan:,}")
+                    kpi2.metric("Sudah Lunas", f"{lunas:,}")
+                    kpi3.metric("Belum Lunas", f"{belum_lunas:,}")
+                    kpi4.metric("Tingkat Kepatuhan", f"{persentase:.2f}%")
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # 3. Visualisasi Grafik
+                    chart_k1, chart_k2 = st.columns(2)
+                    with chart_k1:
+                        st.markdown("**Distribusi Status Pembayaran**")
+                        fig_status = px.pie(
+                            df_k_filtered, names='status_bayar', hole=0.4, 
+                            color_discrete_map={'BELUM LUNAS':'#ef553b', 'SUDAH LUNAS':'#00cc96'}
+                        )
+                        st.plotly_chart(fig_status, use_container_width=True)
+                    with chart_k2:
+                        st.markdown("**Volume Tunggakan per Samsat**")
+                        samsat_df = df_k_filtered['samsat_asal_nama'].value_counts().reset_index()
+                        samsat_df.columns = ['Samsat', 'Jumlah']
+                        fig_samsat = px.bar(
+                            samsat_df, y='Samsat', x='Jumlah', orientation='h', 
+                            color='Jumlah', color_continuous_scale='Blues'
+                        )
+                        fig_samsat.update_layout(yaxis={'categoryorder':'total ascending'})
+                        st.plotly_chart(fig_samsat, use_container_width=True)
+
+                    chart_k3, chart_k4 = st.columns(2)
+                    with chart_k3:
+                        st.markdown("**Prioritas Penagihan**")
+                        prioritas_df = df_k_filtered['prioritas'].value_counts().reset_index()
+                        prioritas_df.columns = ['Prioritas', 'Jumlah']
+                        fig_prio = px.bar(prioritas_df, x='Prioritas', y='Jumlah', color='Prioritas', text_auto=True)
+                        st.plotly_chart(fig_prio, use_container_width=True)
+                    with chart_k4:
+                        st.markdown("**Kelompok Usia Tunggakan**")
+                        usia_df = df_k_filtered['kelompok_selisih_hari_tunggakan'].value_counts().reset_index()
+                        usia_df.columns = ['Usia Tunggakan', 'Jumlah']
+                        fig_usia = px.bar(usia_df, x='Usia Tunggakan', y='Jumlah', color='Usia Tunggakan', text_auto=True)
+                        st.plotly_chart(fig_usia, use_container_width=True)
+                        
+                except Exception as e:
+                    st.error(f"Gagal memproses file. Pastikan format file dan sheet 'Query result' tersedia. Detail: {e}")
+            else:
+                st.info("💡 Data belum dimuat. Silakan unggah file data SAMSAT Anda.")
 
         # ---------------- BAGIAN FOOTER / PENUTUP APLIKASI ----------------
         st.markdown("<br>", unsafe_allow_html=True)
