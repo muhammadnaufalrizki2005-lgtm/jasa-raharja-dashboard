@@ -13,6 +13,118 @@ import streamlit.components.v1 as components
 from supabase import create_client
 
 # ==========================================
+# ⚙️ FUNGSI MACRO GASPOLL (VBA TO PYTHON)
+# ==========================================
+def hitung_tarif_sw(kode_gol, rentang_hari):
+    """Fungsi Python pengganti Macro VBA HitungTarifSW"""
+    try:
+        kode = str(kode_gol).strip().upper()
+        rentang = str(rentang_hari).strip().upper()
+        
+        pokok = 0
+        if kode == "A": pokok = 3000
+        elif kode == "B": pokok = 23000
+        elif kode in ["C1", "C"]: pokok = 35000
+        elif kode == "C2": pokok = 83000
+        elif kode == "DP": pokok = 143000
+        elif kode == "DU": pokok = 73000
+        elif kode == "EP": pokok = 153000
+        elif kode == "EU": pokok = 90000
+        elif kode == "F": pokok = 163000
+        
+        denda = 0
+        if "1-90" in rentang or rentang == "90":
+            if kode == "B": denda = 5000
+            elif kode in ["C1", "C"]: denda = 8000
+            elif kode == "C2": denda = 20000
+            elif kode == "DP": denda = 35000
+            elif kode == "DU": denda = 17500
+            elif kode == "EP": denda = 37500
+            elif kode == "EU": denda = 21750
+            elif kode == "F": denda = 40000
+        elif "91-180" in rentang or rentang == "180":
+            if kode == "B": denda = 10000
+            elif kode in ["C1", "C"]: denda = 16000
+            elif kode == "C2": denda = 40000
+            elif kode == "DP": denda = 70000
+            elif kode == "DU": denda = 35000
+            elif kode == "EP": denda = 75000
+            elif kode == "EU": denda = 43500
+            elif kode == "F": denda = 80000
+        elif "181-270" in rentang or rentang == "270":
+            if kode == "B": denda = 15000
+            elif kode in ["C1", "C"]: denda = 24000
+            elif kode == "C2": denda = 60000
+            elif kode == "DP": denda = 100000
+            elif kode == "DU": denda = 52500
+            elif kode == "EP": denda = 100000
+            elif kode == "EU": denda = 65250
+            elif kode == "F": denda = 100000
+        elif "270" in rentang and "DST" in rentang:
+            if kode == "B": denda = 20000
+            elif kode in ["C1", "C"]: denda = 32000
+            elif kode == "C2": denda = 80000
+            elif kode == "DP": denda = 100000
+            elif kode == "DU": denda = 70000
+            elif kode == "EP": denda = 100000
+            elif kode == "EU": denda = 87000
+            elif kode == "F": denda = 100000
+            
+        return pokok + denda
+    except:
+        return 0
+
+def process_gaspoll_macro(df):
+    """Fungsi Python pengganti Macro VBA RekapGaspollSempurna_Final"""
+    df_clean = df.dropna(subset=['tgl_tindak_lanjut']).copy()
+    df_clean['Tanggal'] = df_clean['tgl_tindak_lanjut'].astype(str).str[:10]
+    
+    col_kelompok = 'kelompok_selisih_hari_tunggakan' if 'kelompok_selisih_hari_tunggakan' in df_clean.columns else 'kelompok selisih hari tunggakan'
+    col_gol = 'kode_golongan' if 'kode_golongan' in df_clean.columns else 'kode golongan'
+    
+    df_clean['Tarif_SW'] = df_clean.apply(lambda r: hitung_tarif_sw(r.get(col_gol, ''), r.get(col_kelompok, '')), axis=1)
+    
+    def is_valid_trans(x):
+        if pd.isna(x): return 0
+        xs = str(x).strip().lower()
+        if xs in ["", "-", "nan", "nat"]: return 0
+        return 1
+    
+    col_trans = 'tgl_transaksi_sw' if 'tgl_transaksi_sw' in df_clean.columns else 'tgl transaksi sw'
+    if col_trans in df_clean.columns:
+        df_clean['Is_Realized'] = df_clean[col_trans].apply(is_valid_trans)
+    else:
+        df_clean['Is_Realized'] = 0
+        
+    df_clean['Realisasi_SW'] = df_clean['Tarif_SW'] * df_clean['Is_Realized']
+    
+    col_samsat = 'samsat_asal_nama' if 'samsat_asal_nama' in df_clean.columns else 'samsat asal nama'
+    if col_samsat not in df_clean.columns:
+        df_clean[col_samsat] = "Tidak Diketahui"
+        
+    gaspoll = df_clean.groupby(['Tanggal', col_samsat]).agg(
+        Sasaran=('no_polisi', 'count'),
+        Realisasi_Unit=('Is_Realized', 'sum'),
+        Target_Nominal=('Tarif_SW', 'sum'),
+        Realisasi_SW=('Realisasi_SW', 'sum')
+    ).reset_index()
+    
+    gaspoll.rename(columns={col_samsat: 'Loket SAMSAT'}, inplace=True)
+    gaspoll['Dihubungi'] = gaspoll['Sasaran']
+    gaspoll['Target_Unit'] = gaspoll['Sasaran']
+    gaspoll['OS_Awal'] = gaspoll['Target_Nominal']
+    gaspoll['OS_Akhir'] = gaspoll['Target_Nominal'] - gaspoll['Realisasi_SW']
+    
+    gaspoll['Coverage (%)'] = (gaspoll['Dihubungi'] / gaspoll['Sasaran']) * 100
+    gaspoll['Conversion (%)'] = np.where(gaspoll['Dihubungi'] == 0, 0, (gaspoll['Realisasi_Unit'] / gaspoll['Dihubungi']) * 100)
+    gaspoll['Gap_Nominal'] = gaspoll['Realisasi_SW'] - gaspoll['Target_Nominal']
+    gaspoll['Recovery (%)'] = np.where(gaspoll['OS_Awal'] == 0, 0, ((gaspoll['OS_Awal'] - gaspoll['OS_Akhir']) / gaspoll['OS_Awal']) * 100)
+    
+    cols = ['Tanggal', 'Loket SAMSAT', 'Sasaran', 'Dihubungi', 'Coverage (%)', 'Target_Unit', 'Realisasi_Unit', 'Conversion (%)', 'Target_Nominal', 'Realisasi_SW', 'Gap_Nominal', 'OS_Awal', 'OS_Akhir', 'Recovery (%)']
+    return gaspoll[cols]
+
+
+# ==========================================
 # ⚙️ SISTEM LOGIN & SESI
 # ==========================================
 if "logged_in" not in st.session_state:
@@ -32,7 +144,7 @@ if "slide_idx" not in st.session_state:
     st.session_state.slide_idx = 0
 
 # ==========================================
-# ⚙️ LOGIKA PENENTUAN JUDUL TAB BROWSER (DYNAMIC)
+# ⚙️ LOGIKA PENENTUAN JUDUL TAB BROWSER
 # ==========================================
 if not st.session_state.logged_in:
     dynamic_title = "Portal Monitoring DIY"
@@ -82,7 +194,6 @@ BULAN_INDO = {
 # ==========================================
 @st.cache_data
 def load_excel_file(uploaded_file):
-    """Membaca file uploader sekali ke dalam memori untuk performa"""
     if uploaded_file is not None:
         try:
             return pd.ExcelFile(uploaded_file)
@@ -801,13 +912,15 @@ else:
         
         st.markdown("<br>", unsafe_allow_html=True)
 
-        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5, tab_pimpinan_6 = st.tabs([
+        tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5, tab_pimpinan_6, tab_pimpinan_7, tab_pimpinan_8 = st.tabs([
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
             "Proyeksi & Skenario Kinerja",
             "Slide Presentasi",
             "Viewer Excel",
-            "Monitoring Kepatuhan Kendaraan"
+            "Monitoring Kepatuhan Kendaraan",
+            "Hitung Gaspoll (VBA)",
+            "Penerimaan Libur SAMSAT"
         ])
 
         df_db = fetch_all_supabase_data()
@@ -1888,7 +2001,6 @@ else:
             st.markdown("### 📊 Dashboard Monitoring Kepatuhan Pembayaran Kendaraan")
             st.markdown("Unggah file Excel data SAMSAT Anda di bawah ini untuk memvisualisasikan tingkat kepatuhan. Anda dapat menghapus atau mengganti file kapan saja dengan menekan tanda silang ('X') pada kotak unggah.")
             
-            # File uploader mandiri khusus untuk data kendaraan
             uploaded_kendaraan = st.file_uploader("Unggah File Data Kendaraan (.xlsx/.xls)", type=["xlsx", "xls"], key="uploader_kendaraan")
             
             if uploaded_kendaraan is not None:
@@ -1900,7 +2012,6 @@ else:
                     if 'tgl_mati_yad' in df_kendaraan.columns:
                         df_kendaraan['tgl_mati_yad'] = pd.to_datetime(df_kendaraan['tgl_mati_yad'])
 
-                    # 1. Filter Interaktif
                     st.markdown("#### 🔍 Filter Interaktif")
                     f_col1, f_col2, f_col3 = st.columns(3)
                     with f_col1:
@@ -1922,14 +2033,12 @@ else:
                             default=df_kendaraan["status_bayar"].dropna().unique()
                         )
 
-                    # Terapkan filter
                     df_k_filtered = df_kendaraan[
                         (df_kendaraan["samsat_asal_nama"].isin(samsat_filter)) &
                         (df_kendaraan["alamat_kotakab"].isin(kota_filter)) &
                         (df_kendaraan["status_bayar"].isin(status_bayar_filter))
                     ]
 
-                    # 2. Metrik KPI
                     st.markdown("<hr style='border-top: 1px dashed #eaedf2; margin: 15px 0;'>", unsafe_allow_html=True)
                     st.markdown("#### 📈 Ringkasan Kepatuhan")
                     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
@@ -1946,7 +2055,6 @@ else:
 
                     st.markdown("<br>", unsafe_allow_html=True)
 
-                    # 3. Visualisasi Grafik
                     chart_k1, chart_k2 = st.columns(2)
                     with chart_k1:
                         st.markdown("**Distribusi Status Pembayaran**")
@@ -1985,15 +2093,139 @@ else:
             else:
                 st.info("💡 Data belum dimuat. Silakan unggah file data SAMSAT Anda.")
 
-        # ---------------- BAGIAN FOOTER / PENUTUP APLIKASI ----------------
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("---")
-        st.markdown(
-            """
-            <div style='text-align: center; color: #64748b; font-size: 12px;'>
-                <strong>Hak Cipta © 2026 PT Jasa Raharja Cabang D.I. Yogyakarta</strong><br>
-                <em>Dokumen dan dashboard ini bersifat rahasia (Strictly Confidential) dan diperuntukkan khusus bagi Pimpinan Cabang.</em>
-            </div>
-            """, 
-            unsafe_allow_html=True
-        )
+        # ---------------- TAB 7: HITUNG GASPOLL (MACRO VBA TO PYTHON) ----------------
+        with tab_pimpinan_7:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 🎯 Kalkulator Rekap Gaspoll (Otomatis)")
+            st.markdown("Unggah file Excel `data_kendaraan_targeted...` untuk otomatis menghitung **OS Awal, OS Akhir, Coverage, Conversion,** dan **Recovery** layaknya Macro VBA.")
+            
+            uploaded_gaspoll = st.file_uploader("Unggah File Data Kendaraan (.xlsx/.xls)", type=["xlsx", "xls"], key="up_gaspoll")
+            
+            if uploaded_gaspoll is not None:
+                try:
+                    df_kendaraan_gaspoll = pd.read_excel(uploaded_gaspoll, sheet_name="Query result")
+                    
+                    df_gaspoll = process_gaspoll_macro(df_kendaraan_gaspoll)
+                    
+                    st.success("✅ Macro Gaspoll Python berhasil dieksekusi!")
+                    
+                    gm1, gm2, gm3, gm4 = st.columns(4)
+                    gm1.metric("Total Sasaran (Unit)", f"{df_gaspoll['Sasaran'].sum():,}")
+                    gm2.metric("Total Realisasi (Unit)", f"{df_gaspoll['Realisasi_Unit'].sum():,}")
+                    gm3.metric("Total Realisasi SW (Rp)", f"Rp {df_gaspoll['Realisasi_SW'].sum():,.0f}".replace(",", "."))
+                    
+                    overall_os = df_gaspoll['OS_Awal'].sum()
+                    overall_rec = ((overall_os - df_gaspoll['OS_Akhir'].sum()) / overall_os) * 100 if overall_os > 0 else 0
+                    gm4.metric("Overall Recovery (%)", f"{overall_rec:.2f}%")
+                    
+                    st.markdown("#### 📑 Hasil Tabel Gaspoll Final")
+                    
+                    df_display_gaspoll = df_gaspoll.copy()
+                    
+                    uang_cols = ['Target_Nominal', 'Realisasi_SW', 'Gap_Nominal', 'OS_Awal', 'OS_Akhir']
+                    for col in uang_cols:
+                        df_display_gaspoll[col] = df_display_gaspoll[col].apply(lambda x: f"Rp {x:,.0f}".replace(",", "."))
+                        
+                    pct_cols = ['Coverage (%)', 'Conversion (%)', 'Recovery (%)']
+                    for col in pct_cols:
+                        df_display_gaspoll[col] = df_display_gaspoll[col].apply(lambda x: f"{x:.2f}%")
+                        
+                    st.dataframe(df_display_gaspoll, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("<hr style='border-top: 1px dashed #eaedf2; margin: 15px 0;'>", unsafe_allow_html=True)
+                    col_g1, col_g2 = st.columns(2)
+                    with col_g1:
+                        fig_bar = px.bar(df_gaspoll, x='Loket SAMSAT', y='Realisasi_SW', color='Tanggal', title="Realisasi SW per Loket")
+                        st.plotly_chart(fig_bar, use_container_width=True)
+                    with col_g2:
+                        col_status = 'status_bayar' if 'status_bayar' in df_kendaraan_gaspoll.columns else 'Status Pembayaran'
+                        if col_status in df_kendaraan_gaspoll.columns:
+                            df_status = df_kendaraan_gaspoll[col_status].value_counts().reset_index()
+                            df_status.columns = ['Status Pembayaran', 'Jumlah']
+                            fig_pie = px.pie(df_status, names='Status Pembayaran', values='Jumlah', title="Proporsi Status Pembayaran", hole=0.4, color_discrete_sequence=['#ef553b', '#00cc96'])
+                            st.plotly_chart(fig_pie, use_container_width=True)
+                        else:
+                            st.info("Kolom status bayar tidak ditemukan untuk visualisasi.")
+                            
+                except Exception as e:
+                    st.error(f"Gagal mengeksekusi Macro Python: Pastikan sheet bernama 'Query result' ada. Detail Error: {e}")
+            else:
+                st.info("💡 Belum ada file data kendaraan yang diunggah untuk dihitung.")
+
+        # ---------------- TAB 8: PENERIMAAN LIBUR SAMSAT (R2 & R4) ----------------
+# ---------------- TAB 8: PENERIMAAN LIBUR SAMSAT (R2 & R4) ----------------
+        with tab_pimpinan_8:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 🛵 Rekapitulasi Penerimaan SWDKLLJ Libur (R2 & R4)")
+            st.markdown("Unggah file Excel rekap liburan (`Penerimaan SwdkllJ libur...`) untuk menganalisis data R2 dan R4 secara gabungan.")
+            
+            uploaded_libur = st.file_uploader("Unggah File Penerimaan Libur (.xlsm/.xlsx)", type=["xlsm", "xlsx", "xls"], key="up_libur")
+            
+            if uploaded_libur is not None:
+                try:
+                    xls_libur = pd.ExcelFile(uploaded_libur)
+                    df_r2 = pd.read_excel(xls_libur, sheet_name='R2') if 'R2' in xls_libur.sheet_names else pd.DataFrame()
+                    df_r4 = pd.read_excel(xls_libur, sheet_name='R4') if 'R4' in xls_libur.sheet_names else pd.DataFrame()
+                    
+                    if not df_r2.empty: df_r2['Jenis Kendaraan'] = 'Roda 2'
+                    if not df_r4.empty: df_r4['Jenis Kendaraan'] = 'Roda 4'
+                    
+                    df_gabung = pd.concat([df_r2, df_r4], ignore_index=True)
+                    
+                    if not df_gabung.empty:
+                        total_kendaraan = len(df_gabung)
+                        total_pokok = df_gabung['SWDKLLJ POKOK'].sum() if 'SWDKLLJ POKOK' in df_gabung.columns else 0
+                        total_denda = df_gabung['SWDKLLJ DENDA'].sum() if 'SWDKLLJ DENDA' in df_gabung.columns else 0
+                        total_penerimaan = total_pokok + total_denda
+                        
+                        m1, m2, m3, m4 = st.columns(4)
+                        m1.metric("Total Kendaraan", f"{total_kendaraan:,}")
+                        m2.metric("Total Penerimaan (Rp)", f"Rp {total_penerimaan:,.0f}".replace(",", "."))
+                        m3.metric("Total POKOK (Rp)", f"Rp {total_pokok:,.0f}".replace(",", "."))
+                        m4.metric("Total DENDA (Rp)", f"Rp {total_denda:,.0f}".replace(",", "."))
+                        
+                        st.markdown("<hr style='border-top: 1px dashed #eaedf2; margin: 15px 0;'>", unsafe_allow_html=True)
+                        
+                        cg1, cg2 = st.columns(2)
+                        with cg1:
+                            st.markdown("**Sebaran Lokasi Bayar**")
+                            if 'Lokasi bayar' in df_gabung.columns:
+                                df_lokasi = df_gabung['Lokasi bayar'].value_counts().reset_index()
+                                df_lokasi.columns = ['Lokasi', 'Volume']
+                                fig_lokasi = px.bar(df_lokasi, y='Lokasi', x='Volume', orientation='h', color='Volume', color_continuous_scale='Teal')
+                                fig_lokasi.update_layout(yaxis={'categoryorder':'total ascending'})
+                                st.plotly_chart(fig_lokasi, use_container_width=True)
+                            else:
+                                st.write("Kolom 'Lokasi bayar' tidak ditemukan.")
+                                
+                        with cg2:
+                            st.markdown("**Proporsi Merek Kendaraan**")
+                            if 'Merek' in df_gabung.columns:
+                                df_merek = df_gabung['Merek'].value_counts().head(10).reset_index()
+                                df_merek.columns = ['Merek', 'Volume']
+                                fig_merek = px.pie(df_merek, names='Merek', values='Volume', hole=0.3)
+                                st.plotly_chart(fig_merek, use_container_width=True)
+                            else:
+                                st.write("Kolom 'Merek' tidak ditemukan.")
+                        
+                        st.markdown("#### 📋 Tabel Rincian Transaksi R2 & R4")
+                        st.dataframe(df_gabung.head(100), use_container_width=True)
+                    else:
+                        st.warning("Sheet R2 atau R4 kosong / tidak ada di dalam file ini.")
+                except Exception as e:
+                    st.error(f"Gagal memproses file Penerimaan Libur: {e}")
+            else:
+                st.info("💡 Belum ada file penerimaan SWDKLLJ libur yang diunggah.")
+
+    # ---------------- BAGIAN FOOTER / PENUTUP APLIKASI ----------------
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style='text-align: center; color: #64748b; font-size: 12px;'>
+            <strong>Hak Cipta © 2026 PT Jasa Raharja Cabang D.I. Yogyakarta</strong><br>
+            <em>Dokumen dan dashboard ini bersifat rahasia (Strictly Confidential) dan diperuntukkan khusus bagi Pimpinan Cabang.</em>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
