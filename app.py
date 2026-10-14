@@ -78,36 +78,44 @@ BULAN_INDO = {
 }
 
 # ==========================================
-# FUNGSI PEMBACAAN EXCEL & UNIFIED DATA
+# FUNGSI PEMBACAAN EXCEL DARI UPLOADER
 # ==========================================
 @st.cache_data
-def load_historis_excel(tahun):
+def load_excel_file(uploaded_file):
+    """Membaca file uploader sekali ke dalam memori untuk performa"""
+    if uploaded_file is not None:
+        try:
+            return pd.ExcelFile(uploaded_file)
+        except Exception:
+            return None
+    return None
+
+def load_historis_excel(xls_master, tahun):
+    if xls_master is None:
+        return pd.DataFrame()
     try:
         sheet_name = f"Historis{tahun}"
-        df_h = pd.read_excel(
-            "Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name
-        )
-        return df_h
+        if sheet_name in xls_master.sheet_names:
+            return pd.read_excel(xls_master, sheet_name=sheet_name)
     except Exception:
+        pass
+    return pd.DataFrame()
+
+def load_anggaran_excel(xls_master, tahun):
+    if xls_master is None:
         return pd.DataFrame()
-
-
-@st.cache_data
-def load_anggaran_excel(tahun):
     try:
         sheet_name = f"Anggaran{tahun}"
-        df_ang = pd.read_excel(
-            "Penerimaan Sektor UU 34 Tahun 1964.xlsx", sheet_name=sheet_name
-        )
-        return df_ang
+        if sheet_name in xls_master.sheet_names:
+            return pd.read_excel(xls_master, sheet_name=sheet_name)
     except Exception:
-        return pd.DataFrame()
+        pass
+    return pd.DataFrame()
 
-
-def get_full_unified_df(df_db_input):
+def get_full_unified_df(df_db_input, xls_master):
     dfs = []
     for thn in [2024, 2025, 2026]:
-        df_h = load_historis_excel(thn)
+        df_h = load_historis_excel(xls_master, thn)
         if not df_h.empty and "Bulan" in df_h.columns and "Jenis_Dana" in df_h.columns:
             loket_cols = [c for c in df_h.columns if c not in ["Bulan", "Jenis_Dana", "No"]]
             df_melt = df_h.melt(id_vars=["Bulan", "Jenis_Dana"], value_vars=loket_cols, var_name="loket_raw", value_name="realisasi")
@@ -142,7 +150,6 @@ def get_full_unified_df(df_db_input):
         df_combined["Tahun_Str"] = df_combined["Tahun"].astype(str)
     return df_combined
 
-
 @st.cache_data
 def get_img_base64(file_path):
     try:
@@ -151,7 +158,6 @@ def get_img_base64(file_path):
         return base64.b64encode(data).decode()
     except Exception:
         return ""
-
 
 img_base64 = get_img_base64("LOGO_JASA_RAHARJA_2024.png")
 
@@ -167,7 +173,6 @@ def init_connection():
 
 supabase = init_connection()
 
-# PERBAIKAN: Cache Penarikan Database agar perpindahan slide instan
 @st.cache_data(ttl=600)
 def fetch_all_supabase_data():
     try:
@@ -176,7 +181,6 @@ def fetch_all_supabase_data():
     except Exception:
         return pd.DataFrame()
 
-# PERBAIKAN: Cache Komputasi Model agar Tab 3 tidak dihitung ulang setiap slide bergeser
 @st.cache_data(show_spinner=False)
 def run_forecast_models(df_monthly_fc):
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
@@ -288,7 +292,6 @@ def run_forecast_models(df_monthly_fc):
     })
     
     return winning_name, tingkat_keandalan, mae, rmse, df_scenarios, forecast_steps
-
 
 # ==========================================
 # TAMPILAN HALAMAN LOGIN
@@ -609,7 +612,7 @@ else:
                 }
                 try:
                     supabase.table("penerimaan_harian").insert(data_insert).execute()
-                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache agar data baru terbaca
+                    fetch_all_supabase_data.clear() # Hapus cache agar data baru terbaca
                     st.session_state.toast_count += 1
                     st.toast(
                         f"Laporan berhasil disimpan ke sistem! (Loket: {f_loket})",
@@ -637,7 +640,6 @@ else:
             filter_sampai = st.date_input("Sampai Tanggal", value=date.today())
 
         try:
-            # PERBAIKAN: Manfaatkan cache fetch_all_supabase_data
             df_all_db = fetch_all_supabase_data()
             if not df_all_db.empty:
                 df_all_db['dt_tanggal'] = pd.to_datetime(df_all_db['tanggal']).dt.date
@@ -762,7 +764,7 @@ else:
                                         "prosentase_siklikal": e_siklikal,
                                         "siklikal_yty": e_yty,
                                     }).eq("id", sel_id).execute()
-                                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache
+                                    fetch_all_supabase_data.clear() # Hapus cache
                                     st.success("Data berhasil diperbarui dalam sistem.")
                                     st.rerun()
                                 except Exception as e:
@@ -771,7 +773,7 @@ else:
                             if delete_btn:
                                 try:
                                     supabase.table("penerimaan_harian").delete().eq("id", sel_id).execute()
-                                    fetch_all_supabase_data.clear() # PERBAIKAN: Hapus cache
+                                    fetch_all_supabase_data.clear() # Hapus cache
                                     st.warning("Data laporan berhasil dihapus dari sistem.")
                                     st.rerun()
                                 except Exception as e:
@@ -785,6 +787,20 @@ else:
     # TAMPILAN: PIMPINAN (DASHBOARD LENGKAP)
     # ----------------------------------------
     elif st.session_state.role == "Pimpinan":
+        
+        # 📂 Fitur Upload File Excel Dinamis
+        st.markdown("### 📂 Unggah Data Master Excel")
+        uploaded_file = st.file_uploader(
+            "Unggah file Excel (misal: data_kendaraan_targeted_2026-10-12T07_25_47.273389344+07_00_2.xlsx) untuk diproses ke dalam laporan di bawah ini:", 
+            type=["xlsx", "xls"]
+        )
+        xls_master = load_excel_file(uploaded_file)
+        
+        if not uploaded_file:
+            st.info("💡 Silakan unggah file Excel Anda terlebih dahulu agar data dapat dikomputasi secara komprehensif pada dashboard.")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+
         tab_pimpinan_1, tab_pimpinan_2, tab_pimpinan_3, tab_pimpinan_4, tab_pimpinan_5 = st.tabs([
             "Laporan Eksekutif Realisasi",
             "Dashboard Rekap & Grafik Tren",
@@ -793,7 +809,6 @@ else:
             "Viewer Excel",
         ])
 
-        # PERBAIKAN: Memanggil database dari fungsi ber-cache
         df_db = fetch_all_supabase_data()
         if not df_db.empty:
             df_db["dt_tanggal"] = pd.to_datetime(df_db["tanggal"])
@@ -841,9 +856,9 @@ else:
                 "Gunung Kidul": "Gunung_Kidul",
             }
 
-            df_anggaran_x = load_anggaran_excel(target_tahun_pilih)
-            df_hist_x = load_historis_excel(target_tahun_pilih)
-            df_hist_x1 = load_historis_excel(tahun_x1)
+            df_anggaran_x = load_anggaran_excel(xls_master, target_tahun_pilih)
+            df_hist_x = load_historis_excel(xls_master, target_tahun_pilih)
+            df_hist_x1 = load_historis_excel(xls_master, tahun_x1)
 
             def get_anggaran_value(df_ang, jenis_dana, loket):
                 if df_ang.empty:
@@ -1217,7 +1232,7 @@ else:
                 if not df_analysis.empty and "dt_tanggal" not in df_analysis.columns:
                     df_analysis["dt_tanggal"] = pd.to_datetime(df_analysis["tanggal"])
             else:
-                df_analysis = get_full_unified_df(df_db)
+                df_analysis = get_full_unified_df(df_db, xls_master)
 
             if not df_analysis.empty:
                 all_years = sorted(df_analysis["Tahun_Str"].unique()) if "Tahun_Str" in df_analysis.columns else [str(date.today().year)]
@@ -1470,7 +1485,7 @@ else:
 
             list_history_dfs = []
             for thn in [2024, 2025, 2026]:
-                df_h = load_historis_excel(thn)
+                df_h = load_historis_excel(xls_master, thn)
                 if not df_h.empty and "Bulan" in df_h.columns and "Jenis_Dana" in df_h.columns:
                     loket_cols = [c for c in df_h.columns if c not in ["Jenis_Dana", "Bulan", "No"]]
                     df_h["Total_Realisasi"] = df_h[loket_cols].sum(axis=1)
@@ -1511,7 +1526,6 @@ else:
 
                 if len(df_monthly_fc) >= 6:
                     try:
-                        # PERBAIKAN: Memanggil dari fungsi model ber-cache
                         winning_name, tingkat_keandalan, mae, rmse, df_scenarios, forecast_steps = run_forecast_models(df_monthly_fc)
 
                         st.success(
@@ -1863,7 +1877,7 @@ else:
             st.markdown("Menampilkan basis data mentah dari sistem untuk keperluan audit dan peninjauan manual.")
             
             try:
-                st.dataframe(get_full_unified_df(df_db), use_container_width=True, hide_index=True)
+                st.dataframe(get_full_unified_df(df_db, xls_master), use_container_width=True, hide_index=True)
             except Exception as e:
                 st.info(f"💡 Data repositori master belum dimuat atau tidak tersedia: {e}")
 
