@@ -1,4 +1,5 @@
 import base64
+import hmac
 import calendar
 from datetime import date
 from PIL import Image
@@ -128,14 +129,8 @@ def process_gaspoll_macro(df):
 # ⚙️ SISTEM LOGIN & SESI
 # ==========================================
 if "logged_in" not in st.session_state:
-    qp_logged = st.query_params.get("logged_in")
-    qp_role = st.query_params.get("role")
-    if qp_logged == "true" and qp_role in ["Petugas SAMSAT", "Pimpinan"]:
-        st.session_state.logged_in = True
-        st.session_state.role = qp_role
-    else:
-        st.session_state.logged_in = False
-        st.session_state.role = None
+    st.session_state.logged_in = False
+    st.session_state.role = None
 
 if "toast_count" not in st.session_state:
     st.session_state.toast_count = 0
@@ -509,17 +504,10 @@ if not st.session_state.logged_in:
                 login_button = st.form_submit_button("Masuk Sistem", type="primary")
 
                 if login_button:
-                    if username.lower() == "petugas" and password == "PetugasDIY2026!":
+                    user = st.secrets.get("users", {}).get(username.strip().lower())
+                    if user and hmac.compare_digest(password.encode(), user["password"].encode()):
                         st.session_state.logged_in = True
-                        st.session_state.role = "Petugas SAMSAT"
-                        st.query_params["logged_in"] = "true"
-                        st.query_params["role"] = "Petugas SAMSAT"
-                        st.rerun()
-                    elif username.lower() == "pimpinan" and password == "PimpinanDIY2026!":
-                        st.session_state.logged_in = True
-                        st.session_state.role = "Pimpinan"
-                        st.query_params["logged_in"] = "true"
-                        st.query_params["role"] = "Pimpinan"
+                        st.session_state.role = user["role"]
                         st.rerun()
                     else:
                         st.error("ID Pengguna atau Password salah. Silakan coba lagi.")
@@ -652,7 +640,6 @@ else:
         if st.button("Keluar", type="primary", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.role = None
-            st.query_params.clear()
             st.rerun()
 
     st.markdown(
